@@ -7433,7 +7433,16 @@ function showView(view) {
                             }
                         },
                         datalabels: {
-                            display: false  // Hide data labels on line charts for clarity
+                            display: true,
+                            align: 'top',
+                            anchor: 'end',
+                            offset: 4,
+                            color: '#000',
+                            backgroundColor: 'rgba(255, 255, 255, 0.9)',
+                            borderRadius: 4,
+                            padding: { top: 2, bottom: 2, left: 4, right: 4 },
+                            font: { size: 10, weight: 'bold', family: 'Inter' },
+                            formatter: (value) => value !== null ? value : ''
                         },
                         tooltip: {
                             backgroundColor: 'rgba(0, 0, 0, 0.85)',
