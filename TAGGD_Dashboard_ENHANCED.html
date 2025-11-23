@@ -7009,6 +7009,19 @@ function showView(view) {
             let filtered2526 = [...fy2526NotReportedData];
             console.log('📊 Before filtering: FY24-25 =', filtered2425.length, 'rows, FY25-26 =', filtered2526.length, 'rows');
             
+            // Regional Head filter - check if array has items
+            if (activeFilters.regionalHead && activeFilters.regionalHead.length > 0) {
+                console.log('👤 Applying regional head filter:', activeFilters.regionalHead);
+                filtered2425 = filtered2425.filter(row => {
+                    const rh = row['Regional Head '] || row['Regional Head'];
+                    return activeFilters.regionalHead.includes(rh);
+                });
+                filtered2526 = filtered2526.filter(row => {
+                    const rh = row['Regional Head '] || row['Regional Head'];
+                    return activeFilters.regionalHead.includes(rh);
+                });
+            }
+            
             // Region filter - check if array has items
             if (activeFilters.region && activeFilters.region.length > 0) {
                 console.log('🌍 Applying region filter:', activeFilters.region);
@@ -7047,6 +7060,7 @@ function showView(view) {
             
             // Calculate dimensional breakdowns
             const projectBreakdown = calculateNotReportedByDimension(filtered2425, filtered2526, 'Project');
+            const regionalHeadBreakdown = calculateNotReportedByRegionalHead(filtered2425, filtered2526);
             const regionBreakdown = calculateNotReportedByDimension(filtered2425, filtered2526, 'Region');
             const practiceBreakdown = calculateNotReportedByDimension(filtered2425, filtered2526, 'Practice Head');
             const monthlyTrend = calculateMonthlyTrend(filtered2425, filtered2526);
@@ -7121,6 +7135,11 @@ function showView(view) {
                         <h3 style="margin-bottom: 15px;"><i class="bi bi-geo-alt"></i> Regional Analysis</h3>
                         <div class="table-container">
                             ${generateNotReportedSummaryTable(regionBreakdown, 'Region')}
+                        </div>
+                        
+                        <h3 style="margin-bottom: 15px; margin-top: 30px;"><i class="bi bi-person-badge-fill"></i> Regional Head-wise Analysis</h3>
+                        <div class="table-container">
+                            ${generateNotReportedSummaryTable(regionalHeadBreakdown, 'Regional Head')}
                         </div>
                     </div>
                     
@@ -7200,6 +7219,55 @@ function showView(view) {
                 
                 if (!breakdown[key]) {
                     breakdown[key] = { name: key, fy2425: 0, fy2526: 0, region: row.Region, practiceHead: row['Practice Head'] };
+                }
+                
+                Object.keys(row).forEach(col => {
+                    if (col.includes('NotReported')) {
+                        breakdown[key].fy2526 += parseInt(row[col]) || 0;
+                    }
+                });
+            });
+            
+            // Calculate changes
+            Object.keys(breakdown).forEach(key => {
+                const item = breakdown[key];
+                item.change = item.fy2526 - item.fy2425;
+                item.pctChange = item.fy2425 > 0 ? ((item.change / item.fy2425) * 100).toFixed(1) : 'N/A';
+                item.trend = item.pctChange !== 'N/A' && parseFloat(item.pctChange) > 10 ? '🔴 Worsening' 
+                            : item.pctChange !== 'N/A' && parseFloat(item.pctChange) < -10 ? '🟢 Improving' 
+                            : '🟡 Stable';
+            });
+            
+            return Object.values(breakdown).sort((a, b) => b.fy2425 - a.fy2425);
+        }
+        
+        // Calculate Not Reported breakdown by Regional Head
+        function calculateNotReportedByRegionalHead(data2425, data2526) {
+            const breakdown = {};
+            
+            // Process FY 24-25
+            data2425.forEach(row => {
+                const key = row['Regional Head '] || row['Regional Head'];
+                if (!key) return;
+                
+                if (!breakdown[key]) {
+                    breakdown[key] = { name: key, fy2425: 0, fy2526: 0 };
+                }
+                
+                Object.keys(row).forEach(col => {
+                    if (col.includes('NotReported')) {
+                        breakdown[key].fy2425 += parseInt(row[col]) || 0;
+                    }
+                });
+            });
+            
+            // Process FY 25-26
+            data2526.forEach(row => {
+                const key = row['Regional Head '] || row['Regional Head'];
+                if (!key) return;
+                
+                if (!breakdown[key]) {
+                    breakdown[key] = { name: key, fy2425: 0, fy2526: 0 };
                 }
                 
                 Object.keys(row).forEach(col => {
