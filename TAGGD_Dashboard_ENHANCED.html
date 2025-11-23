@@ -1690,7 +1690,7 @@ function processNotReportedData() {
         
         processed.fy24_25[account] = {
             account: account,
-            regionalHead: row['Regional Head '],
+            regionalHead: row['Regional Head '] || row['Regional Head'],
             region: row.Region,
             practiceHead: row['Practice Head'],
             months: months,
@@ -1715,7 +1715,7 @@ function processNotReportedData() {
         
         processed.fy25_26[account] = {
             account: account,
-            regionalHead: row['Regional Head '],
+            regionalHead: row['Regional Head '] || row['Regional Head'],
             region: row.Region,
             practiceHead: row['Practice Head'],
             months: months,
