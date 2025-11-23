@@ -4776,8 +4776,9 @@ function showView(view) {
 
         // Render Practice View WITH FY COMPARISON
         function renderPracticeView() {
-            const months12 = ['Apr', 'May', 'June', 'July', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec', 'Jan', 'Feb', 'March'];
-            const months6 = ['Apr', 'May', 'June', 'July', 'Aug', 'Sep'];
+            // Extract actual months from data (dynamic, not hardcoded)
+            const fy24months = extractMonthsFromData(filteredData.fy24_25, null);
+            const fy25months = extractMonthsFromData(null, filteredData.fy25_26);
             
             const practiceData = {};
             
@@ -4788,7 +4789,7 @@ function showView(view) {
                     practiceData[practice] = { fy24Met: 0, fy24NotMet: 0, fy25Met: 0, fy25NotMet: 0 };
                 }
                 
-                months12.forEach(month => {
+                fy24months.forEach(month => {
                     practiceData[practice].fy24Met += getMonthData(row, month, 'fy24_25', 'Met');
                     practiceData[practice].fy24NotMet += getMonthData(row, month, 'fy24_25', 'Not_Met');
                 });
@@ -4801,7 +4802,7 @@ function showView(view) {
                     practiceData[practice] = { fy24Met: 0, fy24NotMet: 0, fy25Met: 0, fy25NotMet: 0 };
                 }
                 
-                months6.forEach(month => {
+                fy25months.forEach(month => {
                     practiceData[practice].fy25Met += getMonthData(row, month, 'fy25_26', 'Met');
                     practiceData[practice].fy25NotMet += getMonthData(row, month, 'fy25_26', 'Not_Met');
                 });
