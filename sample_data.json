@@ -1610,9 +1610,7 @@
       "Sep_Met": 4,
       "Sep_Not_Met": 0,
       "Oct_Met": 4,
-      "Oct_Not_Met": 0,
-      "Nov_Met": 4,
-      "Nov_Not_Met": 0
+      "Oct_Not_Met": 0
     },
     {
       "Project": "Honeywell",
@@ -1632,9 +1630,7 @@
       "Sep_Met": 8,
       "Sep_Not_Met": 0,
       "Oct_Met": 8,
-      "Oct_Not_Met": 0,
-      "Nov_Met": 0,
-      "Nov_Not_Met": 0
+      "Oct_Not_Met": 0
     },
     {
       "Project": "M&M",
@@ -1654,9 +1650,7 @@
       "Sep_Met": 0,
       "Sep_Not_Met": 0,
       "Oct_Met": 0,
-      "Oct_Not_Met": 0,
-      "Nov_Met": 5,
-      "Nov_Not_Met": 8
+      "Oct_Not_Met": 0
     },
     {
       "Project": "Mahindra Holidays",
@@ -1676,9 +1670,7 @@
       "Sep_Met": 0,
       "Sep_Not_Met": 0,
       "Oct_Met": 0,
-      "Oct_Not_Met": 0,
-      "Nov_Met": 0,
-      "Nov_Not_Met": 0
+      "Oct_Not_Met": 0
     },
     {
       "Project": "Mahindra Finance",
@@ -1698,9 +1690,7 @@
       "Sep_Met": 0,
       "Sep_Not_Met": 0,
       "Oct_Met": 0,
-      "Oct_Not_Met": 0,
-      "Nov_Met": 2,
-      "Nov_Not_Met": 5
+      "Oct_Not_Met": 0
     },
     {
       "Project": "P&G",
@@ -1720,9 +1710,7 @@
       "Sep_Met": 4,
       "Sep_Not_Met": 0,
       "Oct_Met": 4,
-      "Oct_Not_Met": 0,
-      "Nov_Met": 4,
-      "Nov_Not_Met": 0
+      "Oct_Not_Met": 0
     },
     {
       "Project": "Pfizer (FLM/RBM)",
@@ -1742,9 +1730,7 @@
       "Sep_Met": 0,
       "Sep_Not_Met": 0,
       "Oct_Met": 0,
-      "Oct_Not_Met": 0,
-      "Nov_Met": 0,
-      "Nov_Not_Met": 0
+      "Oct_Not_Met": 0
     },
     {
       "Project": "Pfizer (FS & FLM)",
@@ -1764,9 +1750,7 @@
       "Sep_Met": 0,
       "Sep_Not_Met": 0,
       "Oct_Met": 0,
-      "Oct_Not_Met": 0,
-      "Nov_Met": 0,
-      "Nov_Not_Met": 0
+      "Oct_Not_Met": 0
     },
     {
       "Project": "Pfizer (FS)",
@@ -1786,9 +1770,7 @@
       "Sep_Met": 0,
       "Sep_Not_Met": 0,
       "Oct_Met": 0,
-      "Oct_Not_Met": 0,
-      "Nov_Met": 0,
-      "Nov_Not_Met": 0
+      "Oct_Not_Met": 0
     },
     {
       "Project": "Pfizer (FS/FLM/RBM)",
@@ -1808,9 +1790,7 @@
       "Sep_Met": 0,
       "Sep_Not_Met": 0,
       "Oct_Met": 0,
-      "Oct_Not_Met": 0,
-      "Nov_Met": 0,
-      "Nov_Not_Met": 0
+      "Oct_Not_Met": 0
     },
     {
       "Project": "Pfizer (FS & FLM) (Chennai)",
@@ -1830,9 +1810,7 @@
       "Sep_Met": 1,
       "Sep_Not_Met": 1,
       "Oct_Met": 1,
-      "Oct_Not_Met": 1,
-      "Nov_Met": 0,
-      "Nov_Not_Met": 1
+      "Oct_Not_Met": 1
     },
     {
       "Project": "Pidilite",
@@ -1852,9 +1830,7 @@
       "Sep_Met": 7,
       "Sep_Not_Met": 5,
       "Oct_Met": 7,
-      "Oct_Not_Met": 5,
-      "Nov_Met": 9,
-      "Nov_Not_Met": 3
+      "Oct_Not_Met": 5
     },
     {
       "Project": "SKF",
@@ -1873,10 +1849,8 @@
       "Aug_Not_Met": 4,
       "Sep_Met": 9,
       "Sep_Not_Met": 5,
-      "Oct_Met": 9,
-      "Oct_Not_Met": 5,
-      "Nov_Met": 10,
-      "Nov_Not_Met": 4
+      "Oct_Met": 0,
+      "Oct_Not_Met": 0
     },
     {
       "Project": "TATA Power",
@@ -1896,9 +1870,7 @@
       "Sep_Met": 0,
       "Sep_Not_Met": 0,
       "Oct_Met": 0,
-      "Oct_Not_Met": 0,
-      "Nov_Met": 0,
-      "Nov_Not_Met": 0
+      "Oct_Not_Met": 0
     },
     {
       "Project": "ISUZU (UD Trucks)",
@@ -1918,9 +1890,7 @@
       "Sep_Met": 0,
       "Sep_Not_Met": 0,
       "Oct_Met": 0,
-      "Oct_Not_Met": 0,
-      "Nov_Met": 0,
-      "Nov_Not_Met": 0
+      "Oct_Not_Met": 0
     },
     {
       "Project": "Vertiv Energy",
@@ -1940,9 +1910,7 @@
       "Sep_Met": 3,
       "Sep_Not_Met": 5,
       "Oct_Met": 3,
-      "Oct_Not_Met": 5,
-      "Nov_Met": 5,
-      "Nov_Not_Met": 3
+      "Oct_Not_Met": 5
     },
     {
       "Project": "Siemens - GBS",
@@ -1962,9 +1930,7 @@
       "Sep_Met": 0,
       "Sep_Not_Met": 0,
       "Oct_Met": 0,
-      "Oct_Not_Met": 0,
-      "Nov_Met": 10,
-      "Nov_Not_Met": 1
+      "Oct_Not_Met": 0
     },
     {
       "Project": "Siemens - Advanta",
@@ -1984,9 +1950,7 @@
       "Sep_Met": 0,
       "Sep_Not_Met": 0,
       "Oct_Met": 0,
-      "Oct_Not_Met": 0,
-      "Nov_Met": 7,
-      "Nov_Not_Met": 4
+      "Oct_Not_Met": 0
     },
     {
       "Project": "Robert Bosch",
@@ -2006,9 +1970,7 @@
       "Sep_Met": 0,
       "Sep_Not_Met": 0,
       "Oct_Met": 0,
-      "Oct_Not_Met": 0,
-      "Nov_Met": 0,
-      "Nov_Not_Met": 0
+      "Oct_Not_Met": 0
     },
     {
       "Project": "Servify",
@@ -2028,9 +1990,7 @@
       "Sep_Met": 0,
       "Sep_Not_Met": 0,
       "Oct_Met": 0,
-      "Oct_Not_Met": 0,
-      "Nov_Met": 0,
-      "Nov_Not_Met": 0
+      "Oct_Not_Met": 0
     },
     {
       "Project": "Birla Paints",
@@ -2050,9 +2010,7 @@
       "Sep_Met": 0,
       "Sep_Not_Met": 0,
       "Oct_Met": 0,
-      "Oct_Not_Met": 0,
-      "Nov_Met": 0,
-      "Nov_Not_Met": 0
+      "Oct_Not_Met": 0
     },
     {
       "Project": "Ingram Micro",
@@ -2072,9 +2030,7 @@
       "Sep_Met": 7,
       "Sep_Not_Met": 1,
       "Oct_Met": 7,
-      "Oct_Not_Met": 1,
-      "Nov_Met": 6,
-      "Nov_Not_Met": 2
+      "Oct_Not_Met": 1
     },
     {
       "Project": "Wipro",
@@ -2094,9 +2050,7 @@
       "Sep_Met": 6,
       "Sep_Not_Met": 1,
       "Oct_Met": 6,
-      "Oct_Not_Met": 1,
-      "Nov_Met": 7,
-      "Nov_Not_Met": 0
+      "Oct_Not_Met": 1
     },
     {
       "Project": "Siemens - Energy",
@@ -2116,9 +2070,7 @@
       "Sep_Met": 0,
       "Sep_Not_Met": 0,
       "Oct_Met": 0,
-      "Oct_Not_Met": 0,
-      "Nov_Met": 8,
-      "Nov_Not_Met": 3
+      "Oct_Not_Met": 0
     },
     {
       "Project": "HPE",
@@ -2138,9 +2090,7 @@
       "Sep_Met": 10,
       "Sep_Not_Met": 0,
       "Oct_Met": 10,
-      "Oct_Not_Met": 0,
-      "Nov_Met": 8,
-      "Nov_Not_Met": 2
+      "Oct_Not_Met": 0
     },
     {
       "Project": "WTW (Ops)",
@@ -2160,9 +2110,7 @@
       "Sep_Met": 0,
       "Sep_Not_Met": 0,
       "Oct_Met": 0,
-      "Oct_Not_Met": 0,
-      "Nov_Met": 0,
-      "Nov_Not_Met": 0
+      "Oct_Not_Met": 0
     },
     {
       "Project": "WTW (Tech)",
@@ -2182,9 +2130,7 @@
       "Sep_Met": 0,
       "Sep_Not_Met": 0,
       "Oct_Met": 0,
-      "Oct_Not_Met": 0,
-      "Nov_Met": 0,
-      "Nov_Not_Met": 0
+      "Oct_Not_Met": 0
     },
     {
       "Project": "WTW (Ops & Tech)",
@@ -2204,9 +2150,7 @@
       "Sep_Met": 0,
       "Sep_Not_Met": 0,
       "Oct_Met": 0,
-      "Oct_Not_Met": 0,
-      "Nov_Met": 0,
-      "Nov_Not_Met": 0
+      "Oct_Not_Met": 0
     },
     {
       "Project": "DP World",
@@ -2226,9 +2170,7 @@
       "Sep_Met": 0,
       "Sep_Not_Met": 0,
       "Oct_Met": 0,
-      "Oct_Not_Met": 0,
-      "Nov_Met": 4,
-      "Nov_Not_Met": 3
+      "Oct_Not_Met": 0
     },
     {
       "Project": "Ametek",
@@ -2248,9 +2190,7 @@
       "Sep_Met": 0,
       "Sep_Not_Met": 0,
       "Oct_Met": 0,
-      "Oct_Not_Met": 0,
-      "Nov_Met": 0,
-      "Nov_Not_Met": 0
+      "Oct_Not_Met": 0
     },
     {
       "Project": "Ultratech",
@@ -2270,9 +2210,7 @@
       "Sep_Met": 0,
       "Sep_Not_Met": 0,
       "Oct_Met": 0,
-      "Oct_Not_Met": 0,
-      "Nov_Met": 0,
-      "Nov_Not_Met": 0
+      "Oct_Not_Met": 0
     },
     {
       "Project": "TATA Electronics",
@@ -2292,9 +2230,7 @@
       "Sep_Met": 0,
       "Sep_Not_Met": 0,
       "Oct_Met": 0,
-      "Oct_Not_Met": 0,
-      "Nov_Met": 2,
-      "Nov_Not_Met": 2
+      "Oct_Not_Met": 0
     },
     {
       "Project": "AMNS",
@@ -2314,9 +2250,7 @@
       "Sep_Met": 0,
       "Sep_Not_Met": 0,
       "Oct_Met": 0,
-      "Oct_Not_Met": 0,
-      "Nov_Met": 0,
-      "Nov_Not_Met": 0
+      "Oct_Not_Met": 0
     },
     {
       "Project": "TITAN",
@@ -2336,9 +2270,7 @@
       "Sep_Met": 0,
       "Sep_Not_Met": 0,
       "Oct_Met": 0,
-      "Oct_Not_Met": 0,
-      "Nov_Met": 0,
-      "Nov_Not_Met": 0
+      "Oct_Not_Met": 0
     },
     {
       "Project": "Jindal",
@@ -2358,9 +2290,7 @@
       "Sep_Met": 5,
       "Sep_Not_Met": 2,
       "Oct_Met": 5,
-      "Oct_Not_Met": 2,
-      "Nov_Met": 5,
-      "Nov_Not_Met": 2
+      "Oct_Not_Met": 2
     },
     {
       "Project": "TATA Tele",
@@ -2380,9 +2310,7 @@
       "Sep_Met": 0,
       "Sep_Not_Met": 0,
       "Oct_Met": 0,
-      "Oct_Not_Met": 0,
-      "Nov_Met": 0,
-      "Nov_Not_Met": 0
+      "Oct_Not_Met": 0
     },
     {
       "Project": "Royal Enfield",
@@ -2402,9 +2330,7 @@
       "Sep_Met": 0,
       "Sep_Not_Met": 0,
       "Oct_Met": 0,
-      "Oct_Not_Met": 0,
-      "Nov_Met": 2,
-      "Nov_Not_Met": 5
+      "Oct_Not_Met": 0
     },
     {
       "Project": "SBI Card",
@@ -2423,10 +2349,8 @@
       "Aug_Not_Met": 0,
       "Sep_Met": 0,
       "Sep_Not_Met": 0,
-      "Oct_Met": 0,
-      "Oct_Not_Met": 0,
-      "Nov_Met": 6,
-      "Nov_Not_Met": 2
+      "Oct_Met": 7,
+      "Oct_Not_Met": 2
     },
     {
       "Project": "Schaeffler",
@@ -2446,9 +2370,7 @@
       "Sep_Met": 1,
       "Sep_Not_Met": 6,
       "Oct_Met": 1,
-      "Oct_Not_Met": 6,
-      "Nov_Met": 5,
-      "Nov_Not_Met": 2
+      "Oct_Not_Met": 6
     },
     {
       "Project": "Excelacom",
@@ -2468,9 +2390,7 @@
       "Sep_Met": 0,
       "Sep_Not_Met": 0,
       "Oct_Met": 0,
-      "Oct_Not_Met": 0,
-      "Nov_Met": 0,
-      "Nov_Not_Met": 0
+      "Oct_Not_Met": 0
     },
     {
       "Project": "Hyundai",
@@ -2490,9 +2410,7 @@
       "Sep_Met": 3,
       "Sep_Not_Met": 3,
       "Oct_Met": 3,
-      "Oct_Not_Met": 3,
-      "Nov_Met": 1,
-      "Nov_Not_Met": 5
+      "Oct_Not_Met": 3
     },
     {
       "Project": "Maruti Suzuki",
@@ -2511,10 +2429,8 @@
       "Aug_Not_Met": 6,
       "Sep_Met": 2,
       "Sep_Not_Met": 6,
-      "Oct_Met": 2,
-      "Oct_Not_Met": 6,
-      "Nov_Met": 3,
-      "Nov_Not_Met": 4
+      "Oct_Met": 4,
+      "Oct_Not_Met": 3
     },
     {
       "Project": "TATA Fiber",
@@ -2534,9 +2450,7 @@
       "Sep_Met": 0,
       "Sep_Not_Met": 0,
       "Oct_Met": 0,
-      "Oct_Not_Met": 0,
-      "Nov_Met": 0,
-      "Nov_Not_Met": 0
+      "Oct_Not_Met": 0
     },
     {
       "Project": "TATA Consumer",
@@ -2556,9 +2470,7 @@
       "Sep_Met": 8,
       "Sep_Not_Met": 3,
       "Oct_Met": 8,
-      "Oct_Not_Met": 3,
-      "Nov_Met": 8,
-      "Nov_Not_Met": 3
+      "Oct_Not_Met": 3
     },
     {
       "Project": "Atomberg",
@@ -2578,9 +2490,7 @@
       "Sep_Met": 28,
       "Sep_Not_Met": 12,
       "Oct_Met": 28,
-      "Oct_Not_Met": 12,
-      "Nov_Met": 13,
-      "Nov_Not_Met": 15
+      "Oct_Not_Met": 12
     },
     {
       "Project": "Subros",
@@ -2599,10 +2509,8 @@
       "Aug_Not_Met": 6,
       "Sep_Met": 0,
       "Sep_Not_Met": 0,
-      "Oct_Met": 0,
-      "Oct_Not_Met": 0,
-      "Nov_Met": 1,
-      "Nov_Not_Met": 5
+      "Oct_Met": 2,
+      "Oct_Not_Met": 6
     },
     {
       "Project": "Sterling tools",
@@ -2622,9 +2530,7 @@
       "Sep_Met": 5,
       "Sep_Not_Met": 1,
       "Oct_Met": 5,
-      "Oct_Not_Met": 1,
-      "Nov_Met": 0,
-      "Nov_Not_Met": 0
+      "Oct_Not_Met": 1
     },
     {
       "Project": "Ashok Leyland",
@@ -2644,9 +2550,7 @@
       "Sep_Met": 0,
       "Sep_Not_Met": 0,
       "Oct_Met": 0,
-      "Oct_Not_Met": 0,
-      "Nov_Met": 0,
-      "Nov_Not_Met": 0
+      "Oct_Not_Met": 0
     },
     {
       "Project": "Bridgestone",
@@ -2666,9 +2570,47 @@
       "Sep_Met": 4,
       "Sep_Not_Met": 2,
       "Oct_Met": 4,
-      "Oct_Not_Met": 2,
-      "Nov_Met": 6,
-      "Nov_Not_Met": 0
+      "Oct_Not_Met": 2
+    },
+    {
+      "Project": "SKF Auto",
+      "Region": "North",
+      "Practice Head": "Naved",
+      "BE SPOC": "Rishab",
+      "Apr_Met": 0,
+      "Apr_Not_Met": 0,
+      "May_Met": 0,
+      "May_Not_Met": 0,
+      "June_Met": 0,
+      "June_Not_Met": 0,
+      "July_Met": 0,
+      "July_Not_Met": 0,
+      "Aug_Met": 0,
+      "Aug_Not_Met": 0,
+      "Sep_Met": 0,
+      "Sep_Not_Met": 0,
+      "Oct_Met": 12,
+      "Oct_Not_Met": 2
+    },
+    {
+      "Project": "SKF Industrial",
+      "Region": "North",
+      "Practice Head": "Naved",
+      "BE SPOC": "Rishab",
+      "Apr_Met": 0,
+      "Apr_Not_Met": 0,
+      "May_Met": 0,
+      "May_Not_Met": 0,
+      "June_Met": 0,
+      "June_Not_Met": 0,
+      "July_Met": 0,
+      "July_Not_Met": 0,
+      "Aug_Met": 0,
+      "Aug_Not_Met": 0,
+      "Sep_Met": 0,
+      "Sep_Not_Met": 0,
+      "Oct_Met": 9,
+      "Oct_Not_Met": 5
     }
   ],
   "fy2425NotReported": [
