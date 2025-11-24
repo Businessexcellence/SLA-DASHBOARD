@@ -1339,6 +1339,192 @@
             color: var(--primary-color);
         }
 
+        /* New Welcome Popup Styles */
+        .welcome-popup-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(5px);
+            z-index: 10000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            animation: fadeIn 0.3s ease-in;
+        }
+
+        .welcome-popup-card {
+            background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            max-width: 600px;
+            width: 90%;
+            padding: 40px;
+            text-align: center;
+            animation: slideInDown 0.5s ease-out;
+            position: relative;
+            overflow: hidden;
+        }
+
+        [data-theme="dark"] .welcome-popup-card {
+            background: linear-gradient(135deg, #2a2a2a 0%, #1a1a1a 100%);
+        }
+
+        .welcome-popup-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 5px;
+            background: linear-gradient(90deg, #FF6B35, #FF8C5A, #FF6B35);
+        }
+
+        .welcome-popup-greeting {
+            font-size: 2em;
+            font-weight: bold;
+            background: linear-gradient(135deg, #3a1c71 0%, #d76d77 50%, #ffaf7b 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 20px;
+            animation: slideInLeft 0.6s ease-out;
+        }
+
+        .welcome-popup-date {
+            font-size: 1.1em;
+            color: var(--text-secondary);
+            margin-bottom: 30px;
+            font-weight: 500;
+            animation: slideInRight 0.7s ease-out;
+        }
+
+        .welcome-popup-quote-box {
+            background: linear-gradient(135deg, #3a1c71 0%, #d76d77 50%, #ffaf7b 100%);
+            color: white;
+            padding: 30px;
+            border-radius: 15px;
+            margin: 30px 0;
+            box-shadow: 0 10px 30px rgba(58, 28, 113, 0.3);
+            animation: zoomIn 0.8s ease-out;
+        }
+
+        .welcome-popup-quote {
+            font-size: 1.3em;
+            font-style: italic;
+            line-height: 1.6;
+            margin: 0;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+        }
+
+        .welcome-popup-btn {
+            background: linear-gradient(135deg, #FF6B35, #FF8C5A);
+            color: white;
+            border: none;
+            padding: 15px 50px;
+            font-size: 1.1em;
+            font-weight: bold;
+            border-radius: 50px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 5px 15px rgba(255, 107, 53, 0.3);
+            animation: pulse 2s ease-in-out infinite;
+        }
+
+        .welcome-popup-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 20px rgba(255, 107, 53, 0.5);
+        }
+
+        .welcome-popup-btn:active {
+            transform: translateY(-1px);
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        @keyframes slideInDown {
+            from {
+                opacity: 0;
+                transform: translateY(-50px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes slideInLeft {
+            from {
+                opacity: 0;
+                transform: translateX(-30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        @keyframes slideInRight {
+            from {
+                opacity: 0;
+                transform: translateX(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        @keyframes zoomIn {
+            from {
+                opacity: 0;
+                transform: scale(0.8);
+            }
+            to {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+
+        @keyframes pulse {
+            0%, 100% {
+                transform: scale(1);
+            }
+            50% {
+                transform: scale(1.05);
+            }
+        }
+
+        /* Mobile Responsive */
+        @media (max-width: 768px) {
+            .welcome-popup-card {
+                padding: 25px;
+                width: 95%;
+            }
+
+            .welcome-popup-greeting {
+                font-size: 1.5em;
+            }
+
+            .welcome-popup-date {
+                font-size: 0.95em;
+            }
+
+            .welcome-popup-quote {
+                font-size: 1.1em;
+            }
+
+            .welcome-popup-btn {
+                padding: 12px 40px;
+                font-size: 1em;
+            }
+        }
+
     </style>
 </head>
 <body>
@@ -1352,6 +1538,18 @@
 
     <!-- Toast Notification -->
     <div class="toast" id="toast"></div>
+
+    <!-- New Welcome Popup -->
+    <div id="welcomePopup" class="welcome-popup-overlay">
+        <div class="welcome-popup-card">
+            <h1 class="welcome-popup-greeting">Hi Tagger, welcome to the SLA Dashboard!</h1>
+            <p class="welcome-popup-date" id="welcomeDate"></p>
+            <div class="welcome-popup-quote-box">
+                <p class="welcome-popup-quote" id="welcomeQuote"></p>
+            </div>
+            <button class="welcome-popup-btn" onclick="closeWelcomePopup()">Go to Dashboard</button>
+        </div>
+    </div>
 
     <!-- Welcome Modal -->
     <!-- Welcome modal disabled - users can access "About Dashboard" view instead -->
@@ -1655,6 +1853,93 @@
                 return defaultValue;
             }
         }
+
+        // ============================================================================
+        // WELCOME POPUP - Random Quotes and Current Date
+        // ============================================================================
+        
+        const inspirationalQuotes = [
+            "Data is not just numbers — it's a story waiting to be understood 🙂",
+            "Great decisions come from great data 🙂",
+            "Analytics turns uncertainty into clarity 🙂",
+            "Without data, you're just another person with an opinion 🙂",
+            "Small insights lead to big improvements 🙂",
+            "Quality is never an accident; it is always the result of intelligent data 🙂",
+            "What gets measured gets improved 🙂",
+            "Data speaks louder than assumptions 🙂",
+            "Every number has a reason — find it 🙂",
+            "Smart teams follow data, not guesses 🙂",
+            "Improvement begins the moment you start measuring 🙂",
+            "Let data guide you, not emotions 🙂",
+            "Accuracy is the heart of excellence 🙂",
+            "Consistent data creates consistent performance 🙂",
+            "Better data = better outcomes 🙂"
+        ];
+
+        function getRandomQuote() {
+            const randomIndex = Math.floor(Math.random() * inspirationalQuotes.length);
+            return inspirationalQuotes[randomIndex];
+        }
+
+        function getCurrentFormattedDate() {
+            const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+            const months = ['January', 'February', 'March', 'April', 'May', 'June', 
+                          'July', 'August', 'September', 'October', 'November', 'December'];
+            
+            const now = new Date();
+            const dayName = days[now.getDay()];
+            const day = now.getDate();
+            const monthName = months[now.getMonth()];
+            const year = now.getFullYear();
+            
+            return `${dayName}, ${day} ${monthName} ${year}`;
+        }
+
+        function initializeWelcomePopup() {
+            // Set current date
+            const dateElement = document.getElementById('welcomeDate');
+            if (dateElement) {
+                dateElement.textContent = getCurrentFormattedDate();
+            }
+            
+            // Set random quote
+            const quoteElement = document.getElementById('welcomeQuote');
+            if (quoteElement) {
+                quoteElement.textContent = getRandomQuote();
+            }
+            
+            // Show popup
+            const popup = document.getElementById('welcomePopup');
+            if (popup) {
+                popup.style.display = 'flex';
+            }
+        }
+
+        function closeWelcomePopup() {
+            const popup = document.getElementById('welcomePopup');
+            if (popup) {
+                popup.style.animation = 'fadeOut 0.3s ease-out';
+                setTimeout(() => {
+                    popup.style.display = 'none';
+                }, 300);
+            }
+        }
+
+        // Add fadeOut animation
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes fadeOut {
+                from { opacity: 1; }
+                to { opacity: 0; }
+            }
+        `;
+        document.head.appendChild(style);
+
+        // Initialize popup when page loads
+        window.addEventListener('load', function() {
+            // Small delay to ensure DOM is fully ready
+            setTimeout(initializeWelcomePopup, 100);
+        });
 
                 // Global Variables
         
@@ -5237,8 +5522,8 @@ function showView(view) {
                 <div class="card animated-card" style="animation-delay: 0.6s;" id="section-faq">
                     <h3><i class="bi bi-question-circle-fill"></i> Frequently Asked Questions</h3>
                     
-                    <h4 style="margin-top: 20px; color: var(--primary-color);">Q: Why does FY 25-26 only show 6 months of data?</h4>
-                    <p><strong>A:</strong> FY 25-26 is the current fiscal year. Data is available from April through September only. The dashboard automatically handles this difference when making comparisons.</p>
+                    <h4 style="margin-top: 20px; color: var(--primary-color);">Q: Why does FY 25-26 show data only up to September?</h4>
+                    <p><strong>A:</strong> FY 25-26 is the current fiscal year. The latest uploaded data includes records up to September 2025. The dashboard is future-proof and will automatically display additional months once new monthly SLA reports are uploaded and processed. The system dynamically detects available months from the data columns.</p>
                     
                     <h4 style="margin-top: 20px; color: var(--primary-color);">Q: What does "N/A" mean in year-over-year comparisons?</h4>
                     <p><strong>A:</strong> N/A appears when an account or practice head was reporting in one fiscal year but not in the other. This could indicate discontinued accounts or new engagements.</p>
@@ -5251,6 +5536,18 @@ function showView(view) {
                     
                     <h4 style="margin-top: 20px; color: var(--primary-color);">Q: Can I compare specific months across years?</h4>
                     <p><strong>A:</strong> Yes! Use the Month filter to select a specific month (e.g., "April"), and all views will show only that month's data for both fiscal years.</p>
+                    
+                    <h4 style="margin-top: 20px; color: var(--primary-color);">Q: What is the Regional Head filter?</h4>
+                    <p><strong>A:</strong> The Regional Head filter allows you to view SLA performance data for specific regional leaders. This filter cascades down to show only the regions, practice heads, and accounts under the selected regional head. Currently available regional heads are Anjli Zutshi and Sulabh Arora.</p>
+                    
+                    <h4 style="margin-top: 20px; color: var(--primary-color);">Q: How do cascading filters work?</h4>
+                    <p><strong>A:</strong> The filters are hierarchical: Regional Head → Region → Practice Head → Account. When you select a Regional Head, the Region dropdown automatically updates to show only regions under that regional head. Similarly, selecting a Region filters the Practice Head options, and so on. This helps you drill down from executive level to individual project level seamlessly.</p>
+                    
+                    <h4 style="margin-top: 20px; color: var(--primary-color);">Q: Why did FY 24-25 data not appear when I filtered by Regional Head?</h4>
+                    <p><strong>A:</strong> This issue has been fixed! Previously, there was a column name inconsistency in the data (FY 24-25 used "Regional Head" while FY 25-26 used "Regional Head " with a space). The dashboard now handles both variations automatically, so all data displays correctly regardless of the filter applied.</p>
+                    
+                    <h4 style="margin-top: 20px; color: var(--primary-color);">Q: Will the dashboard automatically update when new monthly data is available?</h4>
+                    <p><strong>A:</strong> Yes! The dashboard is future-proof. Once new monthly SLA reports are processed and the data file is updated, simply re-upload the file to the dashboard. The system will automatically detect available months from the data columns and update all views, charts, and filters accordingly. No code changes are required.</p>
                 </div>
                 
                 <div class="card animated-card" style="animation-delay: 0.7s;" id="section-bestpractices">
