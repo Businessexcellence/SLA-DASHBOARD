@@ -1525,6 +1525,223 @@
             }
         }
 
+        /* ============================================================
+           FEATURE 1: LAST UPDATED TIMESTAMP
+           ============================================================ */
+        
+        .last-updated-display {
+            position: fixed;
+            top: 80px;
+            right: 20px;
+            font-size: 11px;
+            color: rgba(100, 100, 100, 0.8);
+            background: rgba(255, 255, 255, 0.95);
+            padding: 5px 12px;
+            border-radius: 15px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            animation: fadeInTimestamp 0.5s ease-in;
+            z-index: 900;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(200, 200, 200, 0.3);
+            transition: all 0.3s ease;
+        }
+
+        .last-updated-display:hover {
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            transform: translateY(-2px);
+        }
+
+        [data-theme="dark"] .last-updated-display {
+            background: rgba(42, 42, 42, 0.95);
+            color: rgba(200, 200, 200, 0.8);
+            border: 1px solid rgba(100, 100, 100, 0.3);
+        }
+
+        @keyframes fadeInTimestamp {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @media (max-width: 768px) {
+            .last-updated-display {
+                top: 70px;
+                right: 10px;
+                font-size: 10px;
+                padding: 4px 10px;
+            }
+        }
+
+        /* ============================================================
+           FEATURE 2: VOICE-ENABLED NAVIGATION
+           ============================================================ */
+        
+        .voice-control-btn {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #FF6B35, #FF8C5A);
+            color: white;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+            box-shadow: 0 4px 15px rgba(255, 107, 53, 0.4);
+            z-index: 1000;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .voice-control-btn:hover {
+            transform: scale(1.1);
+            box-shadow: 0 6px 20px rgba(255, 107, 53, 0.6);
+            background: linear-gradient(135deg, #FF8C5A, #FF6B35);
+        }
+
+        .voice-control-btn:active {
+            transform: scale(0.95);
+        }
+
+        .voice-control-btn.listening {
+            animation: voicePulse 1.5s ease-in-out infinite;
+            background: linear-gradient(135deg, #10b981, #34d399);
+        }
+
+        @keyframes voicePulse {
+            0%, 100% {
+                box-shadow: 0 4px 15px rgba(255, 107, 53, 0.4);
+                transform: scale(1);
+            }
+            50% {
+                box-shadow: 0 8px 30px rgba(255, 107, 53, 0.8);
+                transform: scale(1.1);
+            }
+        }
+
+        .voice-listening-indicator {
+            position: fixed;
+            bottom: 100px;
+            right: 30px;
+            background: rgba(255, 107, 53, 0.95);
+            color: white;
+            padding: 10px 20px;
+            border-radius: 25px;
+            display: none;
+            align-items: center;
+            gap: 10px;
+            animation: fadeIn 0.3s ease-in;
+            z-index: 1001;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+            backdrop-filter: blur(10px);
+        }
+
+        .voice-listening-indicator.active {
+            display: flex;
+        }
+
+        .pulse-circle {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: white;
+            animation: pulseCircle 1.5s ease-in-out infinite;
+        }
+
+        @keyframes pulseCircle {
+            0%, 100% {
+                transform: scale(1);
+                opacity: 1;
+            }
+            50% {
+                transform: scale(1.5);
+                opacity: 0.5;
+            }
+        }
+
+        .voice-command-help {
+            position: fixed;
+            bottom: 170px;
+            right: 30px;
+            background: rgba(255, 255, 255, 0.98);
+            color: var(--text-primary);
+            padding: 15px 20px;
+            border-radius: 12px;
+            display: none;
+            flex-direction: column;
+            gap: 8px;
+            animation: fadeIn 0.3s ease-in;
+            z-index: 1001;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+            max-width: 300px;
+            font-size: 12px;
+        }
+
+        [data-theme="dark"] .voice-command-help {
+            background: rgba(42, 42, 42, 0.98);
+            color: var(--text-primary);
+        }
+
+        .voice-command-help.active {
+            display: flex;
+        }
+
+        .voice-command-help h4 {
+            margin: 0 0 8px 0;
+            font-size: 13px;
+            color: var(--primary-color);
+        }
+
+        .voice-command-help ul {
+            margin: 0;
+            padding-left: 20px;
+            list-style: none;
+        }
+
+        .voice-command-help li {
+            margin-bottom: 5px;
+            position: relative;
+            padding-left: 15px;
+        }
+
+        .voice-command-help li::before {
+            content: '🎤';
+            position: absolute;
+            left: 0;
+        }
+
+        @media (max-width: 768px) {
+            .voice-control-btn {
+                bottom: 20px;
+                right: 20px;
+                width: 50px;
+                height: 50px;
+                font-size: 20px;
+            }
+
+            .voice-listening-indicator {
+                bottom: 80px;
+                right: 20px;
+                font-size: 12px;
+                padding: 8px 16px;
+            }
+
+            .voice-command-help {
+                bottom: 150px;
+                right: 20px;
+                max-width: calc(100vw - 40px);
+                font-size: 11px;
+            }
+        }
+
     </style>
 </head>
 <body>
@@ -1538,6 +1755,32 @@
 
     <!-- Toast Notification -->
     <div class="toast" id="toast"></div>
+
+    <!-- Last Updated Timestamp -->
+    <div id="lastUpdatedTimestamp" class="last-updated-display">
+        Last Updated: <span id="timestampText">Never</span>
+    </div>
+
+    <!-- Voice Control Button -->
+    <button id="voiceControlBtn" class="voice-control-btn" title="Voice Commands (Click for help)">
+        <i class="bi bi-mic-fill"></i>
+    </button>
+
+    <!-- Voice Listening Indicator -->
+    <div id="voiceListeningIndicator" class="voice-listening-indicator">
+        <span class="pulse-circle"></span>
+        Listening...
+    </div>
+
+    <!-- Voice Command Help -->
+    <div id="voiceCommandHelp" class="voice-command-help">
+        <h4>🎤 Voice Commands:</h4>
+        <ul>
+            <li>"Show me October SLA"</li>
+            <li>"Switch to Practice Head view"</li>
+            <li>"Export this dashboard"</li>
+        </ul>
+    </div>
 
     <!-- New Welcome Popup -->
     <div id="welcomePopup" class="welcome-popup-overlay">
@@ -1939,7 +2182,275 @@
         window.addEventListener('load', function() {
             // Small delay to ensure DOM is fully ready
             setTimeout(initializeWelcomePopup, 100);
+            // Initialize last updated timestamp
+            updateLastUpdatedTimestamp();
+            // Initialize voice control
+            initializeVoiceControl();
         });
+
+        // ============================================================================
+        // FEATURE 1: LAST UPDATED TIMESTAMP
+        // ============================================================================
+        
+        function updateLastUpdatedTimestamp() {
+            const now = new Date();
+            const formatted = formatTimestamp(now);
+            const timestampElement = document.getElementById('timestampText');
+            if (timestampElement) {
+                timestampElement.textContent = formatted;
+            }
+        }
+
+        function formatTimestamp(date) {
+            const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+            const months = ['January', 'February', 'March', 'April', 'May', 'June', 
+                           'July', 'August', 'September', 'October', 'November', 'December'];
+            
+            const dayName = days[date.getDay()];
+            const day = date.getDate();
+            const month = months[date.getMonth()];
+            const year = date.getFullYear();
+            const hours = date.getHours();
+            const minutes = date.getMinutes().toString().padStart(2, '0');
+            const ampm = hours >= 12 ? 'PM' : 'AM';
+            const displayHours = hours % 12 || 12;
+            
+            return `${dayName}, ${day} ${month} ${year}, ${displayHours}:${minutes} ${ampm}`;
+        }
+
+        // ============================================================================
+        // FEATURE 2: VOICE-ENABLED NAVIGATION
+        // ============================================================================
+        
+        // Web Speech API Integration
+        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+        let recognition = null;
+        let isListening = false;
+        let voiceControlEnabled = false;
+
+        function initializeVoiceControl() {
+            if (SpeechRecognition) {
+                recognition = new SpeechRecognition();
+                recognition.continuous = false;
+                recognition.interimResults = false;
+                recognition.lang = 'en-US';
+                
+                recognition.onstart = () => {
+                    console.log('Voice recognition started');
+                    isListening = true;
+                    playBeep(true);
+                    showListeningIndicator(true);
+                    const voiceBtn = document.getElementById('voiceControlBtn');
+                    if (voiceBtn) {
+                        voiceBtn.classList.add('listening');
+                    }
+                };
+                
+                recognition.onresult = (event) => {
+                    const command = event.results[0][0].transcript.toLowerCase();
+                    console.log('Voice command received:', command);
+                    processVoiceCommand(command);
+                };
+                
+                recognition.onerror = (event) => {
+                    console.error('Voice recognition error:', event.error);
+                    if (event.error === 'no-speech') {
+                        showToast('No speech detected. Please try again.', 'info');
+                    } else if (event.error === 'not-allowed') {
+                        showToast('Microphone access denied. Please enable it in browser settings.', 'error');
+                        voiceControlEnabled = false;
+                    } else {
+                        showToast('Voice recognition error. Please try again.', 'error');
+                    }
+                    showListeningIndicator(false);
+                    isListening = false;
+                    const voiceBtn = document.getElementById('voiceControlBtn');
+                    if (voiceBtn) {
+                        voiceBtn.classList.remove('listening');
+                    }
+                };
+                
+                recognition.onend = () => {
+                    console.log('Voice recognition ended');
+                    playBeep(false);
+                    showListeningIndicator(false);
+                    isListening = false;
+                    const voiceBtn = document.getElementById('voiceControlBtn');
+                    if (voiceBtn) {
+                        voiceBtn.classList.remove('listening');
+                    }
+                };
+
+                voiceControlEnabled = true;
+            } else {
+                console.warn('Web Speech API not supported in this browser');
+                voiceControlEnabled = false;
+            }
+
+            // Attach event listeners
+            const voiceBtn = document.getElementById('voiceControlBtn');
+            if (voiceBtn) {
+                voiceBtn.addEventListener('click', toggleVoiceRecognition);
+                voiceBtn.addEventListener('mouseenter', showVoiceHelp);
+                voiceBtn.addEventListener('mouseleave', hideVoiceHelp);
+            }
+        }
+
+        function toggleVoiceRecognition() {
+            if (!voiceControlEnabled) {
+                showToast('Voice recognition not supported in this browser. Please use Chrome or Edge.', 'error');
+                return;
+            }
+
+            if (isListening) {
+                recognition.stop();
+            } else {
+                try {
+                    recognition.start();
+                } catch (error) {
+                    console.error('Error starting recognition:', error);
+                    showToast('Could not start voice recognition. Please try again.', 'error');
+                }
+            }
+        }
+
+        function showListeningIndicator(show) {
+            const indicator = document.getElementById('voiceListeningIndicator');
+            if (indicator) {
+                if (show) {
+                    indicator.classList.add('active');
+                } else {
+                    indicator.classList.remove('active');
+                }
+            }
+        }
+
+        function showVoiceHelp() {
+            const help = document.getElementById('voiceCommandHelp');
+            if (help && !isListening) {
+                help.classList.add('active');
+            }
+        }
+
+        function hideVoiceHelp() {
+            const help = document.getElementById('voiceCommandHelp');
+            if (help) {
+                help.classList.remove('active');
+            }
+        }
+
+        function processVoiceCommand(command) {
+            console.log('Processing command:', command);
+            
+            // Command 1: Show me [Month] SLA
+            const monthMatch = command.match(/show me (\w+) sla/i);
+            if (monthMatch) {
+                const month = monthMatch[1];
+                const monthMap = {
+                    'january': 'Jan', 'jan': 'Jan',
+                    'february': 'Feb', 'feb': 'Feb',
+                    'march': 'Mar', 'mar': 'Mar', 'march': 'March',
+                    'april': 'Apr', 'apr': 'Apr',
+                    'may': 'May',
+                    'june': 'Jun', 'jun': 'Jun', 'june': 'June',
+                    'july': 'Jul', 'jul': 'Jul', 'july': 'July',
+                    'august': 'Aug', 'aug': 'Aug',
+                    'september': 'Sep', 'sept': 'Sep', 'sep': 'Sep',
+                    'october': 'Oct', 'oct': 'Oct',
+                    'november': 'Nov', 'nov': 'Nov',
+                    'december': 'Dec', 'dec': 'Dec'
+                };
+                
+                const monthValue = monthMap[month.toLowerCase()];
+                if (monthValue) {
+                    showToast(`Setting filter to ${month}...`, 'success');
+                    setTimeout(() => {
+                        const monthFilter = document.getElementById('monthFilter');
+                        if (monthFilter) {
+                            monthFilter.value = monthValue;
+                            applyFilters();
+                        }
+                        showView('overview');
+                    }, 500);
+                    return;
+                }
+            }
+            
+            // Command 2: Switch to Practice Head view
+            if (command.includes('practice') && command.includes('head')) {
+                showToast('Opening Practice Head view...', 'success');
+                setTimeout(() => {
+                    showView('practice');
+                }, 500);
+                return;
+            }
+            
+            // Command 3: Export this dashboard
+            if (command.includes('export')) {
+                showToast('Opening export options...', 'success');
+                setTimeout(() => {
+                    const exportBtn = document.getElementById('exportPdfBtn');
+                    if (exportBtn) {
+                        exportBtn.click();
+                    } else {
+                        // Try alternate export method
+                        exportToPDF();
+                    }
+                }, 500);
+                return;
+            }
+            
+            // Additional helpful commands
+            if (command.includes('overview') || command.includes('dashboard')) {
+                showToast('Opening dashboard overview...', 'success');
+                setTimeout(() => {
+                    showView('overview');
+                }, 500);
+                return;
+            }
+
+            if (command.includes('monthly')) {
+                showToast('Opening monthly view...', 'success');
+                setTimeout(() => {
+                    showView('monthly');
+                }, 500);
+                return;
+            }
+
+            if (command.includes('quarterly')) {
+                showToast('Opening quarterly view...', 'success');
+                setTimeout(() => {
+                    showView('quarterly');
+                }, 500);
+                return;
+            }
+            
+            // Command not recognized
+            showToast('Sorry, I didn\'t catch that. Try: "Show me October SLA", "Switch to Practice Head view", or "Export this dashboard"', 'info');
+        }
+
+        function playBeep(isStart) {
+            // Create a simple beep sound using Web Audio API
+            try {
+                const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                const oscillator = audioContext.createOscillator();
+                const gainNode = audioContext.createGain();
+                
+                oscillator.connect(gainNode);
+                gainNode.connect(audioContext.destination);
+                
+                oscillator.frequency.value = isStart ? 800 : 600; // Higher pitch for start, lower for stop
+                oscillator.type = 'sine';
+                
+                gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+                gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.1);
+                
+                oscillator.start(audioContext.currentTime);
+                oscillator.stop(audioContext.currentTime + 0.1);
+            } catch (error) {
+                console.log('Could not play beep:', error);
+            }
+        }
 
                 // Global Variables
         
@@ -2785,6 +3296,9 @@ let rawData = null;
 
                     console.log('Applying filters...');
                     applyFilters();
+                    
+                    // Update last updated timestamp
+                    updateLastUpdatedTimestamp();
                     
                     showToast('✓ Data loaded successfully!');
                     speak('Data loaded successfully. Dashboard is now ready.');
