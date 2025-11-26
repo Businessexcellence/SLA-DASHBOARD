@@ -4706,15 +4706,16 @@ function renderNotReportedCharts() {
     // Month-wise trend
     const months = ['Apr', 'May', 'June', 'July', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec', 'Jan', 'Feb', 'March'];
     
-    // Dynamically detect which months have data in FY25-26
+    // Dynamically detect which months have actual data in FY25-26
     const availableMonthsSet = new Set();
     Object.values(filteredFY25).forEach(item => {
         Object.keys(item.months).forEach(month => {
-            if (item.months[month] > 0 || item.months[month] === 0) {
-                availableMonthsSet.add(month);
-            }
+            // Only add month if it exists as a key in the data (not checking value)
+            availableMonthsSet.add(month);
         });
     });
+    
+    console.log('🔍 Not Reported - Available FY25-26 months:', Array.from(availableMonthsSet));
     
     // Create FY24 data (all 12 months)
     const fy24Data = months.map(month => {
@@ -4724,10 +4725,13 @@ function renderNotReportedCharts() {
     // Create FY25 data - only populate months that exist in the data, rest as null
     const fy25Data = months.map(month => {
         if (availableMonthsSet.has(month)) {
-            return Object.values(filteredFY25).reduce((sum, item) => sum + (item.months[month] || 0), 0);
+            const value = Object.values(filteredFY25).reduce((sum, item) => sum + (item.months[month] || 0), 0);
+            return value;
         }
         return null;  // Return null for months without data
     });
+    
+    console.log('🔍 Not Reported - FY25 Data Array:', fy25Data);
     
     // Trend Chart
     const trendCtx = document.getElementById('notReportedTrendChart');
@@ -5641,29 +5645,30 @@ function showView(view) {
                         indexAxis: 'y',
                         responsive: true,
                         maintainAspectRatio: false,
+                        layout: {
+                            padding: {
+                                right: 80  // Add padding to right side for labels
+                            }
+                        },
                         plugins: {
                             legend: { display: false },
                             datalabels: {
                                 anchor: 'end',
                                 align: 'end',
-                                offset: 8,
+                                offset: 6,
                                 color: '#ffffff',
                                 backgroundColor: (context) => {
                                     const value = context.dataset.data[context.dataIndex];
                                     return getRAGColor(value);
                                 },
-                                borderRadius: 8,
+                                borderRadius: 6,
                                 borderWidth: 2,
-                                borderColor: '#ffffff',
-                                padding: { top: 8, bottom: 8, left: 12, right: 12 },
-                                font: { weight: 'bold', size: 16 },
+                                borderColor: 'rgba(255, 255, 255, 0.8)',
+                                padding: { top: 6, bottom: 6, left: 10, right: 10 },
+                                font: { weight: 'bold', size: 14 },
                                 formatter: (value) => value.toFixed(1) + '%',
                                 display: true,
-                                clip: false,
-                                shadowColor: 'rgba(0, 0, 0, 0.3)',
-                                shadowBlur: 4,
-                                shadowOffsetX: 2,
-                                shadowOffsetY: 2
+                                clip: false
                             }
                         },
                         scales: {
