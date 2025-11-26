@@ -106,10 +106,9 @@ Click "Export Dashboard" to:
 
 ### Updated TAGGD Brand Theme:
 - Primary: TAGGD Orange (#FF6B35)
-- Sidebar Background: Dark Gray/Charcoal (#2a2a2a) - matches TAGGD logo
-- Sidebar Hover: Medium Gray (#3a3a3a)
-- Header: Charcoal Gradient (#3a3a3a → #4a4a4a → #5a5a5a)
-- Border: Subtle Gray (#4a4a4a)
+- Sidebar Header (Logo Area): Charcoal Gradient (#3a3a3a → #5a5a5a) - matches TAGGD logo
+- Sidebar Background: White (unchanged)
+- All original colors and styling preserved
 - All original RAG colors (Red/Amber/Green) preserved
 
 ### Features Preserved:
@@ -130,7 +129,7 @@ Click "Export Dashboard" to:
 4. **✅ Welcome Message Updated** - Changed to "Welcome, Tagger! You're now accessing the Customer SLA/KPI Performance Dashboard."
 5. **✅ Header/Footer Branding** - Updated to "Taggd SLA/KPI Performance Dashboard" and footer with confidentiality notice
 6. **✅ TAGGD Logo Embedded** - Replaced text with actual PNG logo image in sidebar header
-7. **✅ Brand Colors Updated** - Dashboard background now matches TAGGD logo theme (charcoal/dark gray with orange accent)
+7. **✅ Sidebar Header Background Updated** - Logo area now has charcoal gradient matching TAGGD logo (sidebar remains white)
 
 ### Previously Added (v8-v9):
 1. **New Executive View tab** - Strategic overview
