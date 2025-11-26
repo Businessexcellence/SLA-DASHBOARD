@@ -3027,6 +3027,31 @@ let rawData = null;
         };
 
         // Chart.js Configuration with TAGGD Orange Theme
+        // Helper function to determine if a color is light or dark
+        function isLightColor(color) {
+            // Convert hex to RGB
+            let r, g, b;
+            if (color.startsWith('#')) {
+                const hex = color.substring(1);
+                r = parseInt(hex.substring(0, 2), 16);
+                g = parseInt(hex.substring(2, 4), 16);
+                b = parseInt(hex.substring(4, 6), 16);
+            } else if (color.startsWith('rgb')) {
+                const matches = color.match(/\d+/g);
+                if (matches && matches.length >= 3) {
+                    r = parseInt(matches[0]);
+                    g = parseInt(matches[1]);
+                    b = parseInt(matches[2]);
+                }
+            } else {
+                return false; // Default to dark if cannot parse
+            }
+            
+            // Calculate relative luminance
+            const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+            return luminance > 0.5;
+        }
+        
         Chart.defaults.font.family = "'Inter', 'Segoe UI', sans-serif";
         Chart.defaults.plugins.legend.labels.usePointStyle = true;
 
@@ -3078,20 +3103,41 @@ let rawData = null;
                 if (value === null || value === undefined || value === 0) return 'transparent';
                 
                 // Get the background color of the bar/element
-                const bgColor = context.dataset.backgroundColor;
-                
-                // Use dark text for better visibility
-                if (typeof value === 'number' && value < 100) {
-                    if (value >= 75) return '#fff';  // White on green
-                    if (value >= 50) return '#000';  // Black on amber
-                    return '#fff';  // White on red
+                let bgColor = context.dataset.backgroundColor;
+                if (Array.isArray(bgColor)) {
+                    bgColor = bgColor[context.dataIndex];
                 }
+                
+                // Determine text color based on background and value
+                if (typeof value === 'number') {
+                    // For percentage values (0-100)
+                    if (value <= 100) {
+                        if (value >= 75) {
+                            // Green bars - use white text
+                            return '#ffffff';
+                        } else if (value >= 50) {
+                            // Amber bars - use black text for better contrast
+                            return '#000000';
+                        } else {
+                            // Red bars - use white text
+                            return '#ffffff';
+                        }
+                    }
+                }
+                
+                // For non-percentage values, check if background is dark or light
+                if (bgColor) {
+                    // Convert hex to RGB to determine brightness
+                    const isLight = isLightColor(bgColor);
+                    return isLight ? '#000000' : '#ffffff';
+                }
+                
                 // Default to white for most colored backgrounds
-                return '#fff';
+                return '#ffffff';
             },
             font: {
                 weight: 'bold',
-                size: 13
+                size: 14
             },
             formatter: (value) => {
                 if (value === null || value === undefined || value === 0) return '';
@@ -5092,8 +5138,13 @@ function showView(view) {
                             datalabels: {
                                 anchor: 'end',
                                 align: 'right',
-                                color: '#fff',
-                                font: { weight: 'bold', size: 12 },
+                                color: function(context) {
+                                    const value = context.dataset.data[context.dataIndex];
+                                    // Use black text for better visibility on amber/green backgrounds
+                                    if (value >= 50) return '#000';  // Black on amber/green
+                                    return '#fff';  // White on red
+                                },
+                                font: { weight: 'bold', size: 14 },
                                 formatter: (value) => value.toFixed(1) + '%'
                             }
                         },
