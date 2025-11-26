@@ -19,14 +19,14 @@
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
     
     <style>
-        /* TAGGD Orange/White/Black Theme */
+        /* TAGGD Pink/Purple Theme */
         :root {
-            --primary-color: #F05A28;
-            --primary-light: #FF8C5A;
-            --primary-dark: #A84E2C;
-            --secondary-color: #F05A28;
+            --primary-color: #9333ea;
+            --primary-light: #a855f7;
+            --primary-dark: #7e22ce;
+            --secondary-color: #ec4899;
             --success-color: #10b981;
-            --warning-color: ' + (diff < 0 ? '#ef4444' : '#10b981') + ';
+            --warning-color: #f59e0b;
             --danger-color: #ef4444;
             --info-color: #06b6d4;
             --improvement-color: #10b981;
@@ -40,18 +40,18 @@
             --shadow-sm: 0 2px 4px 0 rgba(0, 0, 0, 0.1);
             --shadow-md: 0 4px 8px -1px rgba(0, 0, 0, 0.15);
             --shadow-lg: 0 10px 20px -3px rgba(0, 0, 0, 0.2);
-            --bg-body: linear-gradient(135deg, #FFF5F0 0%, #FFF8F5 100%);
-            --card-bg: linear-gradient(135deg, rgba(44, 27, 24, 0.03) 0%, rgba(240, 90, 40, 0.05) 100%);
-            --header-bg: linear-gradient(135deg, #2C1B18 0%, #4E3326 25%, #A84E2C 75%, #F05A28 100%);
-            --sidebar-bg: linear-gradient(180deg, #FFF5F0 0%, #ffffff 100%);
-            --sidebar-hover: linear-gradient(135deg, rgba(44, 27, 24, 0.08) 0%, rgba(240, 90, 40, 0.12) 100%);
+            --bg-body: #f5f5f5;
+            --card-bg: #ffffff;
+            --header-bg: linear-gradient(135deg, #3a1c71 0%, #d76d77 50%, #ffaf7b 100%);
+            --sidebar-bg: #ffffff;
+            --sidebar-hover: #f5f5f5;
         }
 
         [data-theme="dark"] {
-            --primary-color: #FF8C5A;
-            --primary-light: #FFA57D;
-            --primary-dark: #FF6B35;
-            --secondary-color: #FF9068;
+            --primary-color: #a855f7;
+            --primary-light: #c084fc;
+            --primary-dark: #9333ea;
+            --secondary-color: #ec4899;
             --success-color: #34d399;
             --warning-color: #fbbf24;
             --danger-color: #f87171;
@@ -439,7 +439,7 @@
         }
 
         button.clear-filters-btn {
-            background: linear-gradient(135deg, #FF6B35 0%, #FF8C5A 50%, #FFA57D 100%) 0%, #dc2626 100%);
+            background: linear-gradient(135deg, #9333ea 0%, #a855f7 50%, #c084fc 100%);
         }
 
         /* Dashboard Grid */
@@ -1470,7 +1470,7 @@
             left: 0;
             right: 0;
             height: 5px;
-            background: linear-gradient(90deg, #FF6B35, #FF8C5A, #FF6B35);
+            background: linear-gradient(90deg, #9333ea, #a855f7, #9333ea);
         }
 
         .welcome-popup-greeting {
@@ -1511,7 +1511,7 @@
         }
 
         .welcome-popup-btn {
-            background: linear-gradient(135deg, #FF6B35, #FF8C5A);
+            background: linear-gradient(135deg, #9333ea, #a855f7);
             color: white;
             border: none;
             padding: 15px 50px;
@@ -1679,7 +1679,7 @@
             width: 60px;
             height: 60px;
             border-radius: 50%;
-            background: linear-gradient(135deg, #FF6B35, #FF8C5A);
+            background: linear-gradient(135deg, #9333ea, #a855f7);
             color: white;
             border: none;
             font-size: 24px;
@@ -1695,7 +1695,7 @@
         .voice-control-btn:hover {
             transform: scale(1.1);
             box-shadow: 0 6px 20px rgba(255, 107, 53, 0.6);
-            background: linear-gradient(135deg, #FF8C5A, #FF6B35);
+            background: linear-gradient(135deg, #a855f7, #9333ea);
         }
 
         .voice-control-btn:active {
@@ -4274,14 +4274,14 @@ function renderNotReportedCharts() {
                 datasets: [{
                     label: 'FY 2024-25',
                     data: fy24Data,
-                    borderColor: '#FF6B35',
+                    borderColor: '#9333ea',
                     backgroundColor: 'rgba(58, 28, 113, 0.1)',
                     tension: 0.4,
                     fill: true
                 }, {
                     label: 'FY 2025-26',
                     data: [...fy25Data, ...Array(6).fill(null)],
-                    borderColor: '#FF6B35',
+                    borderColor: '#9333ea',
                     backgroundColor: 'rgba(255, 107, 53, 0.1)',
                     tension: 0.4,
                     fill: true
@@ -4317,7 +4317,7 @@ function renderNotReportedCharts() {
                 datasets: [{
                     label: 'Total Not Reported',
                     data: [fy24Total, fy25Total],
-                    backgroundColor: ['#FF6B35', '#E65528']
+                    backgroundColor: ['#9333ea', '#7e22ce']
                 }]
             },
             options: {
@@ -4844,7 +4844,7 @@ function showView(view) {
                 <div class="comparison-widget">
                     <div class="metric-box fy24 animated-widget">
                         <div class="metric-label">FY 2024-25 SLA%</div>
-                        <div class="metric-value" style="color: #FF6B35;">${fy24Metrics.compliance}%</div>
+                        <div class="metric-value" style="color: #9333ea;">${fy24Metrics.compliance}%</div>
                     </div>
                     <div class="metric-box fy25 animated-widget">
                         <div class="metric-label">FY 2025-26 SLA%</div>
@@ -5097,15 +5097,15 @@ function showView(view) {
                             legend: { display: false },
                             datalabels: {
                                 anchor: 'end',
-                                align: 'right',
-                                color: function(context) {
-                                    const value = context.dataset.data[context.dataIndex];
-                                    // Use black text on amber (50-74%), white on red/green
-                                    if (value >= 50 && value < 75) return '#000000';
-                                    return '#ffffff';
-                                },
+                                align: 'end',
+                                offset: 8,
+                                color: '#1a1a1a',
+                                backgroundColor: 'rgba(255, 255, 255, 0.95)',
+                                borderRadius: 4,
+                                padding: { top: 4, bottom: 4, left: 6, right: 6 },
                                 font: { weight: 'bold', size: 14 },
-                                formatter: (value) => value.toFixed(1) + '%'
+                                formatter: (value) => value.toFixed(1) + '%',
+                                display: true
                             }
                         },
                         scales: {
@@ -5142,15 +5142,15 @@ function showView(view) {
                             legend: { display: false },
                             datalabels: {
                                 anchor: 'end',
-                                align: 'right',
-                                color: function(context) {
-                                    const value = context.dataset.data[context.dataIndex];
-                                    // Use black text for better visibility on amber/green backgrounds
-                                    if (value >= 50) return '#000';  // Black on amber/green
-                                    return '#fff';  // White on red
-                                },
+                                align: 'end',
+                                offset: 8,
+                                color: '#1a1a1a',
+                                backgroundColor: 'rgba(255, 255, 255, 0.95)',
+                                borderRadius: 4,
+                                padding: { top: 4, bottom: 4, left: 6, right: 6 },
                                 font: { weight: 'bold', size: 14 },
-                                formatter: (value) => value.toFixed(1) + '%'
+                                formatter: (value) => value.toFixed(1) + '%',
+                                display: true
                             }
                         },
                         scales: {
@@ -5187,8 +5187,12 @@ function showView(view) {
                             legend: { display: false },
                             datalabels: {
                                 anchor: 'end',
-                                align: 'right',
-                                color: '#ffffff',
+                                align: 'end',
+                                offset: 8,
+                                color: '#1a1a1a',
+                                backgroundColor: 'rgba(255, 255, 255, 0.95)',
+                                borderRadius: 4,
+                                padding: { top: 4, bottom: 4, left: 6, right: 6 },
                                 font: { weight: 'bold', size: 14 },
                                 formatter: (value) => '+' + value.toFixed(1) + '%',
                                 display: true
@@ -5224,8 +5228,12 @@ function showView(view) {
                             legend: { display: false },
                             datalabels: {
                                 anchor: 'end',
-                                align: 'right',
-                                color: '#ffffff',
+                                align: 'end',
+                                offset: 8,
+                                color: '#1a1a1a',
+                                backgroundColor: 'rgba(255, 255, 255, 0.95)',
+                                borderRadius: 4,
+                                padding: { top: 4, bottom: 4, left: 6, right: 6 },
                                 font: { weight: 'bold', size: 14 },
                                 formatter: (value) => '-' + value.toFixed(1) + '%',
                                 display: true
@@ -5295,7 +5303,7 @@ function showView(view) {
                 <div class="comparison-widget">
                     <div class="metric-box fy24">
                         <div class="metric-label">FY 24-25 Avg (${compareMonthCount} months)</div>
-                        <div class="metric-value" style="color: #FF6B35;">${avgFY24}%</div>
+                        <div class="metric-value" style="color: #9333ea;">${avgFY24}%</div>
                     </div>
                     <div class="metric-box fy25">
                         <div class="metric-label">FY 25-26 Avg (${fy25months.length} months)</div>
@@ -5322,7 +5330,7 @@ function showView(view) {
                 tableHTML += `
                     <tr>
                         <td><strong>${month}</strong></td>
-                        <td style="color: #FF6B35;">${fy24Data[idx].toFixed(1)}%</td>
+                        <td style="color: #9333ea;">${fy24Data[idx].toFixed(1)}%</td>
                         <td style="color: var(--primary-color);">${fy25Data[idx].toFixed(1)}%</td>
                         <td style="color: ${diffColor}; font-weight: bold;">${diff >= 0 ? '+' : ''}${diff.toFixed(1)}%</td>
                     </tr>`;
@@ -5366,8 +5374,8 @@ function showView(view) {
                         {
                             label: 'FY 24-25',
                             data: fy24DataToShow,
-                            borderColor: '#2C1B18',  // Dark brown from gradient
-                            backgroundColor: 'rgba(44, 27, 24, 0.1)',
+                            borderColor: '#3a1c71',  // Purple from gradient
+                            backgroundColor: 'rgba(58, 28, 113, 0.1)',
                             borderWidth: 3,
                             fill: true,
                             tension: 0.4,
@@ -5377,8 +5385,8 @@ function showView(view) {
                         {
                             label: `FY 25-26 (${fy25months.join('-')})`,
                             data: fy25DataToShow,
-                            borderColor: '#F05A28',  // Vibrant orange from gradient
-                            backgroundColor: 'rgba(240, 90, 40, 0.1)',
+                            borderColor: '#d76d77',  // Pink from gradient
+                            backgroundColor: 'rgba(215, 109, 119, 0.1)',
                             borderWidth: 3,
                             fill: true,
                             tension: 0.4,
@@ -5396,7 +5404,12 @@ function showView(view) {
                         datalabels: {
                             display: true,
                             align: 'top',
-                            font: { size: 10, weight: 'bold' },
+                            offset: 4,
+                            color: '#1a1a1a',
+                            backgroundColor: 'rgba(255, 255, 255, 0.95)',
+                            borderRadius: 4,
+                            padding: { top: 2, bottom: 2, left: 4, right: 4 },
+                            font: { size: 11, weight: 'bold' },
                             formatter: (value) => value ? value.toFixed(1) + '%' : ''
                         },
                         legend: {
@@ -5502,7 +5515,7 @@ function showView(view) {
                     comparisonWidget += `
                         <div class="metric-box fy24">
                             <div class="metric-label">FY 24-25 Q${i+1}</div>
-                            <div class="metric-value" style="color: #FF6B35;">${fy24QuarterlyData[i]}%</div>
+                            <div class="metric-value" style="color: #9333ea;">${fy24QuarterlyData[i]}%</div>
                         </div>
                         <div class="metric-box fy25">
                             <div class="metric-label">FY 25-26 Q${i+1}</div>
@@ -5533,7 +5546,7 @@ function showView(view) {
                 tableHTML += `
                     <tr>
                         <td><strong>${q.name}</strong></td>
-                        <td style="color: #FF6B35;">${fy24QuarterlyData[idx].toFixed(1)}%</td>
+                        <td style="color: #9333ea;">${fy24QuarterlyData[idx].toFixed(1)}%</td>
                         <td style="color: var(--primary-color);">${fy25Val !== null ? fy25Val.toFixed(1) + '%' : 'N/A'}</td>
                         <td style="color: ${diff !== null ? diffColor : 'var(--text-secondary)'}; font-weight: bold;">${diff !== null ? (diff >= 0 ? '+' : '') + diff.toFixed(1) + '%' : 'N/A'}</td>
                     </tr>`;
@@ -5585,8 +5598,12 @@ function showView(view) {
                     maintainAspectRatio: false,
                     plugins: {
                         datalabels: {
-                            color: '#fff',
-                            font: { weight: 'bold', size: 14 },
+                            display: true,
+                            color: '#1a1a1a',
+                            backgroundColor: 'rgba(255, 255, 255, 0.95)',
+                            borderRadius: 4,
+                            padding: { top: 3, bottom: 3, left: 5, right: 5 },
+                            font: { weight: 'bold', size: 13 },
                             formatter: (value) => value ? value.toFixed(1) + '%' : ''
                         },
                         legend: {
@@ -5647,7 +5664,7 @@ function showView(view) {
                         <div style="margin-top: 20px;">
                             <div style="display: flex; justify-content: space-between; padding: 15px; background: var(--light-color); border-radius: 8px; margin-bottom: 10px;">
                                 <span>FY 24-25 Compliance:</span>
-                                <strong style="color: #FF6B35;">${fy24Metrics.compliance}%</strong>
+                                <strong style="color: #9333ea;">${fy24Metrics.compliance}%</strong>
                             </div>
                             <div style="display: flex; justify-content: space-between; padding: 15px; background: var(--light-color); border-radius: 8px; margin-bottom: 10px;">
                                 <span>FY 25-26 Compliance:</span>
@@ -5675,7 +5692,7 @@ function showView(view) {
                     labels: ['FY 24-25', 'FY 25-26'],
                     datasets: [{
                         data: [fy24Metrics.compliance, fy25Metrics.compliance],
-                        backgroundColor: ['#9CA3AF', '#FF6B35'],
+                        backgroundColor: ['#9CA3AF', '#9333ea'],
                         borderWidth: 3,
                         borderColor: '#fff'
                     }]
@@ -5685,7 +5702,11 @@ function showView(view) {
                     maintainAspectRatio: false,
                     plugins: {
                         datalabels: {
-                            color: '#fff',
+                            display: true,
+                            color: '#ffffff',
+                            backgroundColor: 'rgba(0, 0, 0, 0.7)',
+                            borderRadius: 6,
+                            padding: { top: 6, bottom: 6, left: 8, right: 8 },
                             font: { weight: 'bold', size: 18 },
                             formatter: (value) => value + '%'
                         }
@@ -5834,26 +5855,26 @@ function showView(view) {
                         {
                             label: 'FY 24-25',
                             data: fy24Values,
-                            borderColor: '#FF6B35',
+                            borderColor: '#9333ea',
                             backgroundColor: 'rgba(99, 102, 241, 0.1)',
                             borderWidth: 3,
                             fill: true,
                             tension: 0.4,
                             pointRadius: 5,
                             pointHoverRadius: 7,
-                            pointBackgroundColor: '#FF6B35'
+                            pointBackgroundColor: '#9333ea'
                         },
                         {
                             label: 'FY 25-26',
                             data: fy25Values,
-                            borderColor: '#FF6B35',
+                            borderColor: '#9333ea',
                             backgroundColor: 'rgba(255, 107, 53, 0.1)',
                             borderWidth: 3,
                             fill: true,
                             tension: 0.4,
                             pointRadius: 5,
                             pointHoverRadius: 7,
-                            pointBackgroundColor: '#FF6B35'
+                            pointBackgroundColor: '#9333ea'
                         }
                     ]
                 },
@@ -5977,7 +5998,7 @@ function showView(view) {
                 
                 html += `<tr>
                     <td><strong>${region}</strong></td>
-                    <td style="color: #FF6B35; font-weight: bold;">${fy24Compliance}%</td>
+                    <td style="color: #9333ea; font-weight: bold;">${fy24Compliance}%</td>
                     <td style="color: var(--primary-color); font-weight: bold;">${fy25Compliance}%</td>
                     <td style="color: ${improvementColor}; font-weight: bold;">${improvement >= 0 ? '+' : ''}${improvement.toFixed(1)}%</td>
                 </tr>`;
@@ -6343,19 +6364,19 @@ function showView(view) {
                 
                 <!-- Table of Contents -->
                 <div class="card animated-card" style="background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%); border-left: 4px solid var(--primary-color);">
-                    <h3 style="color: #FF6B35; margin-bottom: 20px;"><i class="bi bi-list-ol"></i> Table of Contents</h3>
+                    <h3 style="color: #9333ea; margin-bottom: 20px;"><i class="bi bi-list-ol"></i> Table of Contents</h3>
                     <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 15px;">
                         <div>
-                            <a href="#section-overview" style="display: block; padding: 10px; text-decoration: none; color: #FF6B35; background: white; border-radius: 8px; margin-bottom: 8px;"><strong>1.</strong> Dashboard Overview</a>
-                            <a href="#section-calculation" style="display: block; padding: 10px; text-decoration: none; color: #FF6B35; background: white; border-radius: 8px; margin-bottom: 8px;"><strong>2.</strong> Calculation Methodology</a>
-                            <a href="#section-navigation" style="display: block; padding: 10px; text-decoration: none; color: #FF6B35; background: white; border-radius: 8px; margin-bottom: 8px;"><strong>3.</strong> Navigation Guide</a>
-                            <a href="#section-filters" style="display: block; padding: 10px; text-decoration: none; color: #FF6B35; background: white; border-radius: 8px; margin-bottom: 8px;"><strong>4.</strong> Using Filters</a>
+                            <a href="#section-overview" style="display: block; padding: 10px; text-decoration: none; color: #9333ea; background: white; border-radius: 8px; margin-bottom: 8px;"><strong>1.</strong> Dashboard Overview</a>
+                            <a href="#section-calculation" style="display: block; padding: 10px; text-decoration: none; color: #9333ea; background: white; border-radius: 8px; margin-bottom: 8px;"><strong>2.</strong> Calculation Methodology</a>
+                            <a href="#section-navigation" style="display: block; padding: 10px; text-decoration: none; color: #9333ea; background: white; border-radius: 8px; margin-bottom: 8px;"><strong>3.</strong> Navigation Guide</a>
+                            <a href="#section-filters" style="display: block; padding: 10px; text-decoration: none; color: #9333ea; background: white; border-radius: 8px; margin-bottom: 8px;"><strong>4.</strong> Using Filters</a>
                         </div>
                         <div>
-                            <a href="#section-audio" style="display: block; padding: 10px; text-decoration: none; color: #FF6B35; background: white; border-radius: 8px; margin-bottom: 8px;"><strong>5.</strong> Audio Features</a>
-                            <a href="#section-export" style="display: block; padding: 10px; text-decoration: none; color: #FF6B35; background: white; border-radius: 8px; margin-bottom: 8px;"><strong>6.</strong> Export Options</a>
-                            <a href="#section-faq" style="display: block; padding: 10px; text-decoration: none; color: #FF6B35; background: white; border-radius: 8px; margin-bottom: 8px;"><strong>7.</strong> FAQ</a>
-                            <a href="#section-bestpractices" style="display: block; padding: 10px; text-decoration: none; color: #FF6B35; background: white; border-radius: 8px; margin-bottom: 8px;"><strong>8.</strong> Best Practices</a>
+                            <a href="#section-audio" style="display: block; padding: 10px; text-decoration: none; color: #9333ea; background: white; border-radius: 8px; margin-bottom: 8px;"><strong>5.</strong> Audio Features</a>
+                            <a href="#section-export" style="display: block; padding: 10px; text-decoration: none; color: #9333ea; background: white; border-radius: 8px; margin-bottom: 8px;"><strong>6.</strong> Export Options</a>
+                            <a href="#section-faq" style="display: block; padding: 10px; text-decoration: none; color: #9333ea; background: white; border-radius: 8px; margin-bottom: 8px;"><strong>7.</strong> FAQ</a>
+                            <a href="#section-bestpractices" style="display: block; padding: 10px; text-decoration: none; color: #9333ea; background: white; border-radius: 8px; margin-bottom: 8px;"><strong>8.</strong> Best Practices</a>
                         </div>
                     </div>
                 </div>
@@ -6539,7 +6560,7 @@ function showView(view) {
                     <h4 style="margin-top: 20px; color: var(--primary-color);"><i class="bi bi-mic-fill"></i> 🎤 Voice-Enabled Navigation (NEW!)</h4>
                     <p>Control the dashboard hands-free using natural voice commands with intelligent recognition.</p>
                     
-                    <div style="background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%); padding: 20px; border-radius: 10px; margin: 15px 0; border-left: 4px solid #FF6B35;">
+                    <div style="background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%); padding: 20px; border-radius: 10px; margin: 15px 0; border-left: 4px solid #9333ea;">
                         <h5 style="color: #92400e; margin-bottom: 10px;">🚀 How to Use Voice Commands:</h5>
                         <ol style="line-height: 2.2; margin-left: 20px; color: #78350f;">
                             <li>Click the <strong>orange microphone button</strong> 🎤 in the bottom-right corner</li>
@@ -6691,7 +6712,7 @@ function showView(view) {
                     </ul>
                 </div>
                 
-                <div style="background: linear-gradient(135deg, #FF6B35 0%, #FF8C5A 50%, #FFA57D 100%); color: white; padding: 25px; border-radius: 12px; text-align: center; margin-top: 30px;">
+                <div style="background: linear-gradient(135deg, #9333ea 0%, #a855f7 50%, #c084fc 100%); color: white; padding: 25px; border-radius: 12px; text-align: center; margin-top: 30px;">
                     <h3 style="color: white; border: none; padding: 0; margin-bottom: 10px;">
                         <i class="bi bi-info-circle-fill"></i> Need Help?
                     </h3>
@@ -6857,8 +6878,8 @@ function showView(view) {
                     datasets: [{
                         label: 'SLA Compliance %',
                         data: data,
-                        backgroundColor: data.map((val, idx) => idx === 0 ? '#FF6B35' : '#10b981'),
-                        borderColor: data.map((val, idx) => idx === 0 ? '#E65528' : '#059669'),
+                        backgroundColor: data.map((val, idx) => idx === 0 ? '#9333ea' : '#10b981'),
+                        borderColor: data.map((val, idx) => idx === 0 ? '#7e22ce' : '#059669'),
                         borderWidth: 2
                     }]
                 },
@@ -6867,9 +6888,14 @@ function showView(view) {
                     maintainAspectRatio: false,
                     plugins: {
                         datalabels: {
+                            display: true,
                             anchor: 'end',
                             align: 'top',
-                            color: '#000',
+                            offset: 4,
+                            color: '#1a1a1a',
+                            backgroundColor: 'rgba(255, 255, 255, 0.95)',
+                            borderRadius: 4,
+                            padding: { top: 3, bottom: 3, left: 5, right: 5 },
                             font: { weight: 'bold', size: 12 },
                             formatter: (value) => value + '%'
                         },
@@ -6904,8 +6930,8 @@ function showView(view) {
                 </div>
                 
                 <!-- Dashboard Purpose -->
-                <div class="card animated-card" style="background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%); border-left: 5px solid #FF6B35;">
-                    <h3 style="color: #FF6B35;"><i class="bi bi-bullseye"></i> Dashboard Purpose</h3>
+                <div class="card animated-card" style="background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%); border-left: 5px solid #9333ea;">
+                    <h3 style="color: #9333ea;"><i class="bi bi-bullseye"></i> Dashboard Purpose</h3>
                     <p style="font-size: 1.1em; line-height: 1.8; margin-top: 15px;">
                         The TAGGD SLA Performance Dashboard is a comprehensive analytics platform designed to provide executive-level insights 
                         into Service Level Agreement (SLA) performance across the organization. This dashboard enables data-driven decision-making 
@@ -6916,7 +6942,7 @@ function showView(view) {
                 
                 <!-- Key Objectives -->
                 <div class="card animated-card" style="animation-delay: 0.1s;">
-                    <h3 style="color: #FF6B35;"><i class="bi bi-check2-circle"></i> Key Objectives</h3>
+                    <h3 style="color: #9333ea;"><i class="bi bi-check2-circle"></i> Key Objectives</h3>
                     <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; margin-top: 20px;">
                         <div style="padding: 20px; background: linear-gradient(135deg, #10b981 0%, #34d399 100%); color: white; border-radius: 12px;">
                             <h4 style="margin-bottom: 10px;"><i class="bi bi-graph-up-arrow"></i> Performance Monitoring</h4>
@@ -6935,7 +6961,7 @@ function showView(view) {
                 
                 <!-- Who Should Use This Dashboard -->
                 <div class="card animated-card" style="animation-delay: 0.2s;">
-                    <h3 style="color: #FF6B35;"><i class="bi bi-people"></i> Who Should Use This Dashboard</h3>
+                    <h3 style="color: #9333ea;"><i class="bi bi-people"></i> Who Should Use This Dashboard</h3>
                     <table style="margin-top: 15px;">
                         <thead>
                             <tr>
@@ -6976,7 +7002,7 @@ function showView(view) {
                 
                 <!-- Dashboard Capabilities -->
                 <div class="card animated-card" style="animation-delay: 0.3s;">
-                    <h3 style="color: #FF6B35;"><i class="bi bi-gear-fill"></i> Dashboard Capabilities</h3>
+                    <h3 style="color: #9333ea;"><i class="bi bi-gear-fill"></i> Dashboard Capabilities</h3>
                     <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 15px; margin-top: 20px;">
                         <div style="padding: 15px; background: #f8f9fa; border-radius: 10px; border-left: 4px solid #10b981;">
                             <h4 style="color: #10b981; margin-bottom: 8px;">✅ Multi-Year Comparison</h4>
@@ -7002,8 +7028,8 @@ function showView(view) {
                             <h4 style="color: #06b6d4; margin-bottom: 8px;">🔊 Audio Narration</h4>
                             <p>Enable voice descriptions in English or Hindi for accessibility</p>
                         </div>
-                        <div style="padding: 15px; background: #f8f9fa; border-radius: 10px; border-left: 4px solid #FF6B35;">
-                            <h4 style="color: #FF6B35; margin-bottom: 8px;">🎤 Voice Commands</h4>
+                        <div style="padding: 15px; background: #f8f9fa; border-radius: 10px; border-left: 4px solid #9333ea;">
+                            <h4 style="color: #9333ea; margin-bottom: 8px;">🎤 Voice Commands</h4>
                             <p>Hands-free navigation with intelligent voice recognition and natural language processing</p>
                         </div>
                         <div style="padding: 15px; background: #f8f9fa; border-radius: 10px; border-left: 4px solid #9333ea;">
@@ -7018,14 +7044,14 @@ function showView(view) {
                     <h3 style="color: #92400e;"><i class="bi bi-stars"></i> ✨ New Features</h3>
                     
                     <div style="margin-top: 20px;">
-                        <h4 style="color: #FF6B35; margin-bottom: 10px;"><i class="bi bi-mic-fill"></i> 🎤 Voice-Enabled Navigation</h4>
+                        <h4 style="color: #9333ea; margin-bottom: 10px;"><i class="bi bi-mic-fill"></i> 🎤 Voice-Enabled Navigation</h4>
                         <p style="line-height: 1.8; margin-bottom: 15px;">
                             Control the dashboard hands-free using natural voice commands. The intelligent voice recognition system 
                             understands context and can apply filters, switch views, and execute actions based on your spoken instructions.
                         </p>
                         
                         <div style="background: white; padding: 20px; border-radius: 10px; margin: 15px 0;">
-                            <h5 style="color: #FF6B35; margin-bottom: 12px;">📝 Example Voice Commands:</h5>
+                            <h5 style="color: #9333ea; margin-bottom: 12px;">📝 Example Voice Commands:</h5>
                             <ul style="line-height: 2.2; list-style: none; padding-left: 0;">
                                 <li style="padding: 8px; background: #f0f9ff; margin: 5px 0; border-radius: 5px; border-left: 3px solid #3b82f6;">
                                     <strong>"Show me October SLA"</strong> → Filters to October and shows overview
@@ -7075,7 +7101,7 @@ function showView(view) {
                         </p>
                         
                         <div style="background: white; padding: 20px; border-radius: 10px; margin: 15px 0;">
-                            <h5 style="color: #FF6B35; margin-bottom: 12px;">📋 Timestamp Features:</h5>
+                            <h5 style="color: #9333ea; margin-bottom: 12px;">📋 Timestamp Features:</h5>
                             <ul style="line-height: 2; margin-left: 20px;">
                                 <li><strong>Format:</strong> "Last Updated: Monday, 25 November 2025, 2:30 PM"</li>
                                 <li><strong>Auto-Update:</strong> Refreshes automatically on data upload</li>
@@ -7093,8 +7119,8 @@ function showView(view) {
                 
                 <!-- Data Sources & Methodology -->
                 <div class="card animated-card" style="animation-delay: 0.4s;">
-                    <h3 style="color: #FF6B35;"><i class="bi bi-database-fill"></i> Data Sources & Methodology</h3>
-                    <h4 style="margin-top: 20px; color: #FF6B35;">Data Input</h4>
+                    <h3 style="color: #9333ea;"><i class="bi bi-database-fill"></i> Data Sources & Methodology</h3>
+                    <h4 style="margin-top: 20px; color: #9333ea;">Data Input</h4>
                     <p>The dashboard accepts Excel files (.xlsx format) with the following sheet structure:</p>
                     <ul style="line-height: 2; margin-left: 20px; margin-top: 10px;">
                         <li><strong>FY 24-25:</strong> Monthly SLA data (Met/Not Met) for fiscal year 2024-2025</li>
@@ -7103,14 +7129,14 @@ function showView(view) {
                         <li><strong>FY25-26 Not Reported:</strong> Not reported SLA counts by month</li>
                     </ul>
                     
-                    <h4 style="margin-top: 25px; color: #FF6B35;">Calculation Logic</h4>
+                    <h4 style="margin-top: 25px; color: #9333ea;">Calculation Logic</h4>
                     <div style="background: #f8f9fa; padding: 20px; border-radius: 10px; margin-top: 15px;">
                         <p style="font-family: monospace; font-size: 1.05em;"><strong>SLA Compliance % = (SLAs Met / Total SLAs) × 100</strong></p>
                         <p style="margin-top: 10px; color: #666;">Total SLAs = SLAs Met + SLAs Not Met</p>
                         <p style="margin-top: 10px; color: #666;">YoY Change % = ((FY 25-26 % - FY 24-25 %) / FY 24-25 %) × 100</p>
                     </div>
                     
-                    <h4 style="margin-top: 25px; color: #FF6B35;">RAG Status Thresholds</h4>
+                    <h4 style="margin-top: 25px; color: #9333ea;">RAG Status Thresholds</h4>
                     <table style="margin-top: 15px;">
                         <thead>
                             <tr>
@@ -7144,7 +7170,7 @@ function showView(view) {
                 </div>
                 
                 <!-- Version & Technical Info -->
-                <div class="card animated-card" style="animation-delay: 0.5s; background: linear-gradient(135deg, #FF6B35 0%, #FF8C5A 50%, #FFA57D 100%); color: white;">
+                <div class="card animated-card" style="animation-delay: 0.5s; background: linear-gradient(135deg, #9333ea 0%, #a855f7 50%, #c084fc 100%); color: white;">
                     <h3 style="color: white;"><i class="bi bi-code-square"></i> Technical Information</h3>
                     <div style="margin-top: 20px; display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px;">
                         <div>
@@ -7168,7 +7194,7 @@ function showView(view) {
                 
                 <!-- Quick Start -->
                 <div class="card animated-card" style="animation-delay: 0.6s;">
-                    <h3 style="color: #FF6B35;"><i class="bi bi-lightning-fill"></i> Quick Start Guide</h3>
+                    <h3 style="color: #9333ea;"><i class="bi bi-lightning-fill"></i> Quick Start Guide</h3>
                     <div style="margin-top: 20px;">
                         <ol style="line-height: 2.2; font-size: 1.05em;">
                             <li><strong>Upload Data:</strong> Click the "Upload Excel File" button and select your SLA data file</li>
@@ -7182,13 +7208,13 @@ function showView(view) {
                 </div>
                 
                 <!-- Support & Feedback -->
-                <div class="card animated-card" style="animation-delay: 0.7s; text-align: center; background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%); border: 2px solid #FF6B35;">
-                    <h3 style="color: #FF6B35;"><i class="bi bi-question-circle-fill"></i> Need Help?</h3>
+                <div class="card animated-card" style="animation-delay: 0.7s; text-align: center; background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%); border: 2px solid #9333ea;">
+                    <h3 style="color: #9333ea;"><i class="bi bi-question-circle-fill"></i> Need Help?</h3>
                     <p style="font-size: 1.1em; margin: 20px 0; line-height: 1.8;">
                         For technical support, feature requests, or feedback about the dashboard,<br>
                         please refer to the <strong>User Manual</strong> section or contact your system administrator.
                     </p>
-                    <button onclick="showView('manual')" style="padding: 15px 35px; background: linear-gradient(135deg, #FF6B35 0%, #FF8C5A 100%); color: white; border: none; border-radius: 10px; font-size: 1.1em; font-weight: 600; cursor: pointer; transition: all 0.3s ease;">
+                    <button onclick="showView('manual')" style="padding: 15px 35px; background: linear-gradient(135deg, #9333ea 0%, #a855f7 100%); color: white; border: none; border-radius: 10px; font-size: 1.1em; font-weight: 600; cursor: pointer; transition: all 0.3s ease;">
                         <i class="bi bi-book-fill"></i> Open User Manual
                     </button>
                 </div>
@@ -7290,7 +7316,7 @@ function showView(view) {
                 const loadingDiv = document.createElement('div');
                 loadingDiv.id = 'pdfLoading';
                 loadingDiv.style.cssText = 'position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; padding: 30px 50px; border-radius: 15px; box-shadow: 0 10px 40px rgba(0,0,0,0.3); z-index: 10000; text-align: center;';
-                loadingDiv.innerHTML = '<h3 style="color: #FF6B35; margin-bottom: 10px;">Generating PDF...</h3><p style="color: #666;">Please wait</p>';
+                loadingDiv.innerHTML = '<h3 style="color: #9333ea; margin-bottom: 10px;">Generating PDF...</h3><p style="color: #666;">Please wait</p>';
                 document.body.appendChild(loadingDiv);
                 
                 const { jsPDF } = window.jspdf;
@@ -7691,10 +7717,10 @@ function showView(view) {
                     <title>TAGGD SLA Dashboard Export</title>
                     <style>
                         body { font-family: Arial, sans-serif; padding: 20px; }
-                        h1, h2, h3 { color: #FF6B35; }
+                        h1, h2, h3 { color: #9333ea; }
                         table { border-collapse: collapse; width: 100%; margin: 20px 0; }
                         th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
-                        th { background-color: #FF6B35; color: white; }
+                        th { background-color: #9333ea; color: white; }
                         .card { margin: 20px 0; padding: 15px; border: 1px solid #ddd; }
                     </style>
                 </head>
@@ -8198,11 +8224,11 @@ function showView(view) {
                 </div>
                 
                 <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 30px;">
-                    <div style="background: linear-gradient(135deg, #FF6B35, #FF8C5A); color: white; padding: 20px; border-radius: 10px;">
+                    <div style="background: linear-gradient(135deg, #9333ea, #a855f7); color: white; padding: 20px; border-radius: 10px;">
                         <div style="font-size: 0.9em; opacity: 0.9;">Region</div>
                         <div style="font-size: 1.5em; font-weight: bold; margin-top: 5px;">${accountDataFY25.Region || 'N/A'}</div>
                     </div>
-                    <div style="background: linear-gradient(135deg, #FF8C5A, #FFA57D); color: white; padding: 20px; border-radius: 10px;">
+                    <div style="background: linear-gradient(135deg, #a855f7, #c084fc); color: white; padding: 20px; border-radius: 10px;">
                         <div style="font-size: 0.9em; opacity: 0.9;">Practice Head</div>
                         <div style="font-size: 1.5em; font-weight: bold; margin-top: 5px;">${accountDataFY25['Practice Head'] || 'N/A'}</div>
                     </div>
@@ -8659,13 +8685,13 @@ function showView(view) {
                 
                 <!-- Summary Cards -->
                 <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px; margin-bottom: 30px;">
-                    <div class="metric-card" style="background: linear-gradient(135deg, #FF6B35 0%, #FF8C5A 100%);">
+                    <div class="metric-card" style="background: linear-gradient(135deg, #9333ea 0%, #a855f7 100%);">
                         <h3 style="color: white; font-size: 1rem; margin-bottom: 10px;">FY 24-25 Total Not Reported</h3>
                         <p style="font-size: 2.5rem; font-weight: bold; color: white; margin: 0;">${summary2425.total}</p>
                         <p style="color: rgba(255,255,255,0.8); font-size: 0.9rem; margin-top: 5px;">12 Months (Apr 2024 - Mar 2025)</p>
                     </div>
                     
-                    <div class="metric-card" style="background: linear-gradient(135deg, #FF6B35 0%, #ffa94d 100%);">
+                    <div class="metric-card" style="background: linear-gradient(135deg, #9333ea 0%, #ffa94d 100%);">
                         <h3 style="color: white; font-size: 1rem; margin-bottom: 10px;">FY 25-26 Total Not Reported</h3>
                         <p style="font-size: 2.5rem; font-weight: bold; color: white; margin: 0;">${summary2526.total}</p>
                         <p style="color: rgba(255,255,255,0.8); font-size: 0.9rem; margin-top: 5px;">7 Months So Far (Apr - Oct 2025)</p>
@@ -8966,7 +8992,7 @@ function showView(view) {
             let html = `
                 <table style="width: 100%; border-collapse: collapse;">
                     <thead>
-                        <tr style="background: linear-gradient(135deg, #FF6B35 0%, #FF8C5A 100%); color: white;">
+                        <tr style="background: linear-gradient(135deg, #9333ea 0%, #a855f7 100%); color: white;">
                             <th style="padding: 12px; text-align: left;">Project</th>
                             <th style="padding: 12px; text-align: left;">Region</th>
                             <th style="padding: 12px; text-align: left;">Practice Head</th>
@@ -9008,7 +9034,7 @@ function showView(view) {
             let html = `
                 <table style="width: 100%; border-collapse: collapse; font-size: 0.9rem;">
                     <thead>
-                        <tr style="background: linear-gradient(135deg, #FF6B35 0%, #FF8C5A 100%); color: white;">
+                        <tr style="background: linear-gradient(135deg, #9333ea 0%, #a855f7 100%); color: white;">
                             <th style="padding: 10px; text-align: left;">${dimension}</th>
                             <th style="padding: 10px; text-align: center;">FY 24-25</th>
                             <th style="padding: 10px; text-align: center;">FY 25-26</th>
@@ -9044,7 +9070,7 @@ function showView(view) {
             let html = `
                 <table style="width: 100%; border-collapse: collapse;">
                     <thead>
-                        <tr style="background: linear-gradient(135deg, #FF6B35 0%, #FF8C5A 100%); color: white;">
+                        <tr style="background: linear-gradient(135deg, #9333ea 0%, #a855f7 100%); color: white;">
                             <th style="padding: 12px; text-align: left;">Month</th>
                             <th style="padding: 12px; text-align: center;">FY 24-25</th>
                             <th style="padding: 12px; text-align: center;">FY 25-26</th>
@@ -9113,8 +9139,12 @@ function showView(view) {
                         legend: { display: false },
                         datalabels: {
                             anchor: 'end',
-                            align: 'right',
-                            color: '#ffffff',
+                            align: 'end',
+                            offset: 8,
+                            color: '#1a1a1a',
+                            backgroundColor: 'rgba(255, 255, 255, 0.95)',
+                            borderRadius: 4,
+                            padding: { top: 4, bottom: 4, left: 6, right: 6 },
                             font: { size: 12, weight: 'bold', family: 'Inter' },
                             formatter: (value, context) => {
                                 const percentage = ((value / totalCount) * 100).toFixed(1);
