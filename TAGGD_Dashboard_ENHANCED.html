@@ -4328,6 +4328,7 @@ function showView(view) {
         // Calculate overall metrics
         function calculateOverallMetrics(data, fyKey) {
             // Dynamically extract available months from the data
+            // NOTE: extractMonthsFromData already handles the month filter
             const months = extractMonthsFromData(
                 fyKey === 'fy24_25' ? data : null,
                 fyKey === 'fy25_26' ? data : null
@@ -4336,10 +4337,9 @@ function showView(view) {
             let totalMet = 0;
             let totalNotMet = 0;
             
-            // Apply month filter if set
-            const monthsToUse = activeFilters.month !== 'all' ? 
-                months.filter(m => m.startsWith(activeFilters.month)) : 
-                months;
+            // extractMonthsFromData already filtered by activeFilters.month
+            // So we use all returned months directly
+            const monthsToUse = months;
             
             data.forEach(row => {
                 monthsToUse.forEach(month => {
