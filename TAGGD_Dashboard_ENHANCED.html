@@ -113,7 +113,6 @@
             font-weight: 800;
             letter-spacing: 3px;
             margin-bottom: 5px;
-            color: white;
         }
 
         .sidebar-menu {
@@ -949,7 +948,6 @@
 
             .sidebar-header h2 {
                 font-size: 1.4em;
-                color: white;
             }
 
             .menu-item {
@@ -2200,7 +2198,6 @@
     <div class="sidebar">
         <div class="sidebar-header">
             <img src="taggd-logo.png" alt="TAGGD Logo" style="width: 100%; max-width: 180px; height: auto; margin: 15px auto; display: block; padding: 10px;">
-            <h2 style="color: white;">TAGGD</h2>
         </div>
         
         <div class="sidebar-menu">
@@ -4743,6 +4740,17 @@ function renderNotReportedCharts() {
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
+                animation: {
+                    duration: 2000,
+                    easing: 'easeInOutQuart',
+                    delay: (context) => {
+                        let delay = 0;
+                        if (context.type === 'data' && context.mode === 'default') {
+                            delay = context.dataIndex * 150 + context.datasetIndex * 500;
+                        }
+                        return delay;
+                    }
+                },
                 plugins: {
                     legend: { display: true, position: 'top' },
                     title: { display: false },
@@ -5574,18 +5582,25 @@ function showView(view) {
                             legend: { display: false },
                             datalabels: {
                                 anchor: 'end',
-                                align: 'start',
-                                offset: -10,
-                                color: '#000000',
-                                backgroundColor: 'rgba(255, 255, 255, 1)',
-                                borderRadius: 6,
+                                align: 'end',
+                                offset: 8,
+                                color: '#ffffff',
+                                backgroundColor: (context) => {
+                                    const value = context.dataset.data[context.dataIndex];
+                                    return getRAGColor(value);
+                                },
+                                borderRadius: 8,
                                 borderWidth: 2,
-                                borderColor: '#ff6b35',
-                                padding: { top: 6, bottom: 6, left: 8, right: 8 },
-                                font: { weight: 'bold', size: 15 },
+                                borderColor: '#ffffff',
+                                padding: { top: 8, bottom: 8, left: 12, right: 12 },
+                                font: { weight: 'bold', size: 16 },
                                 formatter: (value) => value.toFixed(1) + '%',
                                 display: true,
-                                clip: true
+                                clip: false,
+                                shadowColor: 'rgba(0, 0, 0, 0.3)',
+                                shadowBlur: 4,
+                                shadowOffsetX: 2,
+                                shadowOffsetY: 2
                             }
                         },
                         scales: {
@@ -5900,6 +5915,17 @@ function showView(view) {
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
+                    animation: {
+                        duration: 2000,
+                        easing: 'easeInOutQuart',
+                        delay: (context) => {
+                            let delay = 0;
+                            if (context.type === 'data' && context.mode === 'default') {
+                                delay = context.dataIndex * 150 + context.datasetIndex * 500;
+                            }
+                            return delay;
+                        }
+                    },
                     plugins: {
                         datalabels: {
                             display: true,
@@ -6381,6 +6407,17 @@ function showView(view) {
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
+                    animation: {
+                        duration: 2000,
+                        easing: 'easeInOutQuart',
+                        delay: (context) => {
+                            let delay = 0;
+                            if (context.type === 'data' && context.mode === 'default') {
+                                delay = context.dataIndex * 150 + context.datasetIndex * 500;
+                            }
+                            return delay;
+                        }
+                    },
                     plugins: {
                         datalabels: {
                             display: true,
@@ -10258,6 +10295,17 @@ function showView(view) {
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
+                    animation: {
+                        duration: 2000,
+                        easing: 'easeInOutQuart',
+                        delay: (context) => {
+                            let delay = 0;
+                            if (context.type === 'data' && context.mode === 'default') {
+                                delay = context.dataIndex * 150 + context.datasetIndex * 500;
+                            }
+                            return delay;
+                        }
+                    },
                     plugins: {
                         legend: {
                             display: true,
