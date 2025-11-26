@@ -377,7 +377,7 @@
         .filter-group select:focus {
             outline: none;
             border-color: var(--primary-color);
-            box-shadow: 0 0 0 3px rgba(255, 107, 53, 0.1);
+            box-shadow: 0 0 0 3px rgba(147, 51, 234, 0.1);
         }
 
 
@@ -4282,7 +4282,7 @@ function renderNotReportedCharts() {
                     label: 'FY 2025-26',
                     data: [...fy25Data, ...Array(6).fill(null)],
                     borderColor: '#9333ea',
-                    backgroundColor: 'rgba(255, 107, 53, 0.1)',
+                    backgroundColor: 'rgba(147, 51, 234, 0.1)',
                     tension: 0.4,
                     fill: true
                 }]
@@ -4292,7 +4292,18 @@ function renderNotReportedCharts() {
                 maintainAspectRatio: false,
                 plugins: {
                     legend: { display: true, position: 'top' },
-                    title: { display: false }
+                    title: { display: false },
+                    datalabels: {
+                        display: true,
+                        align: 'top',
+                        offset: 4,
+                        color: '#1a1a1a',
+                        backgroundColor: 'rgba(255, 255, 255, 0.95)',
+                        borderRadius: 4,
+                        padding: { top: 2, bottom: 2, left: 4, right: 4 },
+                        font: { size: 10, weight: 'bold' },
+                        formatter: (value) => value !== null ? value : ''
+                    }
                 },
                 scales: {
                     y: { 
@@ -4326,8 +4337,14 @@ function renderNotReportedCharts() {
                 plugins: {
                     legend: { display: false },
                     datalabels: {
+                        display: true,
                         anchor: 'end',
                         align: 'top',
+                        offset: 4,
+                        color: '#1a1a1a',
+                        backgroundColor: 'rgba(255, 255, 255, 0.95)',
+                        borderRadius: 4,
+                        padding: { top: 4, bottom: 4, left: 6, right: 6 },
                         formatter: (value) => value,
                         font: { weight: 'bold', size: 14 }
                     }
@@ -4679,7 +4696,7 @@ function showView(view) {
                         {
                             label: 'SLA Met',
                             data: [fy24Metrics.totalMet, fy25Metrics.totalMet],
-                            backgroundColor: 'rgba(255, 179, 128, 0.8)',
+                            backgroundColor: 'rgba(168, 85, 247, 0.8)',
                             borderColor: 'rgb(16, 185, 129)',
                             borderWidth: 2
                         },
@@ -4700,7 +4717,14 @@ function showView(view) {
                             position: 'top',
                         },
                         datalabels: {
-                            color: '#fff',
+                            display: true,
+                            align: 'end',
+                            anchor: 'end',
+                            offset: 4,
+                            color: '#1a1a1a',
+                            backgroundColor: 'rgba(255, 255, 255, 0.95)',
+                            borderRadius: 4,
+                            padding: { top: 4, bottom: 4, left: 6, right: 6 },
                             font: {
                                 weight: 'bold',
                                 size: 14
@@ -5587,7 +5611,7 @@ function showView(view) {
                         {
                             label: `FY 25-26 (${availableQuarters === 1 ? 'Q1' : availableQuarters === 2 ? 'Q1-Q2' : availableQuarters === 3 ? 'Q1-Q3' : 'Q1-Q4'})`,
                             data: fy25QuarterlyData,
-                            backgroundColor: '#FFB84D',
+                            backgroundColor: '#9333ea',
                             borderWidth: 2,
                             borderColor: '#fff'
                         }
@@ -5868,7 +5892,7 @@ function showView(view) {
                             label: 'FY 25-26',
                             data: fy25Values,
                             borderColor: '#9333ea',
-                            backgroundColor: 'rgba(255, 107, 53, 0.1)',
+                            backgroundColor: 'rgba(147, 51, 234, 0.1)',
                             borderWidth: 3,
                             fill: true,
                             tension: 0.4,
@@ -5883,7 +5907,15 @@ function showView(view) {
                     maintainAspectRatio: false,
                     plugins: {
                         datalabels: {
-                            display: false
+                            display: true,
+                            align: 'top',
+                            offset: 4,
+                            color: '#1a1a1a',
+                            backgroundColor: 'rgba(255, 255, 255, 0.95)',
+                            borderRadius: 4,
+                            padding: { top: 2, bottom: 2, left: 4, right: 4 },
+                            font: { size: 10, weight: 'bold' },
+                            formatter: (value) => value !== null ? value.toFixed(1) + '%' : ''
                         },
                         legend: {
                             position: 'top'
@@ -6027,14 +6059,14 @@ function showView(view) {
                         {
                             label: 'FY 24-25',
                             data: regionArray.map(r => r.fy24Compliance),
-                            backgroundColor: '#D3D3D3',
+                            backgroundColor: '#9CA3AF',
                             borderWidth: 2,
                             borderColor: '#fff'
                         },
                         {
                             label: 'FY 25-26',
                             data: regionArray.map(r => r.fy25Compliance),
-                            backgroundColor: '#FFB84D',
+                            backgroundColor: '#9333ea',
                             borderWidth: 2,
                             borderColor: '#fff'
                         }
@@ -6045,7 +6077,14 @@ function showView(view) {
                     maintainAspectRatio: false,
                     plugins: {
                         datalabels: {
-                            color: '#fff',
+                            display: true,
+                            align: 'end',
+                            anchor: 'end',
+                            offset: 4,
+                            color: '#1a1a1a',
+                            backgroundColor: 'rgba(255, 255, 255, 0.95)',
+                            borderRadius: 4,
+                            padding: { top: 3, bottom: 3, left: 5, right: 5 },
                             font: { weight: 'bold', size: 12 },
                             formatter: (value) => value.toFixed(1) + '%'
                         },
