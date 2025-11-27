@@ -289,6 +289,66 @@
             50% { opacity: 0.7; }
         }
 
+        .control-btn.music-active {
+            background: var(--success-color);
+            animation: pulse 1.5s ease-in-out infinite;
+        }
+
+        .volume-control {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px;
+            background: var(--card-bg);
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+        }
+
+        .volume-control i {
+            color: var(--text-color);
+            font-size: 1em;
+        }
+
+        .volume-control input[type="range"] {
+            flex: 1;
+            height: 4px;
+            border-radius: 2px;
+            background: var(--border-color);
+            outline: none;
+            -webkit-appearance: none;
+        }
+
+        .volume-control input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            background: var(--primary-color);
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .volume-control input[type="range"]::-webkit-slider-thumb:hover {
+            background: var(--primary-dark);
+            transform: scale(1.2);
+        }
+
+        .volume-control input[type="range"]::-moz-range-thumb {
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            background: var(--primary-color);
+            cursor: pointer;
+            border: none;
+            transition: all 0.3s ease;
+        }
+
+        .volume-control input[type="range"]::-moz-range-thumb:hover {
+            background: var(--primary-dark);
+            transform: scale(1.2);
+        }
+
         /* Main Content */
         .main-content {
             margin-left: 280px;
@@ -2073,7 +2133,7 @@
     <!-- New Welcome Popup -->
     <div id="welcomePopup" class="welcome-popup-overlay">
         <div class="welcome-popup-card">
-            <h1 class="welcome-popup-greeting">Welcome, Tagger! You're now accessing the Customer SLA/KPI Performance Dashboard.</h1>
+            <h1 class="welcome-popup-greeting">Welcome Tagger! You're now accessing the Customer SLA/KPI Performance Dashboard.</h1>
             <p class="welcome-popup-date" id="welcomeDate"></p>
             <div class="welcome-popup-quote-box">
                 <p class="welcome-popup-quote" id="welcomeQuote"></p>
@@ -2291,12 +2351,27 @@
                 <i class="bi bi-volume-up" id="audioIcon"></i>
                 <span id="audioText">Enable Audio</span>
             </button>
+            <button class="control-btn" id="musicBtn" onclick="toggleBackgroundMusic()">
+                <i class="bi bi-music-note-beamed" id="musicIcon"></i>
+                <span id="musicText">Enable Music</span>
+            </button>
+            <div class="volume-control" id="volumeControl" style="display: none;">
+                <i class="bi bi-volume-down"></i>
+                <input type="range" id="volumeSlider" min="0" max="100" value="50" onchange="setMusicVolume(this.value)">
+                <i class="bi bi-volume-up"></i>
+            </div>
             <button class="control-btn" onclick="toggleTheme()">
                 <i class="bi bi-moon-stars" id="themeIcon"></i>
                 <span id="themeText">Dark Mode</span>
             </button>
         </div>
     </div>
+
+    <!-- Background Music -->
+    <audio id="backgroundMusic" loop>
+        <source src="taggd-anthem.mp3" type="audio/mpeg">
+        Your browser does not support the audio element.
+    </audio>
 
     <!-- Main Content -->
     <div class="main-content">
@@ -3195,6 +3270,8 @@ let rawData = null;
         let currentView = 'overview';
         let charts = {};
         let audioEnabled = false;
+        let musicEnabled = false;
+        let backgroundMusic = null;
 
         let audioLanguage = 'en-US'; // Default to English
         let voicesLoaded = false;
@@ -3697,6 +3774,64 @@ let rawData = null;
                 icon.className = 'bi bi-volume-up';
                 text.textContent = 'Enable Audio';
                 speak('Audio description mode disabled.');
+            }
+        }
+
+        function toggleBackgroundMusic() {
+            musicEnabled = !musicEnabled;
+            const btn = document.getElementById('musicBtn');
+            const icon = document.getElementById('musicIcon');
+            const text = document.getElementById('musicText');
+            const volumeControl = document.getElementById('volumeControl');
+            
+            // Initialize background music on first toggle
+            if (!backgroundMusic) {
+                backgroundMusic = document.getElementById('backgroundMusic');
+                backgroundMusic.volume = 0.5; // Set initial volume to 50%
+            }
+            
+            if (musicEnabled) {
+                btn.classList.add('music-active');
+                icon.className = 'bi bi-music-note-beamed';
+                text.textContent = 'Music Playing';
+                volumeControl.style.display = 'flex';
+                
+                // Play music
+                backgroundMusic.play().catch(error => {
+                    console.log('Error playing music:', error);
+                    // If autoplay is blocked, try again after user interaction
+                    musicEnabled = false;
+                    btn.classList.remove('music-active');
+                    text.textContent = 'Enable Music';
+                    volumeControl.style.display = 'none';
+                    alert('Please click the Music button again to enable background music.');
+                });
+                
+                if (audioEnabled) {
+                    speak('Background music enabled');
+                }
+            } else {
+                btn.classList.remove('music-active');
+                icon.className = 'bi bi-music-note-beamed';
+                text.textContent = 'Enable Music';
+                volumeControl.style.display = 'none';
+                
+                // Pause music
+                backgroundMusic.pause();
+                
+                if (audioEnabled) {
+                    speak('Background music disabled');
+                }
+            }
+        }
+
+        function setMusicVolume(value) {
+            if (backgroundMusic) {
+                backgroundMusic.volume = value / 100;
+                
+                if (audioEnabled) {
+                    speak(`Volume set to ${value} percent`);
+                }
             }
         }
 
