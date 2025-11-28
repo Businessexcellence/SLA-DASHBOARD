@@ -10527,17 +10527,19 @@ function showView(view) {
             const ctx = document.getElementById('notReportedTrendChart');
             if (!ctx) return null;
             
-            // Filter months with actual data for FY 25-26
-            const monthsWithData = trend.filter(d => d.fy2526 !== null && d.fy2526 !== undefined);
-            const labelsToShow = monthsWithData.length > 0 
-                ? trend.slice(0, monthsWithData.length).map(d => d.month)
+            // Show all months up to the last month with FY25-26 data (before first null)
+            const lastDataIndex = trend.findIndex(d => d.fy2526 === null);
+            const labelsToShow = lastDataIndex > 0 
+                ? trend.slice(0, lastDataIndex).map(d => d.month)
                 : trend.map(d => d.month);
             
-            // Show only months that exist in both years or have data
-            const fy24Data = labelsToShow.map((month, idx) => trend[idx].fy2425);
-            const fy25Data = labelsToShow.map((month, idx) => 
-                trend[idx].fy2526 !== null && trend[idx].fy2526 !== undefined ? trend[idx].fy2526 : null
-            );
+            // Extract data arrays for both fiscal years
+            const fy24Data = lastDataIndex > 0 
+                ? trend.slice(0, lastDataIndex).map(d => d.fy2425)
+                : trend.map(d => d.fy2425);
+            const fy25Data = lastDataIndex > 0
+                ? trend.slice(0, lastDataIndex).map(d => d.fy2526)
+                : trend.map(d => d.fy2526);
             
             return new Chart(ctx, {
                 type: 'line',
