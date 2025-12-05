@@ -8428,8 +8428,15 @@ function showView(view) {
                 const loadingDiv = document.createElement('div');
                 loadingDiv.id = 'pdfLoading';
                 loadingDiv.style.cssText = 'position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; padding: 30px 50px; border-radius: 15px; box-shadow: 0 10px 40px rgba(0,0,0,0.3); z-index: 10000; text-align: center;';
-                loadingDiv.innerHTML = '<h3 style="color: #ff6b35; margin-bottom: 10px;">Generating PDF...</h3><p style="color: #666;">Please wait</p>';
+                loadingDiv.innerHTML = '<h3 style="color: #ff6b35; margin-bottom: 10px;">Generating PDF...</h3><p style="color: #666;">Please wait, rendering charts...</p>';
                 document.body.appendChild(loadingDiv);
+                
+                // CRITICAL: Wait for charts to fully render before capturing
+                // Charts use setTimeout(100ms) in renderNotReportedView and other view functions
+                // We need to wait at least 800ms to ensure all charts are rendered and painted
+                console.log('⏳ Waiting 800ms for charts to fully render before PDF capture...');
+                loadingDiv.innerHTML = '<h3 style="color: #ff6b35; margin-bottom: 10px;">Generating PDF...</h3><p style="color: #666;">Rendering charts, please wait...</p>';
+                await new Promise(resolve => setTimeout(resolve, 800));
                 
                 const { jsPDF } = window.jspdf;
                 const pdf = new jsPDF({
@@ -8646,6 +8653,13 @@ function showView(view) {
 
                 console.log('PDF Export - Capturing view:', activeView);
                 console.log('PDF Export - Content area:', contentArea ? contentArea.id : 'NOT FOUND');
+                
+                // Verify charts are rendered before capture
+                const chartCanvases = contentArea.querySelectorAll('canvas');
+                console.log('📊 Number of chart canvases found:', chartCanvases.length);
+                chartCanvases.forEach((canvas, i) => {
+                    console.log(`  Canvas ${i+1}: ${canvas.id}, width=${canvas.width}, height=${canvas.height}`);
+                });
                 
                     // Enhanced PDF capture with ULTRA HIGH quality settings
                     const canvas = await html2canvas(contentArea, {
@@ -8907,6 +8921,11 @@ function showView(view) {
                 }
                 
                 showToast('🔄 Generating PowerPoint presentation...', 'info');
+                
+                // CRITICAL: Wait for charts to fully render before capturing
+                // Same issue as PDF export - charts need time to render and paint
+                console.log('⏳ Waiting 800ms for charts to fully render before PPT capture...');
+                await new Promise(resolve => setTimeout(resolve, 800));
                 
                 // Create new presentation with proper PowerPoint 2017+ format
                 const pptx = new PptxGenJS();
