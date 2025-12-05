@@ -8431,11 +8431,56 @@ function showView(view) {
                 loadingDiv.innerHTML = '<h3 style="color: #ff6b35; margin-bottom: 10px;">Generating PDF...</h3><p style="color: #666;">Please wait, rendering charts...</p>';
                 document.body.appendChild(loadingDiv);
                 
-                // CRITICAL: Wait for charts to fully render before capturing
-                // Charts use setTimeout(100ms) in renderNotReportedView and other view functions
-                // We need to wait at least 800ms to ensure all charts are rendered and painted
-                console.log('⏳ Waiting 800ms for charts to fully render before PDF capture...');
-                loadingDiv.innerHTML = '<h3 style="color: #ff6b35; margin-bottom: 10px;">Generating PDF...</h3><p style="color: #666;">Rendering charts, please wait...</p>';
+                // CRITICAL: Smart wait for charts to fully render before capturing
+                // Step 1: Initial wait for chart initialization (DOM creation)
+                console.log('⏳ Step 1: Waiting 1200ms for chart DOM initialization...');
+                loadingDiv.innerHTML = '<h3 style="color: #ff6b35; margin-bottom: 10px;">Generating PDF...</h3><p style="color: #666;">Initializing charts...</p>';
+                await new Promise(resolve => setTimeout(resolve, 1200));
+                
+                // Step 2: Check if charts have actual pixel data (not blank)
+                console.log('⏳ Step 2: Verifying charts have rendered content...');
+                loadingDiv.innerHTML = '<h3 style="color: #ff6b35; margin-bottom: 10px;">Generating PDF...</h3><p style="color: #666;">Verifying chart content...</p>';
+                
+                const tempContentArea = document.getElementById('dashboardContent');
+                if (tempContentArea) {
+                    const chartCanvases = tempContentArea.querySelectorAll('canvas');
+                    console.log(`   Found ${chartCanvases.length} chart canvas elements`);
+                    
+                    let maxWaitAttempts = 8; // Max 4 seconds additional wait (8 * 500ms)
+                    let allChartsReady = false;
+                    
+                    while (maxWaitAttempts > 0 && !allChartsReady && chartCanvases.length > 0) {
+                        allChartsReady = true;
+                        for (let canvas of chartCanvases) {
+                            // Check if canvas has any non-white pixels (actual chart content)
+                            const ctx = canvas.getContext('2d');
+                            if (ctx && canvas.width > 0 && canvas.height > 0) {
+                                const imageData = ctx.getImageData(0, 0, Math.min(100, canvas.width), Math.min(100, canvas.height));
+                                const hasContent = Array.from(imageData.data).some(val => val !== 255 && val !== 0);
+                                if (!hasContent) {
+                                    allChartsReady = false;
+                                    console.log(`   Chart ${canvas.id} not ready yet, waiting...`);
+                                    break;
+                                }
+                            }
+                        }
+                        
+                        if (!allChartsReady) {
+                            await new Promise(resolve => setTimeout(resolve, 500));
+                            maxWaitAttempts--;
+                        }
+                    }
+                    
+                    if (allChartsReady) {
+                        console.log('✅ All charts verified with content!');
+                    } else {
+                        console.warn('⚠️ Timeout waiting for charts, proceeding anyway...');
+                    }
+                }
+                
+                // Step 3: Final stabilization wait for any animations
+                console.log('⏳ Step 3: Final 800ms for chart animations and paint to complete...');
+                loadingDiv.innerHTML = '<h3 style="color: #ff6b35; margin-bottom: 10px;">Generating PDF...</h3><p style="color: #666;">Finalizing charts...</p>';
                 await new Promise(resolve => setTimeout(resolve, 800));
                 
                 const { jsPDF } = window.jspdf;
@@ -8923,8 +8968,19 @@ function showView(view) {
                 showToast('🔄 Generating PowerPoint presentation...', 'info');
                 
                 // CRITICAL: Wait for charts to fully render before capturing
-                // Same issue as PDF export - charts need time to render and paint
-                console.log('⏳ Waiting 800ms for charts to fully render before PPT capture...');
+                // Same issue as PDF export - charts need time to render, paint, and stabilize
+                console.log('⏳ Waiting 1200ms for charts to fully render before PPT capture...');
+                await new Promise(resolve => setTimeout(resolve, 1200));
+                
+                // Verify charts are present
+                const tempContentArea = document.getElementById('dashboardContent');
+                if (tempContentArea) {
+                    const chartCanvases = tempContentArea.querySelectorAll('canvas');
+                    console.log(`📊 PPT Export - Found ${chartCanvases.length} chart canvas elements`);
+                }
+                
+                // Additional wait to ensure Chart.js animations and paint complete
+                console.log('⏳ Allowing 800ms for Chart.js animations and paint to complete...');
                 await new Promise(resolve => setTimeout(resolve, 800));
                 
                 // Create new presentation with proper PowerPoint 2017+ format
