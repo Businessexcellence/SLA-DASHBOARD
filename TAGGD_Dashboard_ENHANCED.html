@@ -3581,6 +3581,7 @@ let rawData = null;
         
         Chart.defaults.font.family = "'Inter', 'Segoe UI', sans-serif";
         Chart.defaults.plugins.legend.labels.usePointStyle = true;
+        Chart.defaults.devicePixelRatio = 3;  // Force high DPI rendering (3x resolution for crisp export)
 
         // Remove grid lines from all charts globally
         Chart.defaults.scales.x = Chart.defaults.scales.x || {};
@@ -8431,7 +8432,13 @@ function showView(view) {
                 document.body.appendChild(loadingDiv);
                 
                 const { jsPDF } = window.jspdf;
-                const pdf = new jsPDF('p', 'mm', 'a4');
+                const pdf = new jsPDF({
+                    orientation: 'p',
+                    unit: 'mm',
+                    format: 'a4',
+                    compress: false,  // Disable compression for better quality
+                    precision: 16  // High precision for rendering
+                });
                 const pageWidth = pdf.internal.pageSize.getWidth();
                 const pageHeight = pdf.internal.pageSize.getHeight();
                 const margin = 15;
@@ -8640,11 +8647,11 @@ function showView(view) {
                 console.log('PDF Export - Capturing view:', activeView);
                 console.log('PDF Export - Content area:', contentArea ? contentArea.id : 'NOT FOUND');
                 
-                    // Enhanced PDF capture with better quality settings
+                    // Enhanced PDF capture with ULTRA HIGH quality settings
                     const canvas = await html2canvas(contentArea, {
-                        scale: 2,  // 2x resolution for balance between quality and file size
+                        scale: 4,  // 4x resolution for ultra high quality (increased from 3)
                         backgroundColor: '#ffffff',
-                        logging: true,  // Enable logging to debug issues
+                        logging: false,  // Disable logging for cleaner output
                         useCORS: true,
                         allowTaint: true,
                         scrollY: 0,  // Start from top
@@ -8655,17 +8662,25 @@ function showView(view) {
                         height: contentArea.scrollHeight,
                         imageTimeout: 0,
                         removeContainer: false,
+                        foreignObjectRendering: true,  // Better text rendering
+                        letterRendering: true,  // Better text clarity
                         onclone: (clonedDoc) => {
-                            // Ensure all images and styles are loaded in the cloned document
+                            // Ensure all images, charts and styles are loaded in the cloned document
                             const clonedContent = clonedDoc.getElementById('dashboardContent');
                             if (clonedContent) {
                                 clonedContent.style.transform = 'none';
                                 clonedContent.style.overflow = 'visible';
+                                // Ensure charts are visible and high resolution
+                                const charts = clonedContent.querySelectorAll('canvas');
+                                charts.forEach(chart => {
+                                    chart.style.display = 'block';
+                                    chart.style.imageRendering = 'high-quality';
+                                });
                             }
                         }
                     });
                     
-                    // Use PNG instead of JPEG for better quality (no compression artifacts)
+                    // Use PNG with maximum quality (no compression)
                     const imgData = canvas.toDataURL('image/png', 1.0);
                     const imgWidth = contentWidth;
                     const imgHeight = (canvas.height * imgWidth) / canvas.width;
@@ -8674,17 +8689,17 @@ function showView(view) {
                     let position = yPos;
                     
                     if (heightLeft <= pageHeight - position - margin) {
-                        pdf.addImage(imgData, 'PNG', margin, position, imgWidth, imgHeight, '', 'FAST');
+                        pdf.addImage(imgData, 'PNG', margin, position, imgWidth, imgHeight, '', 'SLOW');
                     } else {
                         const firstPageHeight = pageHeight - position - margin;
-                        pdf.addImage(imgData, 'PNG', margin, position, imgWidth, firstPageHeight, '', 'FAST');
+                        pdf.addImage(imgData, 'PNG', margin, position, imgWidth, firstPageHeight, '', 'SLOW');
                         heightLeft -= firstPageHeight;
                         
                         while (heightLeft > 0) {
                             pdf.addPage();
                             position = margin;
                             const nextHeight = Math.min(heightLeft, pageHeight - 2 * margin);
-                            pdf.addImage(imgData, 'PNG', margin, position, imgWidth, nextHeight, '', 'FAST');
+                            pdf.addImage(imgData, 'PNG', margin, position, imgWidth, nextHeight, '', 'SLOW');
                             heightLeft -= nextHeight;
                         }
                     }
@@ -8968,13 +8983,31 @@ function showView(view) {
                 // ========== SLIDE 2: Dashboard Screenshot ==========
                 const element = document.getElementById('dashboardContent');
                 const canvas = await html2canvas(element, {
-                    scale: 2,
+                    scale: 4,  // Ultra high quality - 4x resolution (increased from 3)
                     logging: false,
                     useCORS: true,
-                    backgroundColor: '#ffffff'
+                    allowTaint: true,
+                    backgroundColor: '#ffffff',
+                    foreignObjectRendering: true,  // Better text rendering
+                    letterRendering: true,  // Better text clarity
+                    windowWidth: element.scrollWidth,
+                    windowHeight: element.scrollHeight,
+                    width: element.scrollWidth,
+                    height: element.scrollHeight,
+                    onclone: (clonedDoc) => {
+                        // Ensure charts are visible in PPT with high resolution
+                        const clonedContent = clonedDoc.getElementById('dashboardContent');
+                        if (clonedContent) {
+                            const charts = clonedContent.querySelectorAll('canvas');
+                            charts.forEach(chart => {
+                                chart.style.display = 'block';
+                                chart.style.imageRendering = 'high-quality';
+                            });
+                        }
+                    }
                 });
                 
-                const imgData = canvas.toDataURL('image/png');
+                const imgData = canvas.toDataURL('image/png', 1.0);  // Maximum quality
                 
                 const screenshotSlide = pptx.addSlide();
                 screenshotSlide.background = { fill: brandColors.white };
@@ -8987,7 +9020,9 @@ function showView(view) {
                 screenshotSlide.addImage({
                     data: imgData,
                     x: 0.3, y: 1, w: 9.4, h: 6.2,
-                    sizing: { type: 'contain', w: 9.4, h: 6.2 }
+                    sizing: { type: 'contain', w: 9.4, h: 6.2 },
+                    rounding: false,  // Prevent anti-aliasing blur
+                    hyperlink: false  // Disable hyperlink compression
                 });
                 
                 // ========== SLIDE 3: Key Metrics (if available) ==========
