@@ -10660,14 +10660,43 @@ function showView(view) {
                     indexAxis: 'y',
                     responsive: true,
                     maintainAspectRatio: false,
+                    layout: {
+                        padding: {
+                            right: 100  // Extra space for labels on long bars
+                        }
+                    },
                     plugins: {
                         legend: { display: false },
                         datalabels: {
-                            anchor: 'end',
-                            align: 'end',
-                            offset: 8,
-                            color: '#1a1a1a',
-                            backgroundColor: 'rgba(255, 255, 255, 0.95)',
+                            anchor: (context) => {
+                                // Place inside for large values (>80), outside for small
+                                const value = context.dataset.data[context.dataIndex];
+                                const maxValue = Math.max(...context.dataset.data);
+                                return value > maxValue * 0.4 ? 'end' : 'end';
+                            },
+                            align: (context) => {
+                                // Align inside for large bars, outside for small
+                                const value = context.dataset.data[context.dataIndex];
+                                const maxValue = Math.max(...context.dataset.data);
+                                return value > maxValue * 0.4 ? 'start' : 'end';
+                            },
+                            offset: (context) => {
+                                const value = context.dataset.data[context.dataIndex];
+                                const maxValue = Math.max(...context.dataset.data);
+                                return value > maxValue * 0.4 ? -8 : 8;
+                            },
+                            color: (context) => {
+                                const value = context.dataset.data[context.dataIndex];
+                                const maxValue = Math.max(...context.dataset.data);
+                                // White text for large bars (inside), dark for small (outside)
+                                return value > maxValue * 0.4 ? '#ffffff' : '#1a1a1a';
+                            },
+                            backgroundColor: (context) => {
+                                const value = context.dataset.data[context.dataIndex];
+                                const maxValue = Math.max(...context.dataset.data);
+                                // Transparent for inside labels, white bg for outside
+                                return value > maxValue * 0.4 ? 'transparent' : 'rgba(255, 255, 255, 0.95)';
+                            },
                             borderRadius: 4,
                             padding: { top: 4, bottom: 4, left: 6, right: 6 },
                             font: { size: 12, weight: 'bold', family: 'Inter' },
