@@ -28,6 +28,9 @@
             --success-color: #10b981;
             --warning-color: #f59e0b;
             --danger-color: #ef4444;
+            --danger-light: #ff8c8c;
+            --danger-lighter: #ffb0b0;
+            --danger-dark: #dc2626;
             --info-color: #06b6d4;
             --improvement-color: #10b981;
             --decline-color: #ef4444;
@@ -55,6 +58,9 @@
             --success-color: #34d399;
             --warning-color: #fbbf24;
             --danger-color: #f87171;
+            --danger-light: #fca5a5;
+            --danger-lighter: #fecaca;
+            --danger-dark: #ef4444;
             --info-color: #22d3ee;
             --improvement-color: #34d399;
             --decline-color: #f87171;
@@ -724,7 +730,21 @@
         }
 
         button.clear-filters-btn {
-            background: linear-gradient(135deg, #ff6b35 0%, #ff8c5a 50%, #ffb084 100%);
+            background: linear-gradient(135deg, var(--danger-color) 0%, var(--danger-light) 50%, var(--danger-lighter) 100%);
+            color: #ffffff;
+            font-weight: 600;
+            border: none;
+            transition: all 0.3s ease;
+        }
+        
+        button.clear-filters-btn:hover {
+            background: linear-gradient(135deg, var(--danger-dark) 0%, var(--danger-color) 50%, var(--danger-light) 100%);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
+        }
+        
+        [data-theme="dark"] button.clear-filters-btn:hover {
+            box-shadow: 0 4px 12px rgba(248, 113, 113, 0.4);
         }
 
         /* Dashboard Grid */
