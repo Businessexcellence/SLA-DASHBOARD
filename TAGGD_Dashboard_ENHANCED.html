@@ -4210,7 +4210,7 @@ let rawData = null;
                     if (metricsDetailsData.length > 0) {
                         console.log('✅ Drill-down data ready! Sample entry:', {
                             project: metricsDetailsData[0].Project,
-                            measure: metricsDetailsData[0]['Performance Measure '],
+                            measure: metricsDetailsData[0]['Performance Measure'] || metricsDetailsData[0]['Performance Measure '],
                             april: metricsDetailsData[0]['April25 Score'],
                             ytd: metricsDetailsData[0]['YTD Score']
                         });
@@ -9843,9 +9843,10 @@ function showView(view) {
 
         function generateMeasureRow(measure) {
             // DEBUG: Log the measure data to console
-            if (measure['Performance Measure '] && measure['Performance Measure '].includes('Time to Fill')) {
+            const perfMeasure = measure['Performance Measure'] || measure['Performance Measure '];
+            if (perfMeasure && perfMeasure.includes('Time to Fill')) {
                 console.log('🔍 DEBUG - Time to Fill measure data:', {
-                    measure: measure['Performance Measure '],
+                    measure: perfMeasure,
                     target: measure['Target'],
                     april: measure['April25 Score'],
                     may: measure['May25 Score'],
@@ -9890,7 +9891,7 @@ function showView(view) {
             let row = `
                 <tr style="border-bottom: 1px solid var(--border-color);">
                     <td style="text-align: left; padding: 12px 15px; font-weight: 500;">
-                        ${measure['Performance Measure '] || '-'}
+                        ${measure['Performance Measure'] || measure['Performance Measure '] || '-'}
                     </td>
                     <td style="background: ${penaltyBg}; color: ${penaltyColor}; text-align: center; padding: 12px 8px; font-weight: 600;">
                         <div style="display: flex; align-items: center; justify-content: center; gap: 5px;">
