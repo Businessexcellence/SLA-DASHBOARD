@@ -9899,8 +9899,20 @@ function showView(view) {
             `;
             
             months.forEach(month => {
-                const score = measure[month.scoreCol] || '-';
+                const rawScore = measure[month.scoreCol] || '-';
                 const status = measure[month.statusCol] || '-';
+                
+                // Format score - convert decimals to percentages if between 0 and 1
+                let formattedScore = rawScore;
+                if (rawScore !== '-' && rawScore !== null && rawScore !== undefined && rawScore !== '' && rawScore !== 'NA' && rawScore !== 'Not Reported') {
+                    if (typeof rawScore === 'number' && rawScore > 0 && rawScore < 1) {
+                        formattedScore = (rawScore * 100).toFixed(2) + '%';
+                    } else if (typeof rawScore === 'number') {
+                        formattedScore = rawScore;
+                    } else {
+                        formattedScore = rawScore;
+                    }
+                }
                 
                 const bgColor = status === 'Met' ? '#d1fae5' : 
                                status === 'Not Met' ? '#ffe4e6' : 
@@ -9915,15 +9927,28 @@ function showView(view) {
                 
                 row += `
                     <td style="background: ${bgColor}; color: ${textColor}; text-align: center; padding: 8px; font-weight: 500;">
-                        <div style="font-size: 0.95em;">${score}</div>
+                        <div style="font-size: 0.95em;">${formattedScore}</div>
                         <small style="font-size: 0.7em; display: block; margin-top: 2px;">${icon} ${status}</small>
                     </td>
                 `;
             });
             
             // YTD column
-            const ytdScore = measure['YTD Score'] || '-';
+            const rawYtdScore = measure['YTD Score'] || '-';
             const ytdStatus = measure['YTD MET/NOT_MET'] || '-';
+            
+            // Format YTD score - convert decimals to percentages if between 0 and 1
+            let formattedYtdScore = rawYtdScore;
+            if (rawYtdScore !== '-' && rawYtdScore !== null && rawYtdScore !== undefined && rawYtdScore !== '' && rawYtdScore !== 'NA' && rawYtdScore !== 'Not Reported') {
+                if (typeof rawYtdScore === 'number' && rawYtdScore > 0 && rawYtdScore < 1) {
+                    formattedYtdScore = (rawYtdScore * 100).toFixed(2) + '%';
+                } else if (typeof rawYtdScore === 'number') {
+                    formattedYtdScore = rawYtdScore;
+                } else {
+                    formattedYtdScore = rawYtdScore;
+                }
+            }
+            
             const ytdBg = ytdStatus === 'Met' ? '#dbeafe' : 
                           ytdStatus === 'Not Met' ? '#fee2e2' : 
                           ytdStatus === 'NA' || ytdStatus === 'Not Reported' ? '#f3f4f6' :
@@ -9937,7 +9962,7 @@ function showView(view) {
             
             row += `
                     <td style="background: ${ytdBg}; color: ${ytdColor}; text-align: center; padding: 8px; font-weight: bold;">
-                        <div style="font-size: 1.05em;">${ytdScore}</div>
+                        <div style="font-size: 1.05em;">${formattedYtdScore}</div>
                         <small style="font-size: 0.75em; display: block; margin-top: 2px;">${ytdIcon} ${ytdStatus}</small>
                     </td>
                 </tr>
