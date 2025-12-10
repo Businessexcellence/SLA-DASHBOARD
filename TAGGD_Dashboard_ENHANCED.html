@@ -9842,6 +9842,18 @@ function showView(view) {
         }
 
         function generateMeasureRow(measure) {
+            // DEBUG: Log the measure data to console
+            if (measure['Performance Measure '] && measure['Performance Measure '].includes('Time to Fill')) {
+                console.log('🔍 DEBUG - Time to Fill measure data:', {
+                    measure: measure['Performance Measure '],
+                    target: measure['Target'],
+                    april: measure['April25 Score'],
+                    may: measure['May25 Score'],
+                    june: measure['June25 Score'],
+                    allKeys: Object.keys(measure)
+                });
+            }
+            
             const months = [
                 {name: 'April', scoreCol: 'April25 Score', statusCol: 'April MET/NOT_MET'},
                 {name: 'May', scoreCol: 'May25 Score', statusCol: 'May MET/NOT_MET'},
