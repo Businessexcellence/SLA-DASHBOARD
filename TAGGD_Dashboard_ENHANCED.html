@@ -9877,9 +9877,9 @@ function showView(view) {
             const rawTarget = measure['Target'];
             let formattedTarget = '-';
             if (rawTarget !== null && rawTarget !== undefined && rawTarget !== '') {
-                // If it's a number between 0 and 1 (exclusive), likely a percentage
-                if (typeof rawTarget === 'number' && rawTarget > 0 && rawTarget < 1) {
-                    // Smart percentage formatting: 0.4→40%, 0.4643→46.43%
+                // If it's a number between 0 and 1 (inclusive), likely a percentage
+                if (typeof rawTarget === 'number' && rawTarget >= 0 && rawTarget <= 1) {
+                    // Smart percentage formatting: 0→0%, 0.4→40%, 0.4643→46.43%
                     const percentage = rawTarget * 100;
                     // Round to 2 decimals, then remove trailing .00
                     formattedTarget = (Math.round(percentage * 100) / 100).toString().replace(/\.00$/, '') + '%';
@@ -9903,14 +9903,14 @@ function showView(view) {
             `;
             
             months.forEach(month => {
-                const rawScore = measure[month.scoreCol] || '-';
+                const rawScore = measure[month.scoreCol];
                 const status = measure[month.statusCol] || '-';
                 
                 // Format score - convert decimals to percentages if between 0 and 1
-                let formattedScore = rawScore;
-                if (rawScore !== '-' && rawScore !== null && rawScore !== undefined && rawScore !== '' && rawScore !== 'NA' && rawScore !== 'Not Reported') {
-                    if (typeof rawScore === 'number' && rawScore > 0 && rawScore < 1) {
-                        // Smart percentage formatting: 0.4→40%, 0.4643→46.43%
+                let formattedScore = '-';
+                if (rawScore !== null && rawScore !== undefined && rawScore !== '' && rawScore !== 'NA' && rawScore !== 'Not Reported') {
+                    if (typeof rawScore === 'number' && rawScore >= 0 && rawScore <= 1) {
+                        // Smart percentage formatting: 0→0%, 0.4→40%, 0.4643→46.43%
                         const percentage = rawScore * 100;
                         // Round to 2 decimals, then remove trailing .00
                         formattedScore = (Math.round(percentage * 100) / 100).toString().replace(/\.00$/, '') + '%';
@@ -9941,14 +9941,14 @@ function showView(view) {
             });
             
             // YTD column
-            const rawYtdScore = measure['YTD Score'] || '-';
+            const rawYtdScore = measure['YTD Score'];
             const ytdStatus = measure['YTD MET/NOT_MET'] || '-';
             
             // Format YTD score - convert decimals to percentages if between 0 and 1
-            let formattedYtdScore = rawYtdScore;
-            if (rawYtdScore !== '-' && rawYtdScore !== null && rawYtdScore !== undefined && rawYtdScore !== '' && rawYtdScore !== 'NA' && rawYtdScore !== 'Not Reported') {
-                if (typeof rawYtdScore === 'number' && rawYtdScore > 0 && rawYtdScore < 1) {
-                    // Smart percentage formatting: 0.4→40%, 0.4643→46.43%
+            let formattedYtdScore = '-';
+            if (rawYtdScore !== null && rawYtdScore !== undefined && rawYtdScore !== '' && rawYtdScore !== 'NA' && rawYtdScore !== 'Not Reported') {
+                if (typeof rawYtdScore === 'number' && rawYtdScore >= 0 && rawYtdScore <= 1) {
+                    // Smart percentage formatting: 0→0%, 0.4→40%, 0.4643→46.43%
                     const percentage = rawYtdScore * 100;
                     // Round to 2 decimals, then remove trailing .00
                     formattedYtdScore = (Math.round(percentage * 100) / 100).toString().replace(/\.00$/, '') + '%';
