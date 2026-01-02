@@ -213,7 +213,20 @@ Ensure you've clicked "Apply Filters" after making selections.
 
 ## 🌐 Deployment & Sharing
 
-### Live URL Setup
+### 🚀 Current Live Deployment
+**Status:** ✅ **ACTIVE AND RUNNING**
+
+**Live URL:** https://3000-in27j4kvifkpo1odihjj8-b237eb32.sandbox.novita.ai
+
+Access the dashboard immediately at the URL above. All features are fully functional:
+- ✅ Automatic data loading from sample_data.json
+- ✅ All 11+ views and analysis screens
+- ✅ Interactive filters and drill-down features
+- ✅ Export to PDF/Excel/Word/PPT
+- ✅ Voice features and dark mode
+- ✅ Mobile responsive design
+
+### Live URL Setup Options
 The dashboard can be deployed to a public URL so others can access it without downloading files:
 
 **Option 1: GitHub Pages (Easiest)**
