@@ -5202,6 +5202,22 @@ let rawData = null;
                     console.log('FY 24-25 rows:', fy24_25.length);
                     console.log('FY 25-26 rows:', fy25_26.length);
                     
+                    // Debug: Log column names for Industry Type detection
+                    if (fy24_25.length > 0) {
+                        console.log('FY 24-25 first row columns:', Object.keys(fy24_25[0]));
+                        console.log('FY 24-25 Industry Type column check:', {
+                            'Industry Type ': fy24_25[0]['Industry Type '],
+                            'Industry Type': fy24_25[0]['Industry Type']
+                        });
+                    }
+                    if (fy25_26.length > 0) {
+                        console.log('FY 25-26 first row columns:', Object.keys(fy25_26[0]));
+                        console.log('FY 25-26 Industry Type column check:', {
+                            'Industry Type ': fy25_26[0]['Industry Type '],
+                            'Industry Type': fy25_26[0]['Industry Type']
+                        });
+                    }
+                    
                     if (fy24_25.length === 0) {
                         alert('❌ Error: "FY 24-25 Summary" sheet is empty!');
                         return;
@@ -9501,8 +9517,58 @@ function showView(view) {
         // Render Industry Type Analysis View (Like Project Analysis)
         function renderIndustryView() {
             console.log('=== renderIndustryView Debug ===');
-            console.log('FY24-25 rows:', filteredData.fy24_25.length);
-            console.log('FY25-26 rows:', filteredData.fy25_26.length);
+            console.log('FY24-25 rows:', filteredData.fy24_25 ? filteredData.fy24_25.length : 0);
+            console.log('FY25-26 rows:', filteredData.fy25_26 ? filteredData.fy25_26.length : 0);
+            
+            // Check if data is loaded
+            if (!filteredData.fy24_25 || !filteredData.fy25_26 || 
+                (filteredData.fy24_25.length === 0 && filteredData.fy25_26.length === 0)) {
+                console.warn('⚠️ No data loaded for Industry Type Analysis');
+                
+                const noDataHTML = `
+                    <div class="card" style="text-align: center; padding: 60px 40px; background: linear-gradient(135deg, rgba(255,107,53,0.05) 0%, rgba(255,140,90,0.05) 100%);">
+                        <div style="font-size: 64px; color: var(--primary-color); margin-bottom: 20px;">
+                            <i class="bi bi-file-earmark-excel"></i>
+                        </div>
+                        <h2 style="color: var(--primary-color); margin-bottom: 15px;">
+                            <i class="bi bi-exclamation-triangle-fill"></i> No Data Loaded
+                        </h2>
+                        <p style="font-size: 1.1rem; color: var(--text-secondary); margin-bottom: 30px; line-height: 1.6;">
+                            Please upload your Excel file to view the Industry Type Analysis.
+                        </p>
+                        <div style="background: white; padding: 25px; border-radius: 10px; border-left: 5px solid var(--primary-color); margin: 30px auto; max-width: 600px; text-align: left;">
+                            <h3 style="color: var(--primary-color); margin-top: 0;">
+                                <i class="bi bi-info-circle-fill"></i> Quick Steps:
+                            </h3>
+                            <ol style="line-height: 2; color: var(--text-primary); margin: 0; padding-left: 25px;">
+                                <li><strong>Click "Upload Your Data"</strong> in the sidebar</li>
+                                <li><strong>Select</strong> SLA_Monthly_Status_Summary_FINAL.xlsx</li>
+                                <li><strong>Wait</strong> for the success message</li>
+                                <li><strong>Return</strong> to Industry Type Analysis</li>
+                            </ol>
+                        </div>
+                        <button onclick="document.getElementById('fileUpload').click()" 
+                                style="background: var(--primary-color); color: white; border: none; padding: 15px 40px; 
+                                       border-radius: 8px; font-size: 1.1rem; font-weight: 600; cursor: pointer; 
+                                       transition: all 0.3s ease; box-shadow: 0 4px 6px rgba(0,0,0,0.1);"
+                                onmouseover="this.style.background='var(--primary-dark)'; this.style.transform='translateY(-2px)'; this.style.boxShadow='0 6px 12px rgba(0,0,0,0.15)';"
+                                onmouseout="this.style.background='var(--primary-color)'; this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 6px rgba(0,0,0,0.1)';">
+                            <i class="bi bi-upload"></i> Upload Excel File Now
+                        </button>
+                    </div>`;
+                
+                document.getElementById('dashboardContent').innerHTML = noDataHTML;
+                
+                if (audioEnabled) {
+                    speak('No data loaded. Please upload your Excel file to view Industry Type Analysis.');
+                }
+                
+                // Update navigation
+                document.querySelectorAll('.menu-item').forEach(item => item.classList.remove('active'));
+                document.getElementById('nav-industry').classList.add('active');
+                
+                return; // Exit early
+            }
             
             // Debug: Check first row
             if (filteredData.fy24_25.length > 0) {
