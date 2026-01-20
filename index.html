@@ -3035,6 +3035,10 @@
                 <i class="bi bi-people-fill"></i>
                 <span>Practice Head Analysis</span>
             </div>
+            <div class="menu-item" id="nav-industry" title="Industry type performance analysis" onclick="speakAndExecute('Industry Type Analysis', () => showView('industry'))">
+                <i class="bi bi-briefcase-fill"></i>
+                <span>Industry Type Analysis</span>
+            </div>
             <div class="menu-item" id="nav-benchmarking" title="Compare against industry standards" onclick="speakAndExecute('Industry Benchmarking', () => showView('benchmarking'))">
                 <i class="bi bi-trophy-fill"></i>
                 <span>Industry Benchmarking</span>
@@ -6048,6 +6052,9 @@ function showView(view) {
                     break;
                 case 'practice':
                     renderPracticeView();
+                    break;
+                case 'industry':
+                    renderIndustryView();
                     break;
                 case 'benchmarking':
                     renderBenchmarkingView();
@@ -9487,6 +9494,330 @@ function showView(view) {
             
             if (audioEnabled) {
                 speak('User manual loaded. This comprehensive guide covers all dashboard features and calculations.');
+            }
+        }
+
+        // Render Industry Type Analysis View
+        function renderIndustryView() {
+            // Extract actual months from data (dynamic, not hardcoded)
+            const fy24months = extractMonthsFromData(filteredData.fy24_25, null);
+            const fy25months = extractMonthsFromData(null, filteredData.fy25_26);
+            
+            const industryData = {};
+            
+            // FY 24-25 data  
+            filteredData.fy24_25.forEach(row => {
+                const industry = (row['Industry Type '] || row['Industry Type'] || 'Unknown').trim();
+                if (!industryData[industry]) {
+                    industryData[industry] = { fy24Met: 0, fy24NotMet: 0, fy25Met: 0, fy25NotMet: 0 };
+                }
+                
+                fy24months.forEach(month => {
+                    industryData[industry].fy24Met += getMonthData(row, month, 'fy24_25', 'Met');
+                    industryData[industry].fy24NotMet += getMonthData(row, month, 'fy24_25', 'Not_Met');
+                });
+            });
+
+            // FY 25-26 data
+            filteredData.fy25_26.forEach(row => {
+                const industry = (row['Industry Type '] || row['Industry Type'] || 'Unknown').trim();
+                if (!industryData[industry]) {
+                    industryData[industry] = { fy24Met: 0, fy24NotMet: 0, fy25Met: 0, fy25NotMet: 0 };
+                }
+                
+                fy25months.forEach(month => {
+                    industryData[industry].fy25Met += getMonthData(row, month, 'fy25_26', 'Met');
+                    industryData[industry].fy25NotMet += getMonthData(row, month, 'fy25_26', 'Not_Met');
+                });
+            });
+
+            const industryArray = Object.entries(industryData).map(([industry, data]) => {
+                const fy24Total = data.fy24Met + data.fy24NotMet;
+                const fy25Total = data.fy25Met + data.fy25NotMet;
+                const fy24Compliance = fy24Total > 0 ? parseFloat(((data.fy24Met / fy24Total) * 100).toFixed(1)) : null;
+                const fy25Compliance = fy25Total > 0 ? parseFloat(((data.fy25Met / fy25Total) * 100).toFixed(1)) : null;
+                
+                // Calculate status: New, NA, or numeric difference
+                let status = '';
+                let statusClass = '';
+                if (fy24Compliance === null && fy25Compliance !== null) {
+                    status = 'NEW';
+                    statusClass = 'status-new';
+                } else if (fy24Compliance !== null && fy25Compliance === null) {
+                    status = 'N/A';
+                    statusClass = 'status-na';
+                } else if (fy24Compliance !== null && fy25Compliance !== null) {
+                    const diff = fy25Compliance - fy24Compliance;
+                    status = (diff >= 0 ? '+' : '') + diff.toFixed(1) + '%';
+                    statusClass = diff >= 0 ? 'status-improvement' : 'status-decline';
+                } else {
+                    status = 'N/A';
+                    statusClass = 'status-na';
+                }
+                
+                return { 
+                    industry, 
+                    fy24Compliance: fy24Compliance !== null ? fy24Compliance : 0, 
+                    fy25Compliance: fy25Compliance !== null ? fy25Compliance : 0,
+                    fy24Display: fy24Compliance !== null ? fy24Compliance.toFixed(1) + '%' : 'N/A',
+                    fy25Display: fy25Compliance !== null ? fy25Compliance.toFixed(1) + '%' : 'N/A',
+                    fy24Met: data.fy24Met,
+                    fy24NotMet: data.fy24NotMet,
+                    fy25Met: data.fy25Met,
+                    fy25NotMet: data.fy25NotMet,
+                    status,
+                    statusClass
+                };
+            }).sort((a, b) => b.fy25Compliance - a.fy25Compliance);
+
+            const insightsHTML = `
+                <div class="insights-section">
+                    <h3><i class="bi bi-briefcase-fill"></i> Industry Type Performance Overview</h3>
+                    <div class="insight-item">
+                        <h4>🏢 ${industryArray.length} Industry Types Analyzed</h4>
+                        <p>Compare year-over-year SLA performance across different industry sectors.</p>
+                    </div>
+                    <div class="insight-item">
+                        <h4>📊 Industry Benchmarking</h4>
+                        <p>Identify top-performing industries and opportunities for improvement across sectors.</p>
+                    </div>
+                </div>`;
+            
+            // Generate modern industry cards
+            let cardsHTML = '<div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(380px, 1fr)); gap: 24px; margin-top: 24px;">';
+            
+            industryArray.forEach((data, cardIndex) => {
+                const fy24Color = data.fy24Compliance > 0 ? getRAGColor(data.fy24Compliance) : 'var(--text-secondary)';
+                const fy25Color = data.fy25Compliance > 0 ? getRAGColor(data.fy25Compliance) : 'var(--text-secondary)';
+                
+                // Calculate account-wise performance for this industry
+                const accountPerformance = {};
+                
+                // FY 24-25 accounts
+                filteredData.fy24_25.forEach(row => {
+                    const rowIndustry = (row['Industry Type '] || row['Industry Type'] || 'Unknown').trim();
+                    if (rowIndustry === data.industry) {
+                        const account = row.Project;
+                        if (!accountPerformance[account]) {
+                            accountPerformance[account] = { fy24Met: 0, fy24NotMet: 0, fy25Met: 0, fy25NotMet: 0 };
+                        }
+                        fy24months.forEach(month => {
+                            accountPerformance[account].fy24Met += getMonthData(row, month, 'fy24_25', 'Met');
+                            accountPerformance[account].fy24NotMet += getMonthData(row, month, 'fy24_25', 'Not_Met');
+                        });
+                    }
+                });
+                
+                // FY 25-26 accounts
+                filteredData.fy25_26.forEach(row => {
+                    const rowIndustry = (row['Industry Type '] || row['Industry Type'] || 'Unknown').trim();
+                    if (rowIndustry === data.industry) {
+                        const account = row.Project;
+                        if (!accountPerformance[account]) {
+                            accountPerformance[account] = { fy24Met: 0, fy24NotMet: 0, fy25Met: 0, fy25NotMet: 0 };
+                        }
+                        fy25months.forEach(month => {
+                            accountPerformance[account].fy25Met += getMonthData(row, month, 'fy25_26', 'Met');
+                            accountPerformance[account].fy25NotMet += getMonthData(row, month, 'fy25_26', 'Not_Met');
+                        });
+                    }
+                });
+                
+                // Generate account dropdown table
+                const accountArray = Object.entries(accountPerformance).map(([account, accData]) => {
+                    const fy24Total = accData.fy24Met + accData.fy24NotMet;
+                    const fy25Total = accData.fy25Met + accData.fy25NotMet;
+                    const fy24Comp = fy24Total > 0 ? ((accData.fy24Met / fy24Total) * 100).toFixed(1) : 'N/A';
+                    const fy25Comp = fy25Total > 0 ? ((accData.fy25Met / fy25Total) * 100).toFixed(1) : 'N/A';
+                    return { account, fy24Comp, fy25Comp, fy24Total, fy25Total };
+                }).sort((a, b) => {
+                    const aVal = a.fy25Comp !== 'N/A' ? parseFloat(a.fy25Comp) : 0;
+                    const bVal = b.fy25Comp !== 'N/A' ? parseFloat(b.fy25Comp) : 0;
+                    return bVal - aVal;
+                });
+                
+                let accountTableHTML = '';
+                if (accountArray.length > 0) {
+                    accountTableHTML = `
+                        <div class="account-dropdown-container" id="industry-dropdown-${cardIndex}" style="display: none; margin-top: 20px; animation: slideDown 0.3s ease-out;">
+                            <div style="background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%); 
+                                        padding: 12px 16px; border-radius: 10px; margin-bottom: 12px;">
+                                <div style="display: flex; align-items: center; justify-content: space-between;">
+                                    <div style="display: flex; align-items: center; gap: 8px;">
+                                        <i class="bi bi-building" style="font-size: 1.2rem; color: #667eea;"></i>
+                                        <span style="font-weight: 700; color: #3a1c71; font-size: 1rem;">Projects in ${data.industry}</span>
+                                    </div>
+                                    <div style="background: white; padding: 4px 12px; border-radius: 20px; font-size: 0.85rem; font-weight: 600; color: #667eea;">
+                                        ${accountArray.length} Projects
+                                    </div>
+                                </div>
+                            </div>
+                            <div style="max-height: 320px; overflow-y: auto; overflow-x: hidden; border-radius: 8px; 
+                                        box-shadow: inset 0 2px 8px rgba(0,0,0,0.05);" class="custom-scrollbar">
+                                <table style="width: 100%; border-collapse: separate; border-spacing: 0;">
+                                    <thead style="position: sticky; top: 0; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); 
+                                                  z-index: 1; box-shadow: 0 2px 8px rgba(102, 126, 234, 0.2);">
+                                        <tr>
+                                            <th style="padding: 12px 12px; text-align: left; font-weight: 600; color: white; font-size: 0.85rem; letter-spacing: 0.5px;">PROJECT</th>
+                                            <th style="padding: 12px 8px; text-align: center; font-weight: 600; color: white; font-size: 0.85rem; letter-spacing: 0.5px;">FY 24-25</th>
+                                            <th style="padding: 12px 8px; text-align: center; font-weight: 600; color: white; font-size: 0.85rem; letter-spacing: 0.5px;">FY 25-26</th>
+                                            <th style="padding: 12px 8px; text-align: center; font-weight: 600; color: white; font-size: 0.85rem; letter-spacing: 0.5px;">TREND</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>`;
+                    
+                    accountArray.forEach((acc, idx) => {
+                        const fy24Color = acc.fy24Comp !== 'N/A' ? getRAGColor(parseFloat(acc.fy24Comp)) : '#6c757d';
+                        const fy25Color = acc.fy25Comp !== 'N/A' ? getRAGColor(parseFloat(acc.fy25Comp)) : '#6c757d';
+                        const rowBg = idx % 2 === 0 ? '#ffffff' : 'rgba(102, 126, 234, 0.02)';
+                        
+                        // Calculate trend
+                        let trendIcon = '━';
+                        let trendColor = '#6c757d';
+                        if (acc.fy24Comp !== 'N/A' && acc.fy25Comp !== 'N/A') {
+                            const diff = parseFloat(acc.fy25Comp) - parseFloat(acc.fy24Comp);
+                            if (diff > 2) {
+                                trendIcon = '↗';
+                                trendColor = '#10b981';
+                            } else if (diff < -2) {
+                                trendIcon = '↘';
+                                trendColor = '#ef4444';
+                            }
+                        } else if (acc.fy24Comp === 'N/A' && acc.fy25Comp !== 'N/A') {
+                            trendIcon = '★';
+                            trendColor = '#f59e0b';
+                        }
+                        
+                        accountTableHTML += `
+                            <tr style="background: ${rowBg}; transition: all 0.2s ease;">
+                                <td style="padding: 10px 12px; border-bottom: 1px solid rgba(102, 126, 234, 0.08); font-weight: 500; color: #2d3748; font-size: 0.9rem;">
+                                    ${acc.account}
+                                </td>
+                                <td style="padding: 10px 8px; border-bottom: 1px solid rgba(102, 126, 234, 0.08); text-align: center;">
+                                    <span style="display: inline-block; padding: 4px 10px; border-radius: 6px; font-weight: 600; font-size: 0.85rem; 
+                                                color: white; background: ${fy24Color};">
+                                        ${acc.fy24Comp}${acc.fy24Comp !== 'N/A' ? '%' : ''}
+                                    </span>
+                                </td>
+                                <td style="padding: 10px 8px; border-bottom: 1px solid rgba(102, 126, 234, 0.08); text-align: center;">
+                                    <span style="display: inline-block; padding: 4px 10px; border-radius: 6px; font-weight: 600; font-size: 0.85rem; 
+                                                color: white; background: ${fy25Color};">
+                                        ${acc.fy25Comp}${acc.fy25Comp !== 'N/A' ? '%' : ''}
+                                    </span>
+                                </td>
+                                <td style="padding: 10px 8px; border-bottom: 1px solid rgba(102, 126, 234, 0.08); text-align: center;">
+                                    <span style="font-size: 1.4rem; color: ${trendColor};">${trendIcon}</span>
+                                </td>
+                            </tr>`;
+                    });
+                    
+                    accountTableHTML += `
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>`;
+                }
+                
+                cardsHTML += `
+                    <div class="practice-card" style="background: white; border-radius: 16px; padding: 24px; box-shadow: var(--shadow-md); 
+                                                       border-left: 5px solid ${fy25Color}; transition: all 0.3s ease; cursor: pointer;"
+                         onmouseover="this.style.transform='translateY(-4px)'; this.style.boxShadow='0 8px 16px rgba(0,0,0,0.15)';"
+                         onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='var(--shadow-md)';">
+                        
+                        <!-- Header with Industry Name -->
+                        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px;">
+                            <div style="display: flex; align-items: center; gap: 12px;">
+                                <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); 
+                                            width: 48px; height: 48px; border-radius: 12px; display: flex; 
+                                            align-items: center; justify-content: center; box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);">
+                                    <i class="bi bi-briefcase-fill" style="color: white; font-size: 1.5rem;"></i>
+                                </div>
+                                <div>
+                                    <h3 style="margin: 0; font-size: 1.1rem; font-weight: 700; color: #2d3748; line-height: 1.3;">
+                                        ${data.industry}
+                                    </h3>
+                                    <p style="margin: 4px 0 0 0; font-size: 0.85rem; color: #718096;">
+                                        ${accountArray.length} Project${accountArray.length !== 1 ? 's' : ''}
+                                    </p>
+                                </div>
+                            </div>
+                            <div class="${data.statusClass}" style="padding: 6px 14px; border-radius: 20px; font-weight: 700; font-size: 0.9rem; 
+                                                                     white-space: nowrap; box-shadow: 0 2px 6px rgba(0,0,0,0.1);">
+                                ${data.status}
+                            </div>
+                        </div>
+                        
+                        <!-- Performance Metrics -->
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 20px;">
+                            <!-- FY 24-25 -->
+                            <div style="background: linear-gradient(135deg, rgba(102, 126, 234, 0.08) 0%, rgba(118, 75, 162, 0.08) 100%); 
+                                        padding: 16px; border-radius: 12px; border: 2px solid rgba(102, 126, 234, 0.2);">
+                                <div style="font-size: 0.75rem; font-weight: 600; color: #718096; text-transform: uppercase; 
+                                            letter-spacing: 1px; margin-bottom: 8px;">FY 24-25</div>
+                                <div style="font-size: 2rem; font-weight: 700; color: ${fy24Color}; line-height: 1;">
+                                    ${data.fy24Display}
+                                </div>
+                                <div style="font-size: 0.8rem; color: #718096; margin-top: 6px;">
+                                    ${data.fy24Met} Met / ${data.fy24NotMet} Not Met
+                                </div>
+                            </div>
+                            
+                            <!-- FY 25-26 -->
+                            <div style="background: linear-gradient(135deg, rgba(102, 126, 234, 0.12) 0%, rgba(118, 75, 162, 0.12) 100%); 
+                                        padding: 16px; border-radius: 12px; border: 2px solid rgba(102, 126, 234, 0.3);">
+                                <div style="font-size: 0.75rem; font-weight: 600; color: #718096; text-transform: uppercase; 
+                                            letter-spacing: 1px; margin-bottom: 8px;">FY 25-26</div>
+                                <div style="font-size: 2rem; font-weight: 700; color: ${fy25Color}; line-height: 1;">
+                                    ${data.fy25Display}
+                                </div>
+                                <div style="font-size: 0.8rem; color: #718096; margin-top: 6px;">
+                                    ${data.fy25Met} Met / ${data.fy25NotMet} Not Met
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- View Projects Button -->
+                        ${accountArray.length > 0 ? `
+                        <button onclick="event.stopPropagation(); 
+                                        const dropdown = document.getElementById('industry-dropdown-${cardIndex}');
+                                        const isVisible = dropdown.style.display !== 'none';
+                                        dropdown.style.display = isVisible ? 'none' : 'block';
+                                        this.innerHTML = isVisible ? '<i class=\\'bi bi-chevron-down\\'></i> View Projects' : '<i class=\\'bi bi-chevron-up\\'></i> Hide Projects';"
+                                style="width: 100%; padding: 12px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); 
+                                       color: white; border: none; border-radius: 10px; font-weight: 600; font-size: 0.95rem; 
+                                       cursor: pointer; transition: all 0.3s ease; box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);"
+                                onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 6px 16px rgba(102, 126, 234, 0.4)';"
+                                onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 12px rgba(102, 126, 234, 0.3)';">
+                            <i class="bi bi-chevron-down"></i> View Projects (${accountArray.length})
+                        </button>
+                        ` : ''}
+                        
+                        ${accountTableHTML}
+                    </div>`;
+            });
+            
+            cardsHTML += '</div>';
+            
+            document.getElementById('dashboardContent').innerHTML = `
+                <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 40px 30px; border-radius: 16px; 
+                            margin-bottom: 30px; box-shadow: var(--shadow-lg); color: white;">
+                    <h2 style="margin: 0 0 10px 0; font-size: 2rem; font-weight: 700; display: flex; align-items: center; gap: 12px;">
+                        <i class="bi bi-briefcase-fill"></i> Industry Type Analysis
+                    </h2>
+                    <p style="margin: 0; font-size: 1.1rem; opacity: 0.95;">
+                        SLA Performance comparison across ${industryArray.length} industry sectors with year-over-year trends
+                    </p>
+                </div>
+                ${insightsHTML}
+                ${cardsHTML}
+            `;
+            
+            // Update navigation
+            document.querySelectorAll('.menu-item').forEach(item => item.classList.remove('active'));
+            document.getElementById('nav-industry').classList.add('active');
+            
+            if (audioEnabled) {
+                speak(`Industry Type Analysis loaded. Showing performance for ${industryArray.length} industry sectors.`);
             }
         }
 
