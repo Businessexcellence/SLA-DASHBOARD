@@ -9500,21 +9500,38 @@ function showView(view) {
         // Render Industry Type Analysis View
         // Render Industry Type Analysis View (Like Project Analysis)
         function renderIndustryView() {
+            console.log('=== renderIndustryView Debug ===');
+            console.log('FY24-25 rows:', filteredData.fy24_25.length);
+            console.log('FY25-26 rows:', filteredData.fy25_26.length);
+            
+            // Debug: Check first row
+            if (filteredData.fy24_25.length > 0) {
+                const firstRow = filteredData.fy24_25[0];
+                console.log('First FY24-25 row columns:', Object.keys(firstRow));
+                console.log('Industry Type values:', {
+                    'Industry Type ': firstRow['Industry Type '],
+                    'Industry Type': firstRow['Industry Type'],
+                    'IndustryType': firstRow['IndustryType']
+                });
+            }
+            
             const fy24months = extractMonthsFromData(filteredData.fy24_25, null);
             const fy25months = extractMonthsFromData(null, filteredData.fy25_26);
             
             let industryData = [];
 
-            // Get unique industry types
+            // Get unique industry types using global getIndustryType helper
             const uniqueIndustries = new Set([
-                ...filteredData.fy24_25.map(row => (row['Industry Type '] || row['Industry Type'] || 'Unknown').trim()),
-                ...filteredData.fy25_26.map(row => (row['Industry Type '] || row['Industry Type'] || 'Unknown').trim())
+                ...filteredData.fy24_25.map(row => getIndustryType(row)),
+                ...filteredData.fy25_26.map(row => getIndustryType(row))
             ]);
+            
+            console.log('Unique industries found:', Array.from(uniqueIndustries));
 
             uniqueIndustries.forEach(industryName => {
                 // FY 24-25 data
                 const fy24Rows = filteredData.fy24_25.filter(row => 
-                    (row['Industry Type '] || row['Industry Type'] || 'Unknown').trim() === industryName
+                    getIndustryType(row) === industryName
                 );
                 let fy24Met = 0, fy24NotMet = 0;
                 fy24months.forEach(month => {
@@ -9528,7 +9545,7 @@ function showView(view) {
 
                 // FY 25-26 data
                 const fy25Rows = filteredData.fy25_26.filter(row => 
-                    (row['Industry Type '] || row['Industry Type'] || 'Unknown').trim() === industryName
+                    getIndustryType(row) === industryName
                 );
                 let fy25Met = 0, fy25NotMet = 0;
                 fy25months.forEach(month => {
@@ -9727,6 +9744,12 @@ function showView(view) {
             document.getElementById('nav-industry').classList.add('active');
         }
 
+        // Helper function to get industry type from a row
+        function getIndustryType(row) {
+            const industry = row['Industry Type '] || row['Industry Type'] || row['IndustryType'] || row['industry_type'] || row['INDUSTRY TYPE'] || 'Unknown';
+            return industry.toString().trim();
+        }
+
         // Show Industry Drill-down (Similar to Project Drill-down)
         function showIndustryDrilldown(industryName) {
             console.log('Opening drill-down for industry:', industryName);
@@ -9737,10 +9760,10 @@ function showView(view) {
             // Get all projects in this industry
             const projectsInIndustry = new Set([
                 ...filteredData.fy24_25.filter(row => 
-                    (row['Industry Type '] || row['Industry Type'] || 'Unknown').trim() === industryName
+                    getIndustryType(row) === industryName
                 ).map(row => row.Project),
                 ...filteredData.fy25_26.filter(row => 
-                    (row['Industry Type '] || row['Industry Type'] || 'Unknown').trim() === industryName
+                    getIndustryType(row) === industryName
                 ).map(row => row.Project)
             ]);
 
@@ -9749,7 +9772,7 @@ function showView(view) {
                 // Get FY 24-25 data for this project
                 const fy24Rows = filteredData.fy24_25.filter(row => 
                     row.Project === projectName && 
-                    (row['Industry Type '] || row['Industry Type'] || 'Unknown').trim() === industryName
+                    getIndustryType(row) === industryName
                 );
                 let fy24Met = 0, fy24NotMet = 0;
                 fy24months.forEach(month => {
@@ -9764,7 +9787,7 @@ function showView(view) {
                 // Get FY 25-26 data for this project
                 const fy25Rows = filteredData.fy25_26.filter(row => 
                     row.Project === projectName && 
-                    (row['Industry Type '] || row['Industry Type'] || 'Unknown').trim() === industryName
+                    getIndustryType(row) === industryName
                 );
                 let fy25Met = 0, fy25NotMet = 0;
                 fy25months.forEach(month => {
