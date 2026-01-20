@@ -14525,6 +14525,133 @@ function showView(view) {
             });
         }
 
+        // Auto-load Excel file from server on page load
+        async function autoLoadExcelFile() {
+            console.log('🔄 Auto-loading Excel file from server...');
+            
+            try {
+                // Fetch the Excel file from the public directory
+                const response = await fetch('/SLA_Monthly_Status_Summary_FINAL.xlsx');
+                
+                if (!response.ok) {
+                    console.warn('⚠️ Auto-load file not found. User must upload manually.');
+                    return;
+                }
+                
+                console.log('✅ Excel file fetched from server');
+                
+                // Convert response to array buffer
+                const arrayBuffer = await response.arrayBuffer();
+                const data = new Uint8Array(arrayBuffer);
+                
+                // Process the workbook (same logic as manual upload)
+                const workbook = XLSX.read(data, {type: 'array'});
+                
+                console.log('Workbook sheets:', workbook.SheetNames);
+                
+                // Check if required sheets exist
+                if (!workbook.SheetNames.includes('FY 24-25 Summary')) {
+                    console.error('❌ Sheet "FY 24-25 Summary" not found in auto-loaded file');
+                    return;
+                }
+                
+                if (!workbook.SheetNames.includes('FY 25-26 Summary')) {
+                    console.error('❌ Sheet "FY 25-26 Summary" not found in auto-loaded file');
+                    return;
+                }
+                
+                const fy24_25 = XLSX.utils.sheet_to_json(workbook.Sheets['FY 24-25 Summary']);
+                const fy25_26 = XLSX.utils.sheet_to_json(workbook.Sheets['FY 25-26 Summary']);
+                
+                // Process Not Reported sheets
+                fy2425NotReportedData = [];
+                fy2526NotReportedData = [];
+                
+                if (workbook.Sheets['FY24-25 Not Reported']) {
+                    fy2425NotReportedData = XLSX.utils.sheet_to_json(workbook.Sheets['FY24-25 Not Reported']);
+                    console.log('✅ FY24-25 Not Reported data loaded:', fy2425NotReportedData.length, 'rows');
+                }
+                
+                if (workbook.Sheets['FY25-26 Not Reported']) {
+                    fy2526NotReportedData = XLSX.utils.sheet_to_json(workbook.Sheets['FY25-26 Not Reported']);
+                    console.log('✅ FY25-26 Not Reported data loaded:', fy2526NotReportedData.length, 'rows');
+                }
+                
+                // Load FY 25-26 Metrics Details for drill-down
+                if (workbook.Sheets['FY 25-26 Metrics Details ']) {
+                    metricsDetailsData = XLSX.utils.sheet_to_json(workbook.Sheets['FY 25-26 Metrics Details ']);
+                    console.log('✅ FY 25-26 Metrics Details loaded:', metricsDetailsData.length, 'performance measures');
+                } else {
+                    metricsDetailsData = [];
+                }
+                
+                console.log('FY 24-25 rows:', fy24_25.length);
+                console.log('FY 25-26 rows:', fy25_26.length);
+                
+                if (fy24_25.length === 0 || fy25_26.length === 0) {
+                    console.error('❌ Auto-loaded file contains empty sheets');
+                    return;
+                }
+                
+                rawData = { 
+                    fy24_25: fy24_25, 
+                    fy25_26: fy25_26 
+                };
+                
+                parsedData = rawData;
+                
+                console.log('✅ Data auto-loaded successfully!');
+                console.log('📊 Populating filters...');
+                populateFilters();
+                
+                console.log('🔄 Initializing cascading filters...');
+                updatePracticeHeadFilter();
+                updateAccountFilter();
+                
+                console.log('✅ Applying filters...');
+                applyFilters();
+                
+                // Show success notification
+                const notification = document.createElement('div');
+                notification.innerHTML = `
+                    <div style="position: fixed; top: 80px; right: 20px; background: linear-gradient(135deg, #10b981 0%, #059669 100%); 
+                                color: white; padding: 15px 25px; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+                                z-index: 9999; animation: slideInRight 0.3s ease;">
+                        <div style="display: flex; align-items: center; gap: 10px;">
+                            <i class="bi bi-check-circle-fill" style="font-size: 1.2rem;"></i>
+                            <div>
+                                <strong>Data Auto-Loaded Successfully!</strong>
+                                <div style="font-size: 0.85rem; margin-top: 3px; opacity: 0.9;">
+                                    FY 24-25: ${fy24_25.length} projects | FY 25-26: ${fy25_26.length} projects
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                document.body.appendChild(notification);
+                
+                // Auto-remove notification after 5 seconds
+                setTimeout(() => {
+                    notification.style.animation = 'slideOutRight 0.3s ease';
+                    setTimeout(() => notification.remove(), 300);
+                }, 5000);
+                
+                console.log('🎉 Dashboard ready with auto-loaded data!');
+                
+            } catch (error) {
+                console.error('❌ Error auto-loading Excel file:', error);
+                console.log('ℹ️  User can still upload file manually');
+            }
+        }
+        
+        // Auto-load on page load
+        window.addEventListener('load', () => {
+            console.log('🚀 Page loaded, initiating auto-load...');
+            setTimeout(() => {
+                autoLoadExcelFile();
+            }, 1000); // Wait 1 second for XLSX library to be ready
+        });
+
     </script>
 
     <!-- Drill-Down Modal -->
