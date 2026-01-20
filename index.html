@@ -9498,326 +9498,403 @@ function showView(view) {
         }
 
         // Render Industry Type Analysis View
+        // Render Industry Type Analysis View (Like Project Analysis)
         function renderIndustryView() {
-            // Extract actual months from data (dynamic, not hardcoded)
             const fy24months = extractMonthsFromData(filteredData.fy24_25, null);
             const fy25months = extractMonthsFromData(null, filteredData.fy25_26);
             
-            const industryData = {};
-            
-            // FY 24-25 data  
-            filteredData.fy24_25.forEach(row => {
-                const industry = (row['Industry Type '] || row['Industry Type'] || 'Unknown').trim();
-                if (!industryData[industry]) {
-                    industryData[industry] = { fy24Met: 0, fy24NotMet: 0, fy25Met: 0, fy25NotMet: 0 };
-                }
-                
+            let industryData = [];
+
+            // Get unique industry types
+            const uniqueIndustries = new Set([
+                ...filteredData.fy24_25.map(row => (row['Industry Type '] || row['Industry Type'] || 'Unknown').trim()),
+                ...filteredData.fy25_26.map(row => (row['Industry Type '] || row['Industry Type'] || 'Unknown').trim())
+            ]);
+
+            uniqueIndustries.forEach(industryName => {
+                // FY 24-25 data
+                const fy24Rows = filteredData.fy24_25.filter(row => 
+                    (row['Industry Type '] || row['Industry Type'] || 'Unknown').trim() === industryName
+                );
+                let fy24Met = 0, fy24NotMet = 0;
                 fy24months.forEach(month => {
-                    industryData[industry].fy24Met += getMonthData(row, month, 'fy24_25', 'Met');
-                    industryData[industry].fy24NotMet += getMonthData(row, month, 'fy24_25', 'Not_Met');
+                    fy24Rows.forEach(row => {
+                        fy24Met += getMonthData(row, month, 'fy24_25', 'Met');
+                        fy24NotMet += getMonthData(row, month, 'fy24_25', 'Not_Met');
+                    });
                 });
-            });
+                const fy24Total = fy24Met + fy24NotMet;
+                const fy24Compliance = fy24Total > 0 ? parseFloat(((fy24Met / fy24Total) * 100).toFixed(1)) : 0;
 
-            // FY 25-26 data
-            filteredData.fy25_26.forEach(row => {
-                const industry = (row['Industry Type '] || row['Industry Type'] || 'Unknown').trim();
-                if (!industryData[industry]) {
-                    industryData[industry] = { fy24Met: 0, fy24NotMet: 0, fy25Met: 0, fy25NotMet: 0 };
-                }
-                
+                // FY 25-26 data
+                const fy25Rows = filteredData.fy25_26.filter(row => 
+                    (row['Industry Type '] || row['Industry Type'] || 'Unknown').trim() === industryName
+                );
+                let fy25Met = 0, fy25NotMet = 0;
                 fy25months.forEach(month => {
-                    industryData[industry].fy25Met += getMonthData(row, month, 'fy25_26', 'Met');
-                    industryData[industry].fy25NotMet += getMonthData(row, month, 'fy25_26', 'Not_Met');
+                    fy25Rows.forEach(row => {
+                        fy25Met += getMonthData(row, month, 'fy25_26', 'Met');
+                        fy25NotMet += getMonthData(row, month, 'fy25_26', 'Not_Met');
+                    });
+                });
+                const fy25Total = fy25Met + fy25NotMet;
+                const fy25Compliance = fy25Total > 0 ? parseFloat(((fy25Met / fy25Total) * 100).toFixed(1)) : 0;
+
+                // Count projects in this industry
+                const projectCount = new Set([
+                    ...fy24Rows.map(row => row.Project),
+                    ...fy25Rows.map(row => row.Project)
+                ]).size;
+                
+                industryData.push({
+                    industry: industryName,
+                    projectCount: projectCount,
+                    fy24Compliance,
+                    fy25Compliance,
+                    improvement: fy25Compliance - fy24Compliance
                 });
             });
 
-            const industryArray = Object.entries(industryData).map(([industry, data]) => {
-                const fy24Total = data.fy24Met + data.fy24NotMet;
-                const fy25Total = data.fy25Met + data.fy25NotMet;
-                const fy24Compliance = fy24Total > 0 ? parseFloat(((data.fy24Met / fy24Total) * 100).toFixed(1)) : null;
-                const fy25Compliance = fy25Total > 0 ? parseFloat(((data.fy25Met / fy25Total) * 100).toFixed(1)) : null;
-                
-                // Calculate status: New, NA, or numeric difference
-                let status = '';
-                let statusClass = '';
-                if (fy24Compliance === null && fy25Compliance !== null) {
-                    status = 'NEW';
-                    statusClass = 'status-new';
-                } else if (fy24Compliance !== null && fy25Compliance === null) {
-                    status = 'N/A';
-                    statusClass = 'status-na';
-                } else if (fy24Compliance !== null && fy25Compliance !== null) {
-                    const diff = fy25Compliance - fy24Compliance;
-                    status = (diff >= 0 ? '+' : '') + diff.toFixed(1) + '%';
-                    statusClass = diff >= 0 ? 'status-improvement' : 'status-decline';
-                } else {
-                    status = 'N/A';
-                    statusClass = 'status-na';
-                }
-                
-                return { 
-                    industry, 
-                    fy24Compliance: fy24Compliance !== null ? fy24Compliance : 0, 
-                    fy25Compliance: fy25Compliance !== null ? fy25Compliance : 0,
-                    fy24Display: fy24Compliance !== null ? fy24Compliance.toFixed(1) + '%' : 'N/A',
-                    fy25Display: fy25Compliance !== null ? fy25Compliance.toFixed(1) + '%' : 'N/A',
-                    fy24Met: data.fy24Met,
-                    fy24NotMet: data.fy24NotMet,
-                    fy25Met: data.fy25Met,
-                    fy25NotMet: data.fy25NotMet,
-                    status,
-                    statusClass
-                };
-            }).sort((a, b) => b.fy25Compliance - a.fy25Compliance);
+            // Sort by FY 25-26 compliance
+            industryData.sort((a, b) => b.fy25Compliance - a.fy25Compliance);
+
+            // Generate insights
+            const improvingIndustries = industryData.filter(a => a.improvement > 2).length;
+            const decliningIndustries = industryData.filter(a => a.improvement < -2).length;
 
             const insightsHTML = `
                 <div class="insights-section">
-                    <h3><i class="bi bi-briefcase-fill"></i> Industry Type Performance Overview</h3>
+                    <h3><i class="bi bi-lightbulb-fill"></i> Industry Type Performance Comparison</h3>
                     <div class="insight-item">
-                        <h4>🏢 ${industryArray.length} Industry Types Analyzed</h4>
-                        <p>Compare year-over-year SLA performance across different industry sectors.</p>
+                        <h4>📈 Improving Industries</h4>
+                        <p>${improvingIndustries} industry type(s) show >2% improvement in FY 25-26 compared to FY 24-25.</p>
                     </div>
+                    ${decliningIndustries > 0 ? `
                     <div class="insight-item">
-                        <h4>📊 Industry Benchmarking</h4>
-                        <p>Identify top-performing industries and opportunities for improvement across sectors.</p>
+                        <h4>⚠️ Industries Needing Attention</h4>
+                        <p>${decliningIndustries} industry type(s) show >2% decline. Priority intervention recommended.</p>
+                    </div>` : ''}
+                </div>`;
+
+            let tableHTML = `
+                ${insightsHTML}
+                <div class="card">
+                    <h3><i class="bi bi-briefcase-fill"></i> Industry Type-Wise FY Comparison</h3>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Industry Type</th>
+                                <th>Projects</th>
+                                <th>FY 24-25 (%)</th>
+                                <th>FY 25-26 (%)</th>
+                                <th>Change</th>
+                            </tr>
+                        </thead>
+                        <tbody>`;
+            
+            industryData.forEach(data => {
+                const improvementColor = data.improvement >= 0 ? 'var(--success-color)' : 'var(--danger-color)';
+                const improvementIcon = data.improvement >= 0 ? '↑' : '↓';
+                
+                const fy24Display = data.fy24Compliance > 0 ? formatPercentageWithRAG(data.fy24Compliance) : 'N/A';
+                const fy25Display = data.fy25Compliance > 0 ? formatPercentageWithRAG(data.fy25Compliance) : 'N/A';
+                const changeDisplay = formatYoYChange(data.fy24Compliance, data.fy25Compliance);
+                
+                const escapedIndustry = data.industry.replace(/'/g, "\\'");
+                tableHTML += `<tr onclick="showIndustryDrilldown('${escapedIndustry}')" style="cursor: pointer; transition: background 0.2s ease;" 
+                    onmouseover="this.style.background='var(--sidebar-hover)'" 
+                    onmouseout="this.style.background=''"
+                    title="Click to view projects in this industry">
+                    <td><strong>${data.industry} <i class="bi bi-box-arrow-up-right" style="font-size: 0.75em; color: var(--primary-color); margin-left: 5px;"></i></strong></td>
+                    <td style="text-align: center;">${data.projectCount}</td>
+                    <td>${fy24Display}</td>
+                    <td>${fy25Display}</td>
+                    <td>${changeDisplay}</td>
+                </tr>`;
+            });
+            
+            tableHTML += '</tbody></table></div>';
+            
+            // Add trend chart
+            let chartHTML = `
+                <div class="card">
+                    <h3><i class="bi bi-graph-up-arrow"></i> Industry Type Performance Trend</h3>
+                    <div class="chart-container">
+                        <canvas id="industryTrendChart"></canvas>
                     </div>
                 </div>`;
             
-            // Generate modern industry cards
-            let cardsHTML = '<div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(380px, 1fr)); gap: 24px; margin-top: 24px;">';
-            
-            industryArray.forEach((data, cardIndex) => {
-                const fy24Color = data.fy24Compliance > 0 ? getRAGColor(data.fy24Compliance) : 'var(--text-secondary)';
-                const fy25Color = data.fy25Compliance > 0 ? getRAGColor(data.fy25Compliance) : 'var(--text-secondary)';
-                
-                // Calculate account-wise performance for this industry
-                const accountPerformance = {};
-                
-                // FY 24-25 accounts
-                filteredData.fy24_25.forEach(row => {
-                    const rowIndustry = (row['Industry Type '] || row['Industry Type'] || 'Unknown').trim();
-                    if (rowIndustry === data.industry) {
-                        const account = row.Project;
-                        if (!accountPerformance[account]) {
-                            accountPerformance[account] = { fy24Met: 0, fy24NotMet: 0, fy25Met: 0, fy25NotMet: 0 };
+            document.getElementById('dashboardContent').innerHTML = insightsHTML + chartHTML + tableHTML.replace(insightsHTML, '');
+
+            if (audioEnabled) {
+                speak(`Industry Type Analysis loaded. ${industryData.length} industry types analyzed. ${improvingIndustries} industries improving, ${decliningIndustries} industries declining.`);
+            }
+
+            // Render trend chart
+            const industryNames = industryData.slice(0, 10).map(d => d.industry);
+            const fy24Values = industryData.slice(0, 10).map(d => d.fy24Compliance);
+            const fy25Values = industryData.slice(0, 10).map(d => d.fy25Compliance);
+
+            const ctx = document.getElementById('industryTrendChart').getContext('2d');
+            charts.industryTrend = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: industryNames,
+                    datasets: [
+                        {
+                            label: 'FY 24-25',
+                            data: fy24Values,
+                            borderColor: '#9CA3AF',
+                            backgroundColor: 'rgba(156, 163, 175, 0.1)',
+                            borderWidth: 3,
+                            fill: true,
+                            tension: 0.4,
+                            pointRadius: 5,
+                            pointHoverRadius: 7,
+                            pointBackgroundColor: '#9CA3AF'
+                        },
+                        {
+                            label: 'FY 25-26',
+                            data: fy25Values,
+                            borderColor: 'var(--primary-color)',
+                            backgroundColor: 'rgba(255, 107, 53, 0.1)',
+                            borderWidth: 3,
+                            fill: true,
+                            tension: 0.4,
+                            pointRadius: 5,
+                            pointHoverRadius: 7,
+                            pointBackgroundColor: 'var(--primary-color)'
                         }
-                        fy24months.forEach(month => {
-                            accountPerformance[account].fy24Met += getMonthData(row, month, 'fy24_25', 'Met');
-                            accountPerformance[account].fy24NotMet += getMonthData(row, month, 'fy24_25', 'Not_Met');
-                        });
-                    }
-                });
-                
-                // FY 25-26 accounts
-                filteredData.fy25_26.forEach(row => {
-                    const rowIndustry = (row['Industry Type '] || row['Industry Type'] || 'Unknown').trim();
-                    if (rowIndustry === data.industry) {
-                        const account = row.Project;
-                        if (!accountPerformance[account]) {
-                            accountPerformance[account] = { fy24Met: 0, fy24NotMet: 0, fy25Met: 0, fy25NotMet: 0 };
-                        }
-                        fy25months.forEach(month => {
-                            accountPerformance[account].fy25Met += getMonthData(row, month, 'fy25_26', 'Met');
-                            accountPerformance[account].fy25NotMet += getMonthData(row, month, 'fy25_26', 'Not_Met');
-                        });
-                    }
-                });
-                
-                // Generate account dropdown table
-                const accountArray = Object.entries(accountPerformance).map(([account, accData]) => {
-                    const fy24Total = accData.fy24Met + accData.fy24NotMet;
-                    const fy25Total = accData.fy25Met + accData.fy25NotMet;
-                    const fy24Comp = fy24Total > 0 ? ((accData.fy24Met / fy24Total) * 100).toFixed(1) : 'N/A';
-                    const fy25Comp = fy25Total > 0 ? ((accData.fy25Met / fy25Total) * 100).toFixed(1) : 'N/A';
-                    return { account, fy24Comp, fy25Comp, fy24Total, fy25Total };
-                }).sort((a, b) => {
-                    const aVal = a.fy25Comp !== 'N/A' ? parseFloat(a.fy25Comp) : 0;
-                    const bVal = b.fy25Comp !== 'N/A' ? parseFloat(b.fy25Comp) : 0;
-                    return bVal - aVal;
-                });
-                
-                let accountTableHTML = '';
-                if (accountArray.length > 0) {
-                    accountTableHTML = `
-                        <div class="account-dropdown-container" id="industry-dropdown-${cardIndex}" style="display: none; margin-top: 20px; animation: slideDown 0.3s ease-out;">
-                            <div style="background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%); 
-                                        padding: 12px 16px; border-radius: 10px; margin-bottom: 12px;">
-                                <div style="display: flex; align-items: center; justify-content: space-between;">
-                                    <div style="display: flex; align-items: center; gap: 8px;">
-                                        <i class="bi bi-building" style="font-size: 1.2rem; color: #667eea;"></i>
-                                        <span style="font-weight: 700; color: #3a1c71; font-size: 1rem;">Projects in ${data.industry}</span>
-                                    </div>
-                                    <div style="background: white; padding: 4px 12px; border-radius: 20px; font-size: 0.85rem; font-weight: 600; color: #667eea;">
-                                        ${accountArray.length} Projects
-                                    </div>
-                                </div>
-                            </div>
-                            <div style="max-height: 320px; overflow-y: auto; overflow-x: hidden; border-radius: 8px; 
-                                        box-shadow: inset 0 2px 8px rgba(0,0,0,0.05);" class="custom-scrollbar">
-                                <table style="width: 100%; border-collapse: separate; border-spacing: 0;">
-                                    <thead style="position: sticky; top: 0; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); 
-                                                  z-index: 1; box-shadow: 0 2px 8px rgba(102, 126, 234, 0.2);">
-                                        <tr>
-                                            <th style="padding: 12px 12px; text-align: left; font-weight: 600; color: white; font-size: 0.85rem; letter-spacing: 0.5px;">PROJECT</th>
-                                            <th style="padding: 12px 8px; text-align: center; font-weight: 600; color: white; font-size: 0.85rem; letter-spacing: 0.5px;">FY 24-25</th>
-                                            <th style="padding: 12px 8px; text-align: center; font-weight: 600; color: white; font-size: 0.85rem; letter-spacing: 0.5px;">FY 25-26</th>
-                                            <th style="padding: 12px 8px; text-align: center; font-weight: 600; color: white; font-size: 0.85rem; letter-spacing: 0.5px;">TREND</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>`;
-                    
-                    accountArray.forEach((acc, idx) => {
-                        const fy24Color = acc.fy24Comp !== 'N/A' ? getRAGColor(parseFloat(acc.fy24Comp)) : '#6c757d';
-                        const fy25Color = acc.fy25Comp !== 'N/A' ? getRAGColor(parseFloat(acc.fy25Comp)) : '#6c757d';
-                        const rowBg = idx % 2 === 0 ? '#ffffff' : 'rgba(102, 126, 234, 0.02)';
-                        
-                        // Calculate trend
-                        let trendIcon = '━';
-                        let trendColor = '#6c757d';
-                        if (acc.fy24Comp !== 'N/A' && acc.fy25Comp !== 'N/A') {
-                            const diff = parseFloat(acc.fy25Comp) - parseFloat(acc.fy24Comp);
-                            if (diff > 2) {
-                                trendIcon = '↗';
-                                trendColor = '#10b981';
-                            } else if (diff < -2) {
-                                trendIcon = '↘';
-                                trendColor = '#ef4444';
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: true,
+                    interaction: {
+                        mode: 'index',
+                        intersect: false
+                    },
+                    plugins: {
+                        legend: {
+                            display: true,
+                            position: 'top',
+                            labels: {
+                                font: { size: 14, weight: 'bold' },
+                                padding: 15,
+                                usePointStyle: true
                             }
-                        } else if (acc.fy24Comp === 'N/A' && acc.fy25Comp !== 'N/A') {
-                            trendIcon = '★';
-                            trendColor = '#f59e0b';
+                        },
+                        tooltip: {
+                            backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                            titleFont: { size: 14, weight: 'bold' },
+                            bodyFont: { size: 13 },
+                            padding: 12,
+                            displayColors: true,
+                            callbacks: {
+                                label: function(context) {
+                                    return context.dataset.label + ': ' + context.parsed.y.toFixed(1) + '%';
+                                }
+                            }
+                        },
+                        datalabels: {
+                            display: false
                         }
-                        
-                        accountTableHTML += `
-                            <tr style="background: ${rowBg}; transition: all 0.2s ease;">
-                                <td style="padding: 10px 12px; border-bottom: 1px solid rgba(102, 126, 234, 0.08); font-weight: 500; color: #2d3748; font-size: 0.9rem;">
-                                    ${acc.account}
-                                </td>
-                                <td style="padding: 10px 8px; border-bottom: 1px solid rgba(102, 126, 234, 0.08); text-align: center;">
-                                    <span style="display: inline-block; padding: 4px 10px; border-radius: 6px; font-weight: 600; font-size: 0.85rem; 
-                                                color: white; background: ${fy24Color};">
-                                        ${acc.fy24Comp}${acc.fy24Comp !== 'N/A' ? '%' : ''}
-                                    </span>
-                                </td>
-                                <td style="padding: 10px 8px; border-bottom: 1px solid rgba(102, 126, 234, 0.08); text-align: center;">
-                                    <span style="display: inline-block; padding: 4px 10px; border-radius: 6px; font-weight: 600; font-size: 0.85rem; 
-                                                color: white; background: ${fy25Color};">
-                                        ${acc.fy25Comp}${acc.fy25Comp !== 'N/A' ? '%' : ''}
-                                    </span>
-                                </td>
-                                <td style="padding: 10px 8px; border-bottom: 1px solid rgba(102, 126, 234, 0.08); text-align: center;">
-                                    <span style="font-size: 1.4rem; color: ${trendColor};">${trendIcon}</span>
-                                </td>
-                            </tr>`;
-                    });
-                    
-                    accountTableHTML += `
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>`;
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            max: 100,
+                            ticks: {
+                                callback: value => value + '%',
+                                font: { size: 12 }
+                            },
+                            grid: { color: 'rgba(0, 0, 0, 0.05)' }
+                        },
+                        x: {
+                            ticks: {
+                                font: { size: 11 },
+                                maxRotation: 45,
+                                minRotation: 45
+                            },
+                            grid: { display: false }
+                        }
+                    }
                 }
-                
-                cardsHTML += `
-                    <div class="practice-card" style="background: white; border-radius: 16px; padding: 24px; box-shadow: var(--shadow-md); 
-                                                       border-left: 5px solid ${fy25Color}; transition: all 0.3s ease; cursor: pointer;"
-                         onmouseover="this.style.transform='translateY(-4px)'; this.style.boxShadow='0 8px 16px rgba(0,0,0,0.15)';"
-                         onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='var(--shadow-md)';">
-                        
-                        <!-- Header with Industry Name -->
-                        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px;">
-                            <div style="display: flex; align-items: center; gap: 12px;">
-                                <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); 
-                                            width: 48px; height: 48px; border-radius: 12px; display: flex; 
-                                            align-items: center; justify-content: center; box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);">
-                                    <i class="bi bi-briefcase-fill" style="color: white; font-size: 1.5rem;"></i>
-                                </div>
-                                <div>
-                                    <h3 style="margin: 0; font-size: 1.1rem; font-weight: 700; color: #2d3748; line-height: 1.3;">
-                                        ${data.industry}
-                                    </h3>
-                                    <p style="margin: 4px 0 0 0; font-size: 0.85rem; color: #718096;">
-                                        ${accountArray.length} Project${accountArray.length !== 1 ? 's' : ''}
-                                    </p>
-                                </div>
-                            </div>
-                            <div class="${data.statusClass}" style="padding: 6px 14px; border-radius: 20px; font-weight: 700; font-size: 0.9rem; 
-                                                                     white-space: nowrap; box-shadow: 0 2px 6px rgba(0,0,0,0.1);">
-                                ${data.status}
-                            </div>
-                        </div>
-                        
-                        <!-- Performance Metrics -->
-                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 20px;">
-                            <!-- FY 24-25 -->
-                            <div style="background: linear-gradient(135deg, rgba(102, 126, 234, 0.08) 0%, rgba(118, 75, 162, 0.08) 100%); 
-                                        padding: 16px; border-radius: 12px; border: 2px solid rgba(102, 126, 234, 0.2);">
-                                <div style="font-size: 0.75rem; font-weight: 600; color: #718096; text-transform: uppercase; 
-                                            letter-spacing: 1px; margin-bottom: 8px;">FY 24-25</div>
-                                <div style="font-size: 2rem; font-weight: 700; color: ${fy24Color}; line-height: 1;">
-                                    ${data.fy24Display}
-                                </div>
-                                <div style="font-size: 0.8rem; color: #718096; margin-top: 6px;">
-                                    ${data.fy24Met} Met / ${data.fy24NotMet} Not Met
-                                </div>
-                            </div>
-                            
-                            <!-- FY 25-26 -->
-                            <div style="background: linear-gradient(135deg, rgba(102, 126, 234, 0.12) 0%, rgba(118, 75, 162, 0.12) 100%); 
-                                        padding: 16px; border-radius: 12px; border: 2px solid rgba(102, 126, 234, 0.3);">
-                                <div style="font-size: 0.75rem; font-weight: 600; color: #718096; text-transform: uppercase; 
-                                            letter-spacing: 1px; margin-bottom: 8px;">FY 25-26</div>
-                                <div style="font-size: 2rem; font-weight: 700; color: ${fy25Color}; line-height: 1;">
-                                    ${data.fy25Display}
-                                </div>
-                                <div style="font-size: 0.8rem; color: #718096; margin-top: 6px;">
-                                    ${data.fy25Met} Met / ${data.fy25NotMet} Not Met
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <!-- View Projects Button -->
-                        ${accountArray.length > 0 ? `
-                        <button onclick="event.stopPropagation(); 
-                                        const dropdown = document.getElementById('industry-dropdown-${cardIndex}');
-                                        const isVisible = dropdown.style.display !== 'none';
-                                        dropdown.style.display = isVisible ? 'none' : 'block';
-                                        this.innerHTML = isVisible ? '<i class=\\'bi bi-chevron-down\\'></i> View Projects' : '<i class=\\'bi bi-chevron-up\\'></i> Hide Projects';"
-                                style="width: 100%; padding: 12px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); 
-                                       color: white; border: none; border-radius: 10px; font-weight: 600; font-size: 0.95rem; 
-                                       cursor: pointer; transition: all 0.3s ease; box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);"
-                                onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 6px 16px rgba(102, 126, 234, 0.4)';"
-                                onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 12px rgba(102, 126, 234, 0.3)';">
-                            <i class="bi bi-chevron-down"></i> View Projects (${accountArray.length})
-                        </button>
-                        ` : ''}
-                        
-                        ${accountTableHTML}
-                    </div>`;
             });
-            
-            cardsHTML += '</div>';
-            
-            document.getElementById('dashboardContent').innerHTML = `
-                <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 40px 30px; border-radius: 16px; 
-                            margin-bottom: 30px; box-shadow: var(--shadow-lg); color: white;">
-                    <h2 style="margin: 0 0 10px 0; font-size: 2rem; font-weight: 700; display: flex; align-items: center; gap: 12px;">
-                        <i class="bi bi-briefcase-fill"></i> Industry Type Analysis
-                    </h2>
-                    <p style="margin: 0; font-size: 1.1rem; opacity: 0.95;">
-                        SLA Performance comparison across ${industryArray.length} industry sectors with year-over-year trends
-                    </p>
-                </div>
-                ${insightsHTML}
-                ${cardsHTML}
-            `;
-            
+
             // Update navigation
             document.querySelectorAll('.menu-item').forEach(item => item.classList.remove('active'));
             document.getElementById('nav-industry').classList.add('active');
+        }
+
+        // Show Industry Drill-down (Similar to Project Drill-down)
+        function showIndustryDrilldown(industryName) {
+            console.log('Opening drill-down for industry:', industryName);
             
+            const fy24months = extractMonthsFromData(filteredData.fy24_25, null);
+            const fy25months = extractMonthsFromData(null, filteredData.fy25_26);
+            
+            // Get all projects in this industry
+            const projectsInIndustry = new Set([
+                ...filteredData.fy24_25.filter(row => 
+                    (row['Industry Type '] || row['Industry Type'] || 'Unknown').trim() === industryName
+                ).map(row => row.Project),
+                ...filteredData.fy25_26.filter(row => 
+                    (row['Industry Type '] || row['Industry Type'] || 'Unknown').trim() === industryName
+                ).map(row => row.Project)
+            ]);
+
+            let projectRows = '';
+            projectsInIndustry.forEach(projectName => {
+                // Get FY 24-25 data for this project
+                const fy24Rows = filteredData.fy24_25.filter(row => 
+                    row.Project === projectName && 
+                    (row['Industry Type '] || row['Industry Type'] || 'Unknown').trim() === industryName
+                );
+                let fy24Met = 0, fy24NotMet = 0;
+                fy24months.forEach(month => {
+                    fy24Rows.forEach(row => {
+                        fy24Met += getMonthData(row, month, 'fy24_25', 'Met');
+                        fy24NotMet += getMonthData(row, month, 'fy24_25', 'Not_Met');
+                    });
+                });
+                const fy24Total = fy24Met + fy24NotMet;
+                const fy24Comp = fy24Total > 0 ? ((fy24Met / fy24Total) * 100).toFixed(1) : 'N/A';
+
+                // Get FY 25-26 data for this project
+                const fy25Rows = filteredData.fy25_26.filter(row => 
+                    row.Project === projectName && 
+                    (row['Industry Type '] || row['Industry Type'] || 'Unknown').trim() === industryName
+                );
+                let fy25Met = 0, fy25NotMet = 0;
+                fy25months.forEach(month => {
+                    fy25Rows.forEach(row => {
+                        fy25Met += getMonthData(row, month, 'fy25_26', 'Met');
+                        fy25NotMet += getMonthData(row, month, 'fy25_26', 'Not_Met');
+                    });
+                });
+                const fy25Total = fy25Met + fy25NotMet;
+                const fy25Comp = fy25Total > 0 ? ((fy25Met / fy25Total) * 100).toFixed(1) : 'N/A';
+
+                // Get region and practice head
+                const sampleRow = fy25Rows.length > 0 ? fy25Rows[0] : (fy24Rows.length > 0 ? fy24Rows[0] : null);
+                const region = sampleRow ? sampleRow.Region : 'N/A';
+                const practice = sampleRow ? sampleRow['Practice Head'] : 'N/A';
+
+                const fy24Color = fy24Comp !== 'N/A' ? getRAGColor(parseFloat(fy24Comp)) : '#6c757d';
+                const fy25Color = fy25Comp !== 'N/A' ? getRAGColor(parseFloat(fy25Comp)) : '#6c757d';
+
+                // Calculate trend
+                let trendIcon = '━';
+                let trendColor = '#6c757d';
+                if (fy24Comp !== 'N/A' && fy25Comp !== 'N/A') {
+                    const diff = parseFloat(fy25Comp) - parseFloat(fy24Comp);
+                    if (diff > 2) {
+                        trendIcon = '↗';
+                        trendColor = '#10b981';
+                    } else if (diff < -2) {
+                        trendIcon = '↘';
+                        trendColor = '#ef4444';
+                    }
+                } else if (fy24Comp === 'N/A' && fy25Comp !== 'N/A') {
+                    trendIcon = '★';
+                    trendColor = '#f59e0b';
+                }
+
+                const escapedProject = projectName.replace(/'/g, "\\'");
+                projectRows += `
+                    <tr onclick="showProjectDrilldown('${escapedProject}')" style="cursor: pointer;" 
+                        onmouseover="this.style.background='rgba(255,107,53,0.05)'" 
+                        onmouseout="this.style.background=''">
+                        <td><strong>${projectName}</strong></td>
+                        <td>${region}</td>
+                        <td>${practice}</td>
+                        <td style="text-align: center;">
+                            <span style="display: inline-block; padding: 4px 10px; border-radius: 6px; font-weight: 600; 
+                                        color: white; background: ${fy24Color};">
+                                ${fy24Comp}${fy24Comp !== 'N/A' ? '%' : ''}
+                            </span>
+                        </td>
+                        <td style="text-align: center;">
+                            <span style="display: inline-block; padding: 4px 10px; border-radius: 6px; font-weight: 600; 
+                                        color: white; background: ${fy25Color};">
+                                ${fy25Comp}${fy25Comp !== 'N/A' ? '%' : ''}
+                            </span>
+                        </td>
+                        <td style="text-align: center;">
+                            <span style="font-size: 1.4rem; color: ${trendColor};">${trendIcon}</span>
+                        </td>
+                    </tr>`;
+            });
+
+            const drilldownContent = `
+                <div style="background: white; padding: 30px; border-radius: 12px; max-width: 95%; margin: 0 auto;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; 
+                                border-bottom: 3px solid var(--primary-color); padding-bottom: 15px;">
+                        <div>
+                            <h2 style="margin: 0 0 8px 0; color: var(--primary-color); display: flex; align-items: center; gap: 10px;">
+                                <i class="bi bi-briefcase-fill"></i> ${industryName}
+                            </h2>
+                            <p style="margin: 0; color: var(--text-secondary); font-size: 1rem;">
+                                ${projectsInIndustry.size} Project(s) | SLA Performance Analysis
+                            </p>
+                        </div>
+                        <button onclick="closeDrilldownPanel()" 
+                                style="background: var(--danger-color); color: white; border: none; padding: 10px 20px; 
+                                       border-radius: 8px; cursor: pointer; font-weight: 600; font-size: 1rem;
+                                       transition: all 0.3s ease;"
+                                onmouseover="this.style.background='var(--danger-dark)'"
+                                onmouseout="this.style.background='var(--danger-color)'">
+                            <i class="bi bi-x-lg"></i> Close
+                        </button>
+                    </div>
+
+                    <div style="background: linear-gradient(135deg, rgba(255,107,53,0.1) 0%, rgba(255,140,90,0.1) 100%); 
+                                padding: 20px; border-radius: 10px; margin-bottom: 25px; border-left: 5px solid var(--primary-color);">
+                        <h4 style="margin: 0 0 10px 0; color: var(--primary-color); display: flex; align-items: center; gap: 8px;">
+                            <i class="bi bi-info-circle-fill"></i> Industry Overview
+                        </h4>
+                        <p style="margin: 0; color: var(--text-primary); line-height: 1.6;">
+                            This view shows all projects within the <strong>${industryName}</strong> industry sector. 
+                            Click on any project row to view detailed month-by-month performance measures.
+                        </p>
+                    </div>
+
+                    <div style="overflow-x: auto;">
+                        <table style="width: 100%; border-collapse: separate; border-spacing: 0; box-shadow: var(--shadow-md); 
+                                      border-radius: 10px; overflow: hidden;">
+                            <thead style="background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-dark) 100%);">
+                                <tr>
+                                    <th style="padding: 15px; text-align: left; color: white; font-weight: 600; font-size: 0.95rem;">PROJECT</th>
+                                    <th style="padding: 15px; text-align: left; color: white; font-weight: 600; font-size: 0.95rem;">REGION</th>
+                                    <th style="padding: 15px; text-align: left; color: white; font-weight: 600; font-size: 0.95rem;">PRACTICE HEAD</th>
+                                    <th style="padding: 15px; text-align: center; color: white; font-weight: 600; font-size: 0.95rem;">FY 24-25</th>
+                                    <th style="padding: 15px; text-align: center; color: white; font-weight: 600; font-size: 0.95rem;">FY 25-26</th>
+                                    <th style="padding: 15px; text-align: center; color: white; font-weight: 600; font-size: 0.95rem;">TREND</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${projectRows}
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div style="margin-top: 20px; padding: 15px; background: rgba(255,107,53,0.05); border-radius: 8px; 
+                                border: 1px dashed var(--primary-color);">
+                        <p style="margin: 0; color: var(--text-secondary); font-size: 0.9rem; display: flex; align-items: center; gap: 8px;">
+                            <i class="bi bi-lightbulb-fill" style="color: var(--primary-color);"></i>
+                            <strong>Tip:</strong> Click on any project name to view detailed month-by-month performance metrics and drill-down analysis.
+                        </p>
+                    </div>
+                </div>`;
+
+            document.getElementById('drilldownPanel').innerHTML = drilldownContent;
+            document.getElementById('drilldownPanel').style.display = 'flex';
+            document.getElementById('drilldownPanel').style.alignItems = 'center';
+            document.getElementById('drilldownPanel').style.justifyContent = 'center';
+
             if (audioEnabled) {
-                speak(`Industry Type Analysis loaded. Showing performance for ${industryArray.length} industry sectors.`);
+                speak(`Showing ${projectsInIndustry.size} projects in ${industryName} industry.`);
             }
         }
 
