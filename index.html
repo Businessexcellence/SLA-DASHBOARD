@@ -6,7 +6,7 @@
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
-    <title>TAGGD - Customer SLA/KPI Performance Dashboard</title>
+    <title>TAGGD - Customer SLA/KPI Performance Dashboard v2.1</title>
     
     <!-- External Libraries -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0"></script>
@@ -9593,6 +9593,15 @@ function showView(view) {
             ]);
             
             console.log('Unique industries found:', Array.from(uniqueIndustries));
+            console.log('Number of unique industries:', uniqueIndustries.size);
+            
+            // Debug: Sample industry type values
+            if (filteredData.fy24_25.length > 0) {
+                console.log('Sample FY24-25 Industry Types:', filteredData.fy24_25.slice(0, 5).map(row => getIndustryType(row)));
+            }
+            if (filteredData.fy25_26.length > 0) {
+                console.log('Sample FY25-26 Industry Types:', filteredData.fy25_26.slice(0, 5).map(row => getIndustryType(row)));
+            }
 
             uniqueIndustries.forEach(industryName => {
                 // FY 24-25 data
