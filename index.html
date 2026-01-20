@@ -9816,6 +9816,12 @@ function showView(view) {
             return industry.toString().trim();
         }
 
+        // Close drill-down panel
+        function closeDrilldownPanel() {
+            document.getElementById('drilldownPanel').style.display = 'none';
+            document.getElementById('drilldownPanel').innerHTML = '';
+        }
+
         // Show Industry Drill-down (Similar to Project Drill-down)
         function showIndustryDrilldown(industryName) {
             console.log('Opening drill-down for industry:', industryName);
