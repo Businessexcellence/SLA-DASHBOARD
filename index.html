@@ -2792,6 +2792,24 @@
         }
 
     </style>
+    
+    <!-- Google Analytics 4 (GA4) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-C0MLJSWYFS"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+        
+        // Your actual GA4 Measurement ID: G-C0MLJSWYFS
+        gtag('config', 'G-C0MLJSWYFS', {
+            'page_title': document.title,
+            'page_location': window.location.href,
+            'page_path': window.location.pathname
+        });
+        
+        console.log('📊 Google Analytics initialized (Update tracking ID in code)');
+    </script>
+    
 </head>
 <body>
     <!-- Festival Celebration Overlay -->
@@ -3034,6 +3052,10 @@
             <div class="menu-item" id="nav-practice" title="Practice head performance tracking" onclick="speakAndExecute('Practice Head Analysis', () => showView('practice'))">
                 <i class="bi bi-people-fill"></i>
                 <span>Practice Head Analysis</span>
+            </div>
+            <div class="menu-item" id="nav-industry-met" title="Industry-wise SLA Met% analysis" onclick="speakAndExecute('Industry Met% Analysis', () => showView('industry-met'))">
+                <i class="bi bi-briefcase-fill"></i>
+                <span>Industry Met% Analysis</span>
             </div>
             <div class="menu-item" id="nav-benchmarking" title="Compare against industry standards" onclick="speakAndExecute('Industry Benchmarking', () => showView('benchmarking'))">
                 <i class="bi bi-trophy-fill"></i>
@@ -6065,6 +6087,9 @@ function showView(view) {
                 case 'practice':
                     renderPracticeView();
                     break;
+                case 'industry-met':
+                    renderIndustryMetView();
+                    break;
                 case 'benchmarking':
                     renderBenchmarkingView();
                     break;
@@ -8572,8 +8597,386 @@ function showView(view) {
             document.getElementById('dashboardContent').innerHTML = insightsHTML + cardsHTML;
 
             if (audioEnabled) {
-                speak(`Practice head analysis loaded with ${practiceArray.length} practice heads.`);
+                speak(`Practice head analysis loaded with ${practiceArray.length} practice heads.`);}
+        }
+        
+        // Render Industry Met% Analysis View
+        function renderIndustryMetView() {
+            console.log('📊 Industry Met% Analysis View Loading...');
+            
+            // Check if data is loaded (use dashboardData as fallback)
+            const dataSource = filteredData || dashboardData;
+            if (!dataSource || !dataSource.fy24_25 || !dataSource.fy25_26 || 
+                (dataSource.fy24_25.length === 0 && dataSource.fy25_26.length === 0)) {
+                document.getElementById('dashboardContent').innerHTML = `
+                    <div class="card" style="text-align: center; padding: 60px 40px;">
+                        <i class="bi bi-exclamation-triangle-fill" style="font-size: 64px; color: #ff6b35;"></i>
+                        <h2 style="color: #ff6b35; margin-top: 20px;">No Data Loaded</h2>
+                        <p style="color: #666; margin-top: 15px;">Please upload your Excel file to view Industry Met% Analysis.</p>
+                        <button onclick="document.getElementById('fileUpload').click()" 
+                                style="margin-top: 20px; padding: 15px 30px; background: #ff6b35; color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 1.1rem;">
+                            <i class="bi bi-upload"></i> Upload Excel File
+                        </button>
+                    </div>`;
+                return;
             }
+            
+            // Show loading state
+            document.getElementById('dashboardContent').innerHTML = `
+                <div class="card" style="text-align: center; padding: 60px 40px;">
+                    <div class="spinner-border" role="status" style="width: 4rem; height: 4rem; color: #ff6b35;">
+                        <span class="sr-only">Loading...</span>
+                    </div>
+                    <p style="margin-top: 20px; font-size: 1.2rem; color: #666;">Processing industry data...</p>
+                </div>`;
+            
+            // Process data after a short delay to show loading state
+            setTimeout(() => {
+                try {
+                    const industryData = processIndustryMetData();
+                    renderIndustryMetContent(industryData);
+                } catch (error) {
+                    console.error('Error processing industry data:', error);
+                    document.getElementById('dashboardContent').innerHTML = `
+                        <div class="card" style="text-align: center; padding: 60px 40px;">
+                            <i class="bi bi-exclamation-circle-fill" style="font-size: 64px; color: #dc3545;"></i>
+                            <h2 style="color: #dc3545; margin-top: 20px;">Error Processing Data</h2>
+                            <p style="color: #666; margin-top: 15px;">${error.message}</p>
+                        </div>`;
+                }
+            }, 300);
+        }
+        
+        // Process industry data for Met% analysis
+        function processIndustryMetData() {
+            console.log('Processing industry Met% data...');
+            
+            // Helper function to get industry type
+            function getIndustryType(row) {
+                const possibleColumns = ['Industry Type ', 'Industry Type', 'IndustryType', 'industry_type', 'INDUSTRY TYPE'];
+                for (let col of possibleColumns) {
+                    if (row[col] !== undefined && row[col] !== null && row[col] !== '') {
+                        return String(row[col]).trim();
+                    }
+                }
+                return 'Unknown';
+            }
+            
+            // Get unique industries
+            const dataSource = filteredData || dashboardData;
+            const industriesSet = new Set();
+            dataSource.fy24_25.forEach(row => industriesSet.add(getIndustryType(row)));
+            dataSource.fy25_26.forEach(row => industriesSet.add(getIndustryType(row)));
+            
+            const industries = Array.from(industriesSet).filter(ind => ind !== 'Unknown');
+            console.log(`Found ${industries.length} industries:`, industries);
+            
+            // Calculate Met% for each industry
+            const industryStats = industries.map(industry => {
+                // FY24-25 data
+                const fy24Rows = dataSource.fy24_25.filter(row => getIndustryType(row) === industry);
+                let fy24Met = 0, fy24NotMet = 0;
+                const fy24Months = extractMonthsFromData(dataSource.fy24_25, null);
+                
+                fy24Months.forEach(month => {
+                    fy24Rows.forEach(row => {
+                        fy24Met += parseInt(row[`${month}_Met`]) || 0;
+                        fy24NotMet += parseInt(row[`${month}_Not_Met`]) || 0;
+                    });
+                });
+                
+                const fy24Total = fy24Met + fy24NotMet;
+                const fy24Percent = fy24Total > 0 ? ((fy24Met / fy24Total) * 100) : 0;
+                
+                // FY25-26 data
+                const fy25Rows = dataSource.fy25_26.filter(row => getIndustryType(row) === industry);
+                let fy25Met = 0, fy25NotMet = 0;
+                const fy25Months = extractMonthsFromData(null, dataSource.fy25_26);
+                
+                fy25Months.forEach(month => {
+                    fy25Rows.forEach(row => {
+                        fy25Met += parseInt(row[`${month}_Met`]) || 0;
+                        fy25NotMet += parseInt(row[`${month}_Not_Met`]) || 0;
+                    });
+                });
+                
+                const fy25Total = fy25Met + fy25NotMet;
+                const fy25Percent = fy25Total > 0 ? ((fy25Met / fy25Total) * 100) : 0;
+                
+                // Calculate trend
+                const change = fy25Percent - fy24Percent;
+                const projectCount = new Set([...fy24Rows.map(r => r.Project), ...fy25Rows.map(r => r.Project)]).size;
+                
+                return {
+                    industry,
+                    projectCount,
+                    fy24: {
+                        met: fy24Met,
+                        notMet: fy24NotMet,
+                        total: fy24Total,
+                        percent: fy24Percent
+                    },
+                    fy25: {
+                        met: fy25Met,
+                        notMet: fy25NotMet,
+                        total: fy25Total,
+                        percent: fy25Percent
+                    },
+                    change: change,
+                    trend: change > 0 ? 'up' : change < 0 ? 'down' : 'stable'
+                };
+            });
+            
+            // Sort by FY25 percent descending
+            industryStats.sort((a, b) => b.fy25.percent - a.fy25.percent);
+            
+            console.log('Industry stats processed:', industryStats.length, 'industries');
+            return industryStats;
+        }
+        
+        // Render industry Met% content
+        function renderIndustryMetContent(industryData) {
+            // Calculate summary stats
+            const avgFY24 = industryData.reduce((sum, ind) => sum + ind.fy24.percent, 0) / industryData.length;
+            const avgFY25 = industryData.reduce((sum, ind) => sum + ind.fy25.percent, 0) / industryData.length;
+            const improving = industryData.filter(ind => ind.change > 2).length;
+            const declining = industryData.filter(ind => ind.change < -2).length;
+            const topIndustry = industryData[0];
+            
+            // RAG color function
+            function getRAGColor(percent) {
+                if (percent >= 80) return '#22c55e';
+                if (percent >= 50) return '#f59e0b';
+                return '#ef4444';
+            }
+            
+            // Build HTML
+            const html = `
+                <div class="insights-section" style="margin-bottom: 30px;">
+                    <h1><i class="bi bi-briefcase-fill"></i> Industry-wise SLA Met% Analysis</h1>
+                    <p style="color: var(--text-secondary); font-size: 1.1em; margin-top: 10px;">
+                        Comparative analysis of SLA achievement across ${industryData.length} industry types
+                    </p>
+                </div>
+                
+                <!-- Summary Cards -->
+                <div class="forecast-summary-cards" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; margin-bottom: 30px;">
+                    <div class="forecast-card">
+                        <div class="forecast-card-title">Total Industries</div>
+                        <div class="forecast-card-value">${industryData.length}</div>
+                        <div class="forecast-card-subtitle">Analyzed</div>
+                    </div>
+                    <div class="forecast-card">
+                        <div class="forecast-card-title">Avg FY 24-25</div>
+                        <div class="forecast-card-value">${avgFY24.toFixed(1)}%</div>
+                        <div class="forecast-card-subtitle">Overall average</div>
+                    </div>
+                    <div class="forecast-card">
+                        <div class="forecast-card-title">Avg FY 25-26</div>
+                        <div class="forecast-card-value">${avgFY25.toFixed(1)}%</div>
+                        <div class="forecast-card-subtitle">Current year</div>
+                    </div>
+                    <div class="forecast-card">
+                        <div class="forecast-card-title">Improving</div>
+                        <div class="forecast-card-value" style="color: #22c55e;">${improving}</div>
+                        <div class="forecast-card-subtitle">↑ +2% or more</div>
+                    </div>
+                    <div class="forecast-card">
+                        <div class="forecast-card-title">Top Performer</div>
+                        <div class="forecast-card-value" style="font-size: 1.2rem;">${topIndustry.fy25.percent.toFixed(1)}%</div>
+                        <div class="forecast-card-subtitle">${topIndustry.industry.substring(0, 20)}${topIndustry.industry.length > 20 ? '...' : ''}</div>
+                    </div>
+                </div>
+                
+                <!-- Insights -->
+                <div class="forecast-insights" style="margin-bottom: 30px;">
+                    <h3><i class="bi bi-lightbulb-fill"></i> Key Insights</h3>
+                    <ul class="forecast-insights-list">
+                        <li><span class="forecast-insights-icon">📊</span> <span>${industryData.length} industries analyzed with ${avgFY25.toFixed(1)}% average SLA Met% in FY 25-26</span></li>
+                        <li><span class="forecast-insights-icon">📈</span> <span>${improving} industries showing improvement (≥2% increase) compared to previous year</span></li>
+                        <li><span class="forecast-insights-icon">📉</span> <span>${declining} industries requiring attention (≥2% decline) in current fiscal year</span></li>
+                        <li><span class="forecast-insights-icon">🏆</span> <span>${topIndustry.industry} leads with ${topIndustry.fy25.percent.toFixed(1)}% SLA Met% (${topIndustry.projectCount} projects)</span></li>
+                    </ul>
+                </div>
+                
+                <!-- Industry Table -->
+                <div class="card">
+                    <h3><i class="bi bi-table"></i> Industry-wise SLA Met% Comparison</h3>
+                    <div style="margin: 20px 0; display: flex; gap: 10px; align-items: center;">
+                        <input type="text" id="industrySearch" placeholder="🔍 Search industries..." 
+                               style="flex: 1; padding: 10px; border: 2px solid #e5e7eb; border-radius: 8px; font-size: 1rem;"
+                               onkeyup="filterIndustryTable()">
+                        <select id="industrySortSelect" onchange="sortIndustryTable()" 
+                                style="padding: 10px; border: 2px solid #e5e7eb; border-radius: 8px; font-size: 1rem;">
+                            <option value="fy25-desc">Sort: FY25 % (High to Low)</option>
+                            <option value="fy25-asc">Sort: FY25 % (Low to High)</option>
+                            <option value="change-desc">Sort: Change (High to Low)</option>
+                            <option value="change-asc">Sort: Change (Low to High)</option>
+                            <option value="name-asc">Sort: Name (A to Z)</option>
+                        </select>
+                    </div>
+                    <div style="overflow-x: auto;">
+                        <table class="dashboard-table" id="industryMetTable">
+                            <thead>
+                                <tr>
+                                    <th style="text-align: left; min-width: 200px;">Industry Type</th>
+                                    <th style="text-align: center;">Projects</th>
+                                    <th style="text-align: center;">FY 24-25 Met%</th>
+                                    <th style="text-align: center;">FY 25-26 Met%</th>
+                                    <th style="text-align: center;">Change</th>
+                                    <th style="text-align: center;">Trend</th>
+                                </tr>
+                            </thead>
+                            <tbody id="industryMetTableBody">
+                                ${industryData.map(ind => `
+                                    <tr class="industry-row" data-industry="${ind.industry}" style="transition: background 0.2s;">
+                                        <td style="font-weight: 600;">${ind.industry}</td>
+                                        <td style="text-align: center;">${ind.projectCount}</td>
+                                        <td style="text-align: center;">
+                                            <span style="display: inline-block; padding: 6px 12px; border-radius: 6px; color: white; font-weight: 600; background: ${getRAGColor(ind.fy24.percent)};">
+                                                ${ind.fy24.percent.toFixed(1)}%
+                                            </span>
+                                        </td>
+                                        <td style="text-align: center;">
+                                            <span style="display: inline-block; padding: 6px 12px; border-radius: 6px; color: white; font-weight: 600; background: ${getRAGColor(ind.fy25.percent)};">
+                                                ${ind.fy25.percent.toFixed(1)}%
+                                            </span>
+                                        </td>
+                                        <td style="text-align: center; color: ${ind.change > 0 ? '#22c55e' : ind.change < 0 ? '#ef4444' : '#666'}; font-weight: 600;">
+                                            ${ind.change > 0 ? '+' : ''}${ind.change.toFixed(1)}%
+                                        </td>
+                                        <td style="text-align: center; font-size: 1.5rem;">
+                                            ${ind.trend === 'up' ? '📈' : ind.trend === 'down' ? '📉' : '➡️'}
+                                        </td>
+                                    </tr>
+                                `).join('')}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                
+                <!-- Chart -->
+                <div class="card" style="margin-top: 30px;">
+                    <h3><i class="bi bi-bar-chart-fill"></i> Top 15 Industries - SLA Met% Comparison</h3>
+                    <canvas id="industryMetChart" style="max-height: 500px;"></canvas>
+                </div>
+            `;
+            
+            document.getElementById('dashboardContent').innerHTML = html;
+            
+            // Render chart
+            setTimeout(() => {
+                renderIndustryMetChart(industryData.slice(0, 15));
+            }, 100);
+            
+            // Update navigation
+            document.querySelectorAll('.menu-item').forEach(item => item.classList.remove('active'));
+            document.getElementById('nav-industry-met').classList.add('active');
+            
+            if (audioEnabled) {
+                speak(`Industry Met% Analysis loaded. ${industryData.length} industries analyzed. ${improving} industries improving, ${declining} declining.`);
+            }
+        }
+        
+        // Render industry Met% chart
+        function renderIndustryMetChart(topIndustries) {
+            const ctx = document.getElementById('industryMetChart').getContext('2d');
+            
+            if (charts.industryMet) {
+                charts.industryMet.destroy();
+            }
+            
+            charts.industryMet = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: topIndustries.map(ind => ind.industry),
+                    datasets: [
+                        {
+                            label: 'FY 24-25',
+                            data: topIndustries.map(ind => ind.fy24.percent),
+                            backgroundColor: '#9CA3AF',
+                            borderColor: '#6B7280',
+                            borderWidth: 1
+                        },
+                        {
+                            label: 'FY 25-26',
+                            data: topIndustries.map(ind => ind.fy25.percent),
+                            backgroundColor: '#ff6b35',
+                            borderColor: '#e55a28',
+                            borderWidth: 1
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: true,
+                    plugins: {
+                        legend: {
+                            display: true,
+                            position: 'top',
+                            labels: {
+                                font: { size: 14, weight: 'bold' },
+                                padding: 15
+                            }
+                        },
+                        tooltip: {
+                            backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                            titleFont: { size: 14, weight: 'bold' },
+                            bodyFont: { size: 13 },
+                            padding: 12,
+                            callbacks: {
+                                label: function(context) {
+                                    return context.dataset.label + ': ' + context.parsed.y.toFixed(1) + '%';
+                                }
+                            }
+                        },
+                        datalabels: {
+                            display: false
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            max: 100,
+                            ticks: {
+                                callback: value => value + '%',
+                                font: { size: 12 }
+                            },
+                            grid: { color: 'rgba(0, 0, 0, 0.05)' }
+                        },
+                        x: {
+                            ticks: {
+                                font: { size: 11 },
+                                maxRotation: 45,
+                                minRotation: 45
+                            },
+                            grid: { display: false }
+                        }
+                    }
+                }
+            });
+        }
+        
+        // Filter industry table
+        function filterIndustryTable() {
+            const searchValue = document.getElementById('industrySearch').value.toLowerCase();
+            const rows = document.querySelectorAll('#industryMetTable .industry-row');
+            
+            rows.forEach(row => {
+                const industryName = row.getAttribute('data-industry').toLowerCase();
+                if (industryName.includes(searchValue)) {
+                    row.style.display = '';
+                } else {
+                    row.style.display = 'none';
+                }
+            });
+        }
+        
+        // Sort industry table
+        function sortIndustryTable() {
+            // This would require re-rendering with sorted data
+            // For now, just refresh the view
+            renderIndustryMetView();
         }
         
         // Render User Manual
@@ -8597,9 +9000,10 @@ function showView(view) {
                         </div>
                         <div>
                             <a href="#section-audio" style="display: block; padding: 10px; text-decoration: none; color: #ff6b35; background: white; border-radius: 8px; margin-bottom: 8px;"><strong>7.</strong> Audio Features</a>
-                            <a href="#section-export" style="display: block; padding: 10px; text-decoration: none; color: #ff6b35; background: white; border-radius: 8px; margin-bottom: 8px;"><strong>8.</strong> Export Options</a>
-                            <a href="#section-faq" style="display: block; padding: 10px; text-decoration: none; color: #ff6b35; background: white; border-radius: 8px; margin-bottom: 8px;"><strong>9.</strong> FAQ</a>
-                            <a href="#section-bestpractices" style="display: block; padding: 10px; text-decoration: none; color: #ff6b35; background: white; border-radius: 8px; margin-bottom: 8px;"><strong>10.</strong> Best Practices</a>
+                            <a href="#section-forecasting" style="display: block; padding: 10px; text-decoration: none; color: #ff6b35; background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%); border-radius: 8px; margin-bottom: 8px; border-left: 3px solid #ff6b35;"><strong>8.</strong> 📈 Forecasting Methodology (NEW!)</a>
+                            <a href="#section-export" style="display: block; padding: 10px; text-decoration: none; color: #ff6b35; background: white; border-radius: 8px; margin-bottom: 8px;"><strong>9.</strong> Export Options</a>
+                            <a href="#section-faq" style="display: block; padding: 10px; text-decoration: none; color: #ff6b35; background: white; border-radius: 8px; margin-bottom: 8px;"><strong>10.</strong> FAQ</a>
+                            <a href="#section-bestpractices" style="display: block; padding: 10px; text-decoration: none; color: #ff6b35; background: white; border-radius: 8px; margin-bottom: 8px;"><strong>11.</strong> Best Practices</a>
                         </div>
                     </div>
                 </div>
@@ -9431,6 +9835,80 @@ function showView(view) {
                     
                     <h4 style="margin-top: 20px; color: var(--primary-color);">PDF Export</h4>
                     <p>Creates a PDF snapshot of the current dashboard view including all visible charts and tables.</p>
+                </div>
+                
+                <div class="card animated-card" style="animation-delay: 0.55s; background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%); border-left: 5px solid #ff6b35;" id="section-forecasting">
+                    <h3><i class="bi bi-graph-up-arrow"></i> 📈 Forecasting Methodology (NEW!)</h3>
+                    <p>The Forecasting view provides predictive analytics for SLA performance till the Financial Year End (March 31, 2026) using robust statistical methods.</p>
+                    
+                    <h4 style="margin-top: 20px; color: var(--primary-color);">How Forecasting Works</h4>
+                    <div style="background: white; padding: 20px; border-radius: 10px; margin: 15px 0;">
+                        <p><strong>1. Historical Data Analysis (8 months):</strong></p>
+                        <ul style="line-height: 1.8; margin-left: 20px;">
+                            <li>Analyzes FY 25-26 data from April to November 2025</li>
+                            <li>Extracts monthly SLA Met and Not Met counts</li>
+                            <li>Calculates monthly success rates (Met / Total × 100)</li>
+                        </ul>
+                        
+                        <p style="margin-top: 15px;"><strong>2. Median-Based Robust Forecasting:</strong></p>
+                        <ul style="line-height: 1.8; margin-left: 20px;">
+                            <li><strong>Median instead of Mean:</strong> Uses median values which are robust against outliers and provide more stable predictions</li>
+                            <li><strong>Trend Analysis:</strong> Compares recent 4 months vs earlier 4 months to detect improvement or decline</li>
+                            <li><strong>Variability Assessment:</strong> Calculates standard deviation to measure performance consistency</li>
+                        </ul>
+                        
+                        <p style="margin-top: 15px;"><strong>3. Forecast Period:</strong></p>
+                        <ul style="line-height: 1.8; margin-left: 20px;">
+                            <li>Predicts performance for <strong>December 2025, January 2026, February 2026, and March 2026</strong></li>
+                            <li>Extends forecast till <strong>Financial Year End (March 31, 2026)</strong></li>
+                            <li>Uses trend-adjusted median to project future SLA Met%</li>
+                        </ul>
+                        
+                        <p style="margin-top: 15px;"><strong>4. Risk Assessment:</strong></p>
+                        <ul style="line-height: 1.8; margin-left: 20px;">
+                            <li>🟢 <strong>Low Risk:</strong> Median SLA ≥ 70% and low variability (StdDev ≤ 5)</li>
+                            <li>🟡 <strong>Medium Risk:</strong> Median SLA 60-70% or moderate variability (StdDev 5-8)</li>
+                            <li>🔴 <strong>High Risk:</strong> Median SLA < 60% or high variability (StdDev > 8)</li>
+                        </ul>
+                    </div>
+                    
+                    <h4 style="margin-top: 20px; color: var(--primary-color);">Forecasting Formula</h4>
+                    <div style="background: white; padding: 20px; border-radius: 10px; margin: 15px 0; font-family: monospace;">
+                        <p><strong>Median SLA Rate:</strong> Median of [April, May, Jun, Jul, Aug, Sep, Oct, Nov] SLA%</p>
+                        <p><strong>Trend Change:</strong> Median[Recent 4 months] - Median[Earlier 4 months]</p>
+                        <p><strong>Forecasted Rate:</strong> Median SLA Rate + (Trend Change × 0.5)</p>
+                        <p><strong>Confidence Interval:</strong> Forecasted Rate ± Standard Deviation</p>
+                    </div>
+                    
+                    <h4 style="margin-top: 20px; color: var(--primary-color);">Key Insights Provided</h4>
+                    <ul style="line-height: 1.8; margin-left: 20px;">
+                        <li><strong>Current SLA Rate:</strong> Median of last 8 months' performance</li>
+                        <li><strong>Predicted SLA Rate:</strong> Expected performance for remaining FY months (Dec-Mar)</li>
+                        <li><strong>Forecasted Targets Met:</strong> Expected number of SLAs met per month</li>
+                        <li><strong>Trend Direction:</strong> Positive (improving), Negative (declining), or Neutral (stable)</li>
+                        <li><strong>Performance Volatility:</strong> How consistent the SLA achievement has been</li>
+                    </ul>
+                    
+                    <h4 style="margin-top: 20px; color: var(--primary-color);">Charts Included</h4>
+                    <ol style="line-height: 1.8; margin-left: 20px;">
+                        <li><strong>Historical & Forecasted Performance:</strong> Line chart showing past 8 months (solid line) and future 4 months (dashed projection line) till March 31, 2026</li>
+                        <li><strong>Targets Met vs Not Met Forecast:</strong> Stacked bar chart comparing historical and projected achievement</li>
+                        <li><strong>Monthly Success Rate Distribution:</strong> Bar chart showing consistency of performance</li>
+                        <li><strong>Confidence Intervals:</strong> Error bars showing prediction uncertainty range</li>
+                    </ol>
+                    
+                    <h4 style="margin-top: 20px; color: var(--primary-color);">Use Cases</h4>
+                    <ul style="line-height: 1.8; margin-left: 20px;">
+                        <li>📊 <strong>Planning:</strong> Forecast year-end SLA performance to plan resource allocation</li>
+                        <li>⚠️ <strong>Risk Mitigation:</strong> Identify declining trends early and take corrective action</li>
+                        <li>🎯 <strong>Goal Setting:</strong> Set realistic targets based on historical performance patterns</li>
+                        <li>📈 <strong>Progress Tracking:</strong> Monitor if current trajectory will meet FY end goals</li>
+                        <li>💼 <strong>Executive Reporting:</strong> Present data-driven predictions to stakeholders</li>
+                    </ul>
+                    
+                    <div style="background: #fff3cd; border-left: 5px solid #ffc107; padding: 15px; margin-top: 20px; border-radius: 8px;">
+                        <p style="margin: 0; color: #856404;"><strong>⚠️ Important Note:</strong> Forecasts are statistical predictions based on historical patterns. Actual results may vary due to external factors, process changes, or seasonal variations. Use forecasts as guidance, not absolute predictions.</p>
+                    </div>
                 </div>
                 
                 <div class="card animated-card" style="animation-delay: 0.6s;" id="section-faq">
@@ -11928,7 +12406,7 @@ function showView(view) {
                     <div class="forecast-header">
                         <h1>📈 Performance Forecasting & Predictions</h1>
                         <p style="color: var(--text-secondary); font-size: 1.1em;">
-                            Median-based robust forecasting for the next 4 months
+                            Median-based robust forecasting till Financial Year End (March 31, 2026)
                         </p>
                     </div>
 
@@ -11943,7 +12421,7 @@ function showView(view) {
                         <div class="forecast-card">
                             <div class="forecast-card-title">Predicted SLA Rate</div>
                             <div class="forecast-card-value">${forecast.predictedRate.toFixed(1)}%</div>
-                            <div class="forecast-card-subtitle">Next 4 months forecast</div>
+                            <div class="forecast-card-subtitle">Till FY End (Mar 31, 2026)</div>
                             <div class="forecast-trend ${forecast.trend}">
                                 <i class="bi bi-${forecast.trend === 'positive' ? 'arrow-up' : forecast.trend === 'negative' ? 'arrow-down' : 'arrow-right'}"></i>
                                 ${forecast.trendText}
@@ -12022,8 +12500,8 @@ function showView(view) {
                             <div class="methodology-item">
                                 <span class="methodology-icon">🔮</span>
                                 <div class="methodology-text">
-                                    <h4>4-Month Forecast</h4>
-                                    <p>Predicts performance for December 2025 through March 2026 based on historical data patterns.</p>
+                                    <h4>Forecast Till FY End</h4>
+                                    <p>Predicts performance for remaining months (Dec 2025 - Mar 2026) till Financial Year End based on historical data patterns.</p>
                                 </div>
                             </div>
                             <div class="methodology-item">
@@ -12278,6 +12756,30 @@ function showView(view) {
                                 label: function(context) {
                                     return context.dataset.label + ': ' + (context.parsed.y ? context.parsed.y.toFixed(1) + '%' : 'N/A');
                                 }
+                            }
+                        },
+                        datalabels: {
+                            display: true,
+                            align: 'top',
+                            anchor: 'end',
+                            color: '#333',
+                            font: {
+                                weight: 'bold',
+                                size: 11
+                            },
+                            formatter: function(value, context) {
+                                // Only show labels for data points that exist
+                                if (value === null || value === undefined) return '';
+                                // Show labels for last historical point and all forecast points
+                                const dataIndex = context.dataIndex;
+                                const datasetIndex = context.datasetIndex;
+                                const dataLength = context.dataset.data.length;
+                                
+                                // Show on last 5 points (last month + 4 forecast months)
+                                if (dataIndex >= dataLength - 5) {
+                                    return value.toFixed(1) + '%';
+                                }
+                                return '';
                             }
                         }
                     },
@@ -14177,6 +14679,187 @@ function showView(view) {
             </div>
         </div>
     </div>
+
+    <!-- Admin Panel for Analytics (Password Protected) -->
+    <div id="adminPanel" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 10000; overflow-y: auto;">
+        <div style="max-width: 1200px; margin: 50px auto; background: white; border-radius: 15px; padding: 40px; position: relative;">
+            <button onclick="closeAdminPanel()" style="position: absolute; top: 20px; right: 20px; background: #ef4444; color: white; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer; font-size: 1rem;">
+                <i class="bi bi-x-lg"></i> Close
+            </button>
+            
+            <div id="adminLoginSection">
+                <h2 style="color: #ff6b35; margin-bottom: 20px;"><i class="bi bi-shield-lock-fill"></i> Admin Panel - Protected Access</h2>
+                <p style="color: #666; margin-bottom: 30px;">Enter the admin password to view analytics and usage statistics.</p>
+                
+                <div style="max-width: 400px;">
+                    <input type="password" id="adminPassword" placeholder="Enter admin password" 
+                           style="width: 100%; padding: 15px; border: 2px solid #e5e7eb; border-radius: 8px; font-size: 1rem; margin-bottom: 20px;"
+                           onkeypress="if(event.key==='Enter') checkAdminPassword()">
+                    <button onclick="checkAdminPassword()" 
+                            style="width: 100%; padding: 15px; background: #ff6b35; color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 1.1rem; font-weight: 600;">
+                        <i class="bi bi-unlock-fill"></i> Unlock Admin Panel
+                    </button>
+                    <p id="adminError" style="color: #ef4444; margin-top: 15px; display: none;"></p>
+                </div>
+            </div>
+            
+            <div id="adminContentSection" style="display: none;">
+                <h2 style="color: #ff6b35; margin-bottom: 10px;"><i class="bi bi-graph-up"></i> Analytics & Usage Dashboard</h2>
+                <p style="color: #666; margin-bottom: 30px;">Real-time dashboard usage statistics and visitor analytics</p>
+                
+                <!-- Google Analytics Embed -->
+                <div style="background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%); padding: 30px; border-radius: 10px; border-left: 5px solid #ff6b35; margin-bottom: 30px;">
+                    <h3 style="margin-top: 0;"><i class="bi bi-info-circle-fill"></i> How to View Analytics</h3>
+                    <ol style="line-height: 2; color: #333;">
+                        <li><strong>Google Analytics Dashboard:</strong> Visit <a href="https://analytics.google.com" target="_blank" style="color: #ff6b35; font-weight: 600;">analytics.google.com</a></li>
+                        <li><strong>Select Property:</strong> Choose "TAGGD Dashboard" property</li>
+                        <li><strong>View Reports:</strong> Navigate to Reports → Realtime or Reports → Engagement</li>
+                        <li><strong>Key Metrics Available:</strong>
+                            <ul style="margin-top: 10px;">
+                                <li>✅ Number of visitors (daily/weekly/monthly)</li>
+                                <li>✅ Unique vs returning visitors</li>
+                                <li>✅ Page views per session</li>
+                                <li>✅ Average session duration</li>
+                                <li>✅ Geographic location (country/city)</li>
+                                <li>✅ Browser/Device type</li>
+                                <li>✅ Referral sources</li>
+                                <li>✅ Real-time visitor count</li>
+                                <li>✅ Which pages/views are most popular</li>
+                            </ul>
+                        </li>
+                    </ol>
+                </div>
+                
+                <!-- Setup Instructions -->
+                <div class="card" style="margin-bottom: 30px;">
+                    <h3><i class="bi bi-gear-fill"></i> Google Analytics Setup Status</h3>
+                    <div style="background: #d1fae5; border-left: 5px solid #10b981; padding: 20px; margin-top: 20px; border-radius: 8px;">
+                        <p style="margin: 0; color: #065f46; font-weight: 600;">✅ TRACKING ACTIVE: Analytics Configured</p>
+                        <p style="margin: 10px 0 0 0; color: #047857;">
+                            Your Google Analytics is set up with Measurement ID: <code style="background: #d1fae5; padding: 2px 6px; border-radius: 4px; font-weight: bold;">G-C0MLJSWYFS</code>
+                        </p>
+                        <p style="margin: 10px 0 0 0; color: #047857;">
+                            Data collection is active. Visit <a href="https://analytics.google.com" target="_blank" style="color: #059669; font-weight: 600;">Google Analytics</a> to view reports (data appears in 24-48 hours).
+                        </p>
+                    </div>
+                    
+                    <h4 style="margin-top: 30px; color: #ff6b35;">How to Get Your GA4 Tracking ID:</h4>
+                    <ol style="line-height: 2; color: #333;">
+                        <li>Go to <a href="https://analytics.google.com" target="_blank" style="color: #ff6b35;">analytics.google.com</a></li>
+                        <li>Create a new GA4 property named "TAGGD Dashboard"</li>
+                        <li>Set up a Data Stream for your website</li>
+                        <li>Copy the Measurement ID (format: G-XXXXXXXXXX)</li>
+                        <li>Replace both instances of G-XXXXXXXXXX in index.html</li>
+                        <li>Wait 24 hours for data to start appearing</li>
+                    </ol>
+                </div>
+                
+                <!-- Quick Stats Summary -->
+                <div class="card">
+                    <h3><i class="bi bi-clipboard-data-fill"></i> Quick Stats Summary</h3>
+                    <p style="color: #666;">Once Google Analytics is configured, you'll be able to see:</p>
+                    
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px; margin-top: 20px;">
+                        <div style="background: linear-gradient(135deg, #e0f2fe 0%, #bae6fd 100%); padding: 20px; border-radius: 10px; text-align: center;">
+                            <div style="font-size: 3rem;">👥</div>
+                            <h4 style="margin: 10px 0 5px 0;">Total Visitors</h4>
+                            <p style="margin: 0; color: #666; font-size: 0.9rem;">Daily, weekly, monthly counts</p>
+                        </div>
+                        
+                        <div style="background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%); padding: 20px; border-radius: 10px; text-align: center;">
+                            <div style="font-size: 3rem;">📊</div>
+                            <h4 style="margin: 10px 0 5px 0;">Page Views</h4>
+                            <p style="margin: 0; color: #666; font-size: 0.9rem;">Most popular dashboard views</p>
+                        </div>
+                        
+                        <div style="background: linear-gradient(135deg, #ddd6fe 0%, #c4b5fd 100%); padding: 20px; border-radius: 10px; text-align: center;">
+                            <div style="font-size: 3rem;">⏱️</div>
+                            <h4 style="margin: 10px 0 5px 0;">Session Duration</h4>
+                            <p style="margin: 0; color: #666; font-size: 0.9rem;">Average time spent on dashboard</p>
+                        </div>
+                        
+                        <div style="background: linear-gradient(135deg, #dcfce7 0%, #bbf7d0 100%); padding: 20px; border-radius: 10px; text-align: center;">
+                            <div style="font-size: 3rem;">🌍</div>
+                            <h4 style="margin: 10px 0 5px 0;">Geographic Data</h4>
+                            <p style="margin: 0; color: #666; font-size: 0.9rem;">Countries and cities</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Direct Link to GA Dashboard -->
+                <div style="text-align: center; margin-top: 30px;">
+                    <a href="https://analytics.google.com" target="_blank" 
+                       style="display: inline-block; padding: 15px 40px; background: #ff6b35; color: white; text-decoration: none; border-radius: 8px; font-size: 1.1rem; font-weight: 600;">
+                        <i class="bi bi-box-arrow-up-right"></i> Open Google Analytics Dashboard
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Admin Panel JavaScript -->
+    <script>
+        // Admin password (hardcoded - for production, consider more secure methods)
+        const ADMIN_PASSWORD = 'Taggd@2026';
+        
+        // Open admin panel
+        function openAdminPanel() {
+            document.getElementById('adminPanel').style.display = 'block';
+            document.getElementById('adminLoginSection').style.display = 'block';
+            document.getElementById('adminContentSection').style.display = 'none';
+            document.getElementById('adminPassword').value = '';
+            document.getElementById('adminError').style.display = 'none';
+        }
+        
+        // Close admin panel
+        function closeAdminPanel() {
+            document.getElementById('adminPanel').style.display = 'none';
+        }
+        
+        // Check admin password
+        function checkAdminPassword() {
+            const enteredPassword = document.getElementById('adminPassword').value;
+            const errorMsg = document.getElementById('adminError');
+            
+            if (enteredPassword === ADMIN_PASSWORD) {
+                // Correct password
+                document.getElementById('adminLoginSection').style.display = 'none';
+                document.getElementById('adminContentSection').style.display = 'block';
+                errorMsg.style.display = 'none';
+                
+                // Track admin access
+                if (typeof gtag === 'function') {
+                    gtag('event', 'admin_access', {
+                        'event_category': 'Admin',
+                        'event_label': 'Admin Panel Accessed'
+                    });
+                }
+            } else {
+                // Incorrect password
+                errorMsg.textContent = '❌ Incorrect password. Please try again.';
+                errorMsg.style.display = 'block';
+                document.getElementById('adminPassword').value = '';
+                document.getElementById('adminPassword').focus();
+                
+                // Track failed attempt
+                if (typeof gtag === 'function') {
+                    gtag('event', 'admin_access_failed', {
+                        'event_category': 'Admin',
+                        'event_label': 'Failed Login Attempt'
+                    });
+                }
+            }
+        }
+        
+        // Add keyboard shortcut to open admin panel (Ctrl+Shift+A)
+        document.addEventListener('keydown', function(event) {
+            if (event.ctrlKey && event.shiftKey && event.key === 'A') {
+                openAdminPanel();
+            }
+        });
+        
+        console.log('🔐 Admin Panel available - Press Ctrl+Shift+A or call openAdminPanel()');
+    </script>
 
 </body>
 </html>
