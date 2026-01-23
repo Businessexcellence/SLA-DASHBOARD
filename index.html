@@ -12144,7 +12144,7 @@ function showView(view) {
         // Extract monthly data for forecasting
         function extractMonthlyDataForForecasting() {
             const fy2526 = dashboardData.fy25_26 || [];
-            const months = ['Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov'];
+            const months = ['Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
             const monthlyStats = [];
 
             months.forEach(month => {
@@ -12378,21 +12378,31 @@ function showView(view) {
                             display: true,
                             align: 'top',
                             anchor: 'end',
-                            color: '#333',
+                            color: '#FFFFFF',
+                            backgroundColor: function(context) {
+                                const dataIndex = context.dataIndex;
+                                const totalLength = context.dataset.data.length;
+                                // Historical data = orange background, Forecast = blue background
+                                if (context.datasetIndex === 0) return '#FF6B35'; // Historical
+                                if (context.datasetIndex === 1) return '#4A90E2'; // Forecast
+                                return 'transparent';
+                            },
+                            borderRadius: 4,
+                            padding: 6,
                             font: {
                                 weight: 'bold',
-                                size: 11
+                                size: 14
                             },
                             formatter: function(value, context) {
                                 // Only show labels for data points that exist
                                 if (value === null || value === undefined) return '';
-                                // Show labels for last historical point and all forecast points
                                 const dataIndex = context.dataIndex;
                                 const datasetIndex = context.datasetIndex;
                                 const dataLength = context.dataset.data.length;
                                 
-                                // Show on last 6 points (last 3 historical months: Oct, Nov, Dec + 3 forecast months: Jan, Feb, Mar)
-                                if (dataIndex >= dataLength - 6) {
+                                // Show on last 6 points (Oct, Nov, Dec + Jan, Feb, Mar)
+                                // For 9 historical + 3 forecast = 12 total, show labels on last 6 (index >= 6)
+                                if (dataIndex >= 6) {
                                     return value.toFixed(1) + '%';
                                 }
                                 return '';
@@ -13044,7 +13054,7 @@ function showView(view) {
 
         function calculateForecast(data) {
             // Extract monthly data
-            const months = ['Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov'];
+            const months = ['Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
             const monthlyData = [];
             
             months.forEach(month => {
