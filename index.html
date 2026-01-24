@@ -2807,7 +2807,123 @@
             'page_path': window.location.pathname
         });
         
-        console.log('📊 Google Analytics initialized (Update tracking ID in code)');
+        console.log('📊 Google Analytics initialized with Measurement ID: G-C0MLJSWYFS');
+        
+        // =================== COMPREHENSIVE GA4 EVENT TRACKING ===================
+        // SAFETY: All tracking wrapped in try-catch to prevent dashboard breakage
+        
+        // Safe tracking wrapper - ensures errors never break dashboard
+        window.safeTrack = function(eventName, params) {
+            try {
+                if (typeof gtag === 'function') {
+                    gtag('event', eventName, params || {});
+                }
+            } catch (e) {
+                // Silent fail - tracking error won't break dashboard
+            }
+        };
+        
+        // Track view navigation (called from showView function later)
+        window.trackViewNavigation = function(viewName) {
+            window.safeTrack('view_navigation', {
+                'view_name': viewName,
+                'event_category': 'Navigation',
+                'event_label': 'View Change',
+                'timestamp': new Date().toISOString()
+            });
+        };
+        
+        // Track time spent on views (called when leaving a view)
+        window.trackTimeSpent = function(viewName, seconds) {
+            if (seconds > 2) { // Only track meaningful time
+                window.safeTrack('time_on_view', {
+                    'view_name': viewName,
+                    'time_seconds': seconds,
+                    'event_category': 'Engagement',
+                    'event_label': 'Time Spent'
+                });
+            }
+        };
+        
+        // Track filter usage (called when filters applied)
+        window.trackFilterUsage = function(filterType, filterValue) {
+            window.safeTrack('filter_applied', {
+                'filter_type': filterType,
+                'filter_value': filterValue,
+                'event_category': 'Interaction',
+                'event_label': 'Filter Used'
+            });
+        };
+        
+        // Track export actions (called on export)
+        window.trackExport = function(exportType, viewName) {
+            window.safeTrack('export_action', {
+                'export_type': exportType,
+                'view_name': viewName,
+                'event_category': 'Conversion',
+                'event_label': 'Data Export'
+            });
+        };
+        
+        // Track file uploads (called on file upload)
+        window.trackFileUpload = function(fileName, fileSize) {
+            window.safeTrack('file_upload', {
+                'file_name': fileName,
+                'file_size_kb': Math.round(fileSize / 1024),
+                'event_category': 'Data',
+                'event_label': 'File Uploaded'
+            });
+        };
+        
+        // Track drill-down clicks (called when project details opened)
+        window.trackDrilldown = function(projectName, viewName) {
+            window.safeTrack('drilldown_click', {
+                'project_name': projectName,
+                'view_name': viewName,
+                'event_category': 'Interaction',
+                'event_label': 'Project Details'
+            });
+        };
+        
+        // Track theme changes (called on theme switch)
+        window.trackThemeChange = function(themeName) {
+            window.safeTrack('theme_change', {
+                'theme_name': themeName,
+                'event_category': 'Personalization',
+                'event_label': 'Theme Switch'
+            });
+        };
+        
+        // Track voice commands (called on voice feature use)
+        window.trackVoiceCommand = function(command) {
+            window.safeTrack('voice_command', {
+                'command': command,
+                'event_category': 'Interaction',
+                'event_label': 'Voice Control'
+            });
+        };
+        
+        // Track errors (called on JavaScript errors)
+        window.trackError = function(errorMessage, errorLocation) {
+            window.safeTrack('error_occurred', {
+                'error_message': errorMessage,
+                'error_location': errorLocation,
+                'event_category': 'Error',
+                'event_label': 'JavaScript Error'
+            });
+        };
+        
+        // Track search usage (called on search)
+        window.trackSearch = function(searchTerm, resultCount) {
+            window.safeTrack('search_performed', {
+                'search_term': searchTerm,
+                'result_count': resultCount,
+                'event_category': 'Interaction',
+                'event_label': 'Search'
+            });
+        };
+        
+        console.log('✅ GA4 Event Tracking initialized - 10 event types ready');
     </script>
     
 </head>
@@ -3807,6 +3923,15 @@
             const currentView = document.querySelector('.sidebar button.active');
             if (currentView && currentView.onclick) {
                 currentView.onclick();
+            }
+            
+            // SAFE: Track theme change
+            try {
+                if (typeof window.trackThemeChange === 'function') {
+                    window.trackThemeChange(themeId);
+                }
+            } catch (e) {
+                // Silent fail
             }
         }
 
@@ -5278,6 +5403,15 @@ let rawData = null;
                     showToast('✓ Data loaded successfully!');
                     speak('Data loaded successfully. Dashboard is now ready.');
                     
+                    // SAFE: Track file upload
+                    try {
+                        if (typeof window.trackFileUpload === 'function') {
+                            window.trackFileUpload(file.name, file.size);
+                        }
+                    } catch (e) {
+                        // Silent fail
+                    }
+                    
                     console.log('✅ File upload complete');
                 } catch(error) {
                     console.error('Error loading file:', error);
@@ -5578,6 +5712,29 @@ let rawData = null;
             
             showToast('Filters applied');
             speak('Filters applied successfully');
+            
+            // SAFE: Track filter usage
+            try {
+                if (typeof window.trackFilterUsage === 'function') {
+                    if (activeFilters.regionalHead && activeFilters.regionalHead.length > 0) {
+                        window.trackFilterUsage('Regional Head', activeFilters.regionalHead.join(', '));
+                    }
+                    if (activeFilters.region && activeFilters.region.length > 0) {
+                        window.trackFilterUsage('Region', activeFilters.region.join(', '));
+                    }
+                    if (activeFilters.practice && activeFilters.practice.length > 0) {
+                        window.trackFilterUsage('Practice Head', activeFilters.practice.join(', '));
+                    }
+                    if (activeFilters.account && activeFilters.account.length > 0) {
+                        window.trackFilterUsage('Account', activeFilters.account.join(', '));
+                    }
+                    if (activeFilters.fy && activeFilters.fy !== 'comparison') {
+                        window.trackFilterUsage('Fiscal Year', activeFilters.fy);
+                    }
+                }
+            } catch (e) {
+                // Silent fail - won't break dashboard
+            }
         }
 
         // Update cascading filters
@@ -6103,6 +6260,15 @@ function showView(view) {
         case 'manual':
                     renderUserManual();
                     break;
+            }
+            
+            // SAFE: Track view navigation (only after view successfully rendered)
+            try {
+                if (typeof window.trackViewNavigation === 'function') {
+                    window.trackViewNavigation(view);
+                }
+            } catch (e) {
+                // Silent fail - won't break dashboard
             }
         }
 
@@ -10259,6 +10425,15 @@ function showView(view) {
                 speak('Excel exported successfully!');
                 alert('✅ Excel exported successfully!');
                 
+                // SAFE: Track export action
+                try {
+                    if (typeof window.trackExport === 'function') {
+                        window.trackExport('Excel', currentView);
+                    }
+                } catch (e) {
+                    // Silent fail
+                }
+                
             } catch (error) {
                 console.error('Excel Export Error:', error);
                 alert('❌ Excel export failed: ' + error.message);
@@ -10717,6 +10892,15 @@ function showView(view) {
                 document.body.removeChild(loadingDiv);
                 alert('✅ PDF exported successfully!');
                 
+                // SAFE: Track export action
+                try {
+                    if (typeof window.trackExport === 'function') {
+                        window.trackExport('PDF', currentView);
+                    }
+                } catch (e) {
+                    // Silent fail
+                }
+                
             } catch (error) {
                 console.error('PDF Export Error:', error);
                 const loading = document.getElementById('pdfLoading');
@@ -11154,6 +11338,18 @@ function showView(view) {
             setTimeout(() => {
                 modal.style.opacity = '1';
             }, 10);
+            
+            // SAFE: Track drill-down click
+            try {
+                if (typeof window.trackDrilldown === 'function') {
+                    // Extract project name from content if possible
+                    const titleMatch = content.match(/Project: ([^<]+)</);
+                    const projectName = titleMatch ? titleMatch[1] : 'Unknown';
+                    window.trackDrilldown(projectName, currentView);
+                }
+            } catch (e) {
+                // Silent fail
+            }
         }
 
         // Project Drill-Down: Show detailed performance measures
