@@ -14366,10 +14366,13 @@ function showView(view) {
         // Auto-load Excel file from server on page load
         async function autoLoadExcelFile() {
             console.log('🔄 Auto-loading Excel file from server...');
+            console.log('📅 Dashboard Version: 2.1.0 - December 2025 Data Update');
+            console.log('🕐 Load Time:', new Date().toLocaleString());
             
             try {
-                // Fetch the Excel file from the public directory
-                const response = await fetch('/SLA_Monthly_Status_Summary_FINAL.xlsx');
+                // Fetch the Excel file from the public directory with cache-busting
+                const timestamp = new Date().getTime();
+                const response = await fetch(`/SLA_Monthly_Status_Summary_FINAL.xlsx?v=${timestamp}`);
                 
                 if (!response.ok) {
                     console.warn('⚠️ Auto-load file not found. User must upload manually.');
@@ -14425,6 +14428,20 @@ function showView(view) {
                 
                 console.log('FY 24-25 rows:', fy24_25.length);
                 console.log('FY 25-26 rows:', fy25_26.length);
+                
+                // Verify December data is present
+                if (fy25_26.length > 0) {
+                    const firstRow = fy25_26[0];
+                    const columns = Object.keys(firstRow);
+                    const decColumns = columns.filter(col => col.includes('Dec'));
+                    console.log('✅ December columns found in FY 25-26:', decColumns);
+                    
+                    // Check first few rows for December data
+                    const decMetValues = fy25_26.slice(0, 5).map(row => row.Dec_Met);
+                    const decNotMetValues = fy25_26.slice(0, 5).map(row => row.Dec_Not_Met);
+                    console.log('📊 Sample Dec_Met values:', decMetValues);
+                    console.log('📊 Sample Dec_Not_Met values:', decNotMetValues);
+                }
                 
                 if (fy24_25.length === 0 || fy25_26.length === 0) {
                     console.error('❌ Auto-loaded file contains empty sheets');
