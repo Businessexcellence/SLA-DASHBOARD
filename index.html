@@ -14366,13 +14366,21 @@ function showView(view) {
         // Auto-load Excel file from server on page load
         async function autoLoadExcelFile() {
             console.log('🔄 Auto-loading Excel file from server...');
-            console.log('📅 Dashboard Version: 2.1.0 - December 2025 Data Update');
+            console.log('📅 Dashboard Version: 2.2.0 - December 2025 Data Update (CACHE FIX)');
             console.log('🕐 Load Time:', new Date().toLocaleString());
             
             try {
-                // Fetch the Excel file from the public directory with cache-busting
+                // Fetch the Excel file with aggressive cache-busting
                 const timestamp = new Date().getTime();
-                const response = await fetch(`/SLA_Monthly_Status_Summary_FINAL.xlsx?v=${timestamp}`);
+                const random = Math.random().toString(36).substring(7);
+                const response = await fetch(`/SLA_Monthly_Status_Summary_FINAL_v2.xlsx?v=${timestamp}&r=${random}`, {
+                    cache: 'no-store',
+                    headers: {
+                        'Cache-Control': 'no-cache, no-store, must-revalidate',
+                        'Pragma': 'no-cache',
+                        'Expires': '0'
+                    }
+                });
                 
                 if (!response.ok) {
                     console.warn('⚠️ Auto-load file not found. User must upload manually.');
