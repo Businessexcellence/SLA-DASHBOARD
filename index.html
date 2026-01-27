@@ -12316,7 +12316,7 @@ function showView(view) {
                                 <span class="methodology-icon">🔮</span>
                                 <div class="methodology-text">
                                     <h4>Forecast Till FY End</h4>
-                                    <p>Predicts performance for remaining months (Dec 2025 - Mar 2026) till Financial Year End based on historical data patterns.</p>
+                                    <p>Predicts performance for remaining months (Jan 2026 - Mar 2026) till Financial Year End based on historical data patterns.</p>
                                 </div>
                             </div>
                             <div class="methodology-item">
@@ -12477,7 +12477,7 @@ function showView(view) {
 
             insights.push({
                 icon: '🔮',
-                text: `Forecast for next 4 months: Expected ${Math.round(forecastedMet)} targets met per month (${forecastedRate.toFixed(1)}% success rate).`
+                text: `Forecast for next 3 months (Jan-Mar 2026): Expected ${Math.round(forecastedMet)} targets met per month (${forecastedRate.toFixed(1)}% success rate).`
             });
 
             if (forecastedRate >= 75) {
@@ -12651,13 +12651,13 @@ function showView(view) {
                     datasets: [
                         {
                             label: 'Targets Met',
-                            data: [...historicalMet, ...new Array(4).fill(forecast.forecastedMet)],
+                            data: [...historicalMet, ...new Array(3).fill(forecast.forecastedMet)],
                             backgroundColor: '#10b981',
                             borderRadius: 8
                         },
                         {
                             label: 'Targets Not Met',
-                            data: [...historicalNotMet, ...new Array(4).fill(forecast.forecastedNotMet)],
+                            data: [...historicalNotMet, ...new Array(3).fill(forecast.forecastedNotMet)],
                             backgroundColor: '#ef4444',
                             borderRadius: 8
                         }
