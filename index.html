@@ -3802,13 +3802,14 @@
                 // Check each month in reverse order to find the latest with data
                 for (let i = monthsOrder.length - 1; i >= 0; i--) {
                     const month = monthsOrder[i];
-                    const hasData = rawData.fy25_26.some(row => {
-                        const metKey = month + '_Met';
-                        const notMetKey = month + '_Not_Met';
-                        return (row[metKey] && row[metKey] > 0) || (row[notMetKey] && row[notMetKey] > 0);
-                    });
-
-                    if (hasData) {
+                    const metKey = month + '_Met';
+                    const notMetKey = month + '_Not_Met';
+                    
+                    // Check if the column EXISTS in the data (not if it has values > 0)
+                    const hasColumn = rawData.fy25_26.length > 0 && 
+                                     (metKey in rawData.fy25_26[0] || notMetKey in rawData.fy25_26[0]);
+                    
+                    if (hasColumn) {
                         latestMonth = month;
                         latestYear = yearMapping[month];
                         break;
