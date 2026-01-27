@@ -14369,18 +14369,19 @@ function showView(view) {
         // Auto-load Excel file from server on page load
         async function autoLoadExcelFile() {
             console.log('🔄 Auto-loading Excel file from server...');
-            console.log('📅 Dashboard Version: 3.0.0 - DECEMBER 2025 DATA - HASH-BASED CACHE');
+            console.log('📅 Dashboard Version: 4.0.0 - DECEMBER 2025 DATA - NUCLEAR CACHE FIX (New Filename)');
             console.log('🕐 Load Time:', new Date().toLocaleString());
             
             try {
-                // Use FILE HASH as cache buster - guarantees fresh file
-                const fileHash = '026a6308e99407de7bc0fdf142f95fd1';
+                // NUCLEAR CACHE BUSTING: New filename for December 2025 data
                 const timestamp = new Date().getTime();
+                const random = Math.random().toString(36).substring(7);
                 
-                console.log('📦 Loading Excel file with hash:', fileHash.substring(0, 8));
+                console.log('🚨 LOADING NEW FILE: SLA_Data_20260127.xlsx with DECEMBER 2025 DATA');
+                console.log('📅 This file contains December Met/Not Met + YTD columns');
                 
-                // Try v2 filename first (with December data)
-                let response = await fetch(`/SLA_Monthly_Status_Summary_FINAL_v2.xlsx?hash=${fileHash}&t=${timestamp}`, {
+                // Try NEW filename first (guaranteed December 2025 data)
+                let response = await fetch(`/SLA_Data_20260127.xlsx?v=${timestamp}&r=${random}`, {
                     cache: 'no-store',
                     headers: {
                         'Cache-Control': 'no-cache, no-store, must-revalidate',
@@ -14389,10 +14390,23 @@ function showView(view) {
                     }
                 });
                 
-                // If v2 not found, try original filename
+                // Fallback to v2 filename
+                if (!response.ok) {
+                    console.log('⚠️ Trying v2 filename...');
+                    response = await fetch(`/SLA_Monthly_Status_Summary_FINAL_v2.xlsx?v=${timestamp}&r=${random}`, {
+                        cache: 'no-store',
+                        headers: {
+                            'Cache-Control': 'no-cache, no-store, must-revalidate',
+                            'Pragma': 'no-cache',
+                            'Expires': '0'
+                        }
+                    });
+                }
+                
+                // Fallback to original filename
                 if (!response.ok) {
                     console.log('⚠️ Trying original filename...');
-                    response = await fetch(`/SLA_Monthly_Status_Summary_FINAL.xlsx?hash=${fileHash}&t=${timestamp}`, {
+                    response = await fetch(`/SLA_Monthly_Status_Summary_FINAL.xlsx?v=${timestamp}&r=${random}`, {
                         cache: 'no-store',
                         headers: {
                             'Cache-Control': 'no-cache, no-store, must-revalidate',
