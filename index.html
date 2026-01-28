@@ -12515,9 +12515,9 @@ function showView(view) {
             const months = monthlyData.map(m => m.month);
             const historicalRates = monthlyData.map(m => m.rate);
             
-            // Generate forecast months (Jan, Feb, Mar - after December which is last historical month)
-            const forecastMonths = ['Jan', 'Feb', 'Mar'];
-            const forecastRates = forecastMonths.map(() => forecast.predictedRate);
+            // Get individual monthly forecast rates from the forecast object (not the same rate for all)
+            const forecastMonths = forecast.monthlyForecasts.map(m => m.month);
+            const forecastRates = forecast.monthlyForecasts.map(m => m.compliance);
             
             // Connect December to January: Add December's rate as first point in forecast data
             const lastHistoricalRate = historicalRates[historicalRates.length - 1]; // December rate
