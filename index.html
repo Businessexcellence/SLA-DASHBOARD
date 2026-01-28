@@ -12518,6 +12518,9 @@ function showView(view) {
             // Generate forecast months (Jan, Feb, Mar - after December which is last historical month)
             const forecastMonths = ['Jan', 'Feb', 'Mar'];
             const forecastRates = forecastMonths.map(() => forecast.predictedRate);
+            
+            // Connect December to January: Add December's rate as first point in forecast data
+            const lastHistoricalRate = historicalRates[historicalRates.length - 1]; // December rate
 
             new Chart(ctx, {
                 type: 'line',
@@ -12525,23 +12528,27 @@ function showView(view) {
                     labels: [...months, ...forecastMonths],
                     datasets: [
                         {
-                            label: 'Historical Performance',
+                            label: 'Historical Performance (Apr-Dec 2025)',
                             data: [...historicalRates, null, null, null],
                             borderColor: '#FF6B35',
                             backgroundColor: 'rgba(255, 107, 53, 0.1)',
                             borderWidth: 3,
                             fill: true,
-                            tension: 0.4
+                            tension: 0.4,
+                            pointRadius: 5,
+                            pointHoverRadius: 7
                         },
                         {
-                            label: 'Forecasted Performance',
-                            data: [...new Array(months.length).fill(null), ...forecastRates],
+                            label: 'Forecasted Performance (Jan-Mar 2026)',
+                            data: [...new Array(months.length - 1).fill(null), lastHistoricalRate, ...forecastRates],
                             borderColor: '#4A90E2',
                             backgroundColor: 'rgba(74, 144, 226, 0.1)',
                             borderWidth: 3,
                             borderDash: [10, 5],
                             fill: true,
-                            tension: 0.4
+                            tension: 0.4,
+                            pointRadius: 5,
+                            pointHoverRadius: 7
                         },
                         {
                             label: 'Median Baseline',
