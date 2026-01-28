@@ -14381,7 +14381,8 @@ function showView(view) {
                 console.log('📅 This file contains December Met/Not Met + YTD columns');
                 
                 // Try NEW filename first (guaranteed December 2025 data)
-                let response = await fetch(`/SLA_Data_20260127.xlsx?v=${timestamp}&r=${random}`, {
+                // Use relative path (no leading slash) for GitHub Pages compatibility
+                let response = await fetch(`SLA_Data_20260127.xlsx?v=${timestamp}&r=${random}`, {
                     cache: 'no-store',
                     headers: {
                         'Cache-Control': 'no-cache, no-store, must-revalidate',
@@ -14393,7 +14394,7 @@ function showView(view) {
                 // Fallback to v2 filename
                 if (!response.ok) {
                     console.log('⚠️ Trying v2 filename...');
-                    response = await fetch(`/SLA_Monthly_Status_Summary_FINAL_v2.xlsx?v=${timestamp}&r=${random}`, {
+                    response = await fetch(`SLA_Monthly_Status_Summary_FINAL_v2.xlsx?v=${timestamp}&r=${random}`, {
                         cache: 'no-store',
                         headers: {
                             'Cache-Control': 'no-cache, no-store, must-revalidate',
@@ -14406,7 +14407,7 @@ function showView(view) {
                 // Fallback to original filename
                 if (!response.ok) {
                     console.log('⚠️ Trying original filename...');
-                    response = await fetch(`/SLA_Monthly_Status_Summary_FINAL.xlsx?v=${timestamp}&r=${random}`, {
+                    response = await fetch(`SLA_Monthly_Status_Summary_FINAL.xlsx?v=${timestamp}&r=${random}`, {
                         cache: 'no-store',
                         headers: {
                             'Cache-Control': 'no-cache, no-store, must-revalidate',
