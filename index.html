@@ -13310,9 +13310,9 @@ function showView(view) {
             const confidence = Math.round(Math.max(50, Math.min(95, 100 - (stdDev * 2))));
             const confidenceLevel = confidence >= 80 ? 'High' : confidence >= 60 ? 'Medium' : 'Moderate';
             
-            // Generate 3-month forecasts
+            // Generate 3-month forecasts (Jan, Feb, Mar 2026)
             const monthlyForecasts = [];
-            const futureMonths = ['Dec', 'Jan', 'Feb'];
+            const futureMonths = ['Jan', 'Feb', 'Mar'];
             
             for (let i = 0; i < 3; i++) {
                 const monthForecast = Math.max(0, Math.min(100, Math.round(medianCompliance + (trendAdjustment * (i + 1)))));
