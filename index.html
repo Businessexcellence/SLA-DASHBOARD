@@ -13624,8 +13624,11 @@ function showView(view) {
             
             // Process FY 24-25
             data2425.forEach(row => {
-                const key = row[dimension];
+                let key = row[dimension];
                 if (!key) return;
+                
+                // Normalize key: trim whitespace and convert to consistent case
+                key = String(key).trim();
                 
                 if (!breakdown[key]) {
                     breakdown[key] = { name: key, fy2425: 0, fy2526: 0, region: row.Region, practiceHead: row['Practice Head'] };
@@ -13640,8 +13643,11 @@ function showView(view) {
             
             // Process FY 25-26
             data2526.forEach(row => {
-                const key = row[dimension];
+                let key = row[dimension];
                 if (!key) return;
+                
+                // Normalize key: trim whitespace and convert to consistent case
+                key = String(key).trim();
                 
                 if (!breakdown[key]) {
                     breakdown[key] = { name: key, fy2425: 0, fy2526: 0, region: row.Region, practiceHead: row['Practice Head'] };
@@ -13687,8 +13693,11 @@ function showView(view) {
             
             // Process FY 24-25
             data2425.forEach(row => {
-                const key = row['Regional Head '] || row['Regional Head'];
+                let key = row['Regional Head '] || row['Regional Head'];
                 if (!key) return;
+                
+                // Normalize key: trim whitespace
+                key = String(key).trim();
                 
                 if (!breakdown[key]) {
                     breakdown[key] = { name: key, fy2425: 0, fy2526: 0 };
@@ -13703,8 +13712,11 @@ function showView(view) {
             
             // Process FY 25-26
             data2526.forEach(row => {
-                const key = row['Regional Head '] || row['Regional Head'];
+                let key = row['Regional Head '] || row['Regional Head'];
                 if (!key) return;
+                
+                // Normalize key: trim whitespace
+                key = String(key).trim();
                 
                 if (!breakdown[key]) {
                     breakdown[key] = { name: key, fy2425: 0, fy2526: 0 };
