@@ -6,7 +6,7 @@
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
-    <title>TAGGD - Customer SLA/KPI Performance Dashboard v2.1</title>
+    <title>TAGGD Dashboard v5.2.0 - Jan'26 Column Added</title>
     
     <!-- External Libraries -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0"></script>
@@ -11438,6 +11438,7 @@ function showView(view) {
                                 <th style="min-width: 90px;">Oct'25</th>
                                 <th style="min-width: 90px;">Nov'25</th>
                                 <th style="min-width: 90px;">Dec'25</th>
+                                <th style="min-width: 90px; background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);">Jan'26</th>
                                 <th style="min-width: 100px; background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);">YTD</th>
                             </tr>
                         </thead>
@@ -11513,7 +11514,8 @@ function showView(view) {
                 {name: 'Sep', scoreCol: 'Sep25 Score', statusCol: 'Sep MET/NOT_MET'},
                 {name: 'Oct', scoreCol: 'Oct25 Score', statusCol: 'Oct MET/NOT_MET'},
                 {name: 'Nov', scoreCol: 'Nov25 Score', statusCol: 'Nov MET/NOT_MET'},
-                {name: 'Dec', scoreCol: 'Dec25 Score', statusCol: 'Dec MET/NOT_MET'}
+                {name: 'Dec', scoreCol: 'Dec25 Score', statusCol: 'Dec MET/NOT_MET'},
+                {name: 'Jan', scoreCol: 'Jan26 Score', statusCol: 'Jan MET/NOT_MET'}
             ];
             
             // Determine penalty status and styling
@@ -12316,7 +12318,7 @@ function showView(view) {
                                 <span class="methodology-icon">🔮</span>
                                 <div class="methodology-text">
                                     <h4>Forecast Till FY End</h4>
-                                    <p>Predicts performance for remaining months (Jan 2026 - Mar 2026) till Financial Year End based on historical data patterns.</p>
+                                    <p>Predicts performance for remaining months (Feb 2026 - Apr 2026) till Financial Year End based on historical data patterns.</p>
                                 </div>
                             </div>
                             <div class="methodology-item">
@@ -12343,7 +12345,7 @@ function showView(view) {
         // Extract monthly data for forecasting
         function extractMonthlyDataForForecasting() {
             const fy2526 = dashboardData.fy25_26 || [];
-            const months = ['Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+            const months = ['Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec', 'Jan'];
             const monthlyStats = [];
 
             months.forEach(month => {
@@ -12477,7 +12479,7 @@ function showView(view) {
 
             insights.push({
                 icon: '🔮',
-                text: `Forecast for next 3 months (Jan-Mar 2026): Expected ${Math.round(forecastedMet)} targets met per month (${forecastedRate.toFixed(1)}% success rate).`
+                text: `Forecast for next 3 months (Feb-Apr 2026): Expected ${Math.round(forecastedMet)} targets met per month (${forecastedRate.toFixed(1)}% success rate).`
             });
 
             if (forecastedRate >= 75) {
@@ -12528,7 +12530,7 @@ function showView(view) {
                     labels: [...months, ...forecastMonths],
                     datasets: [
                         {
-                            label: 'Historical Performance (Apr-Dec 2025)',
+                            label: 'Historical Performance (Apr-Jan 2026)',
                             data: [...historicalRates, null, null, null],
                             borderColor: '#FF6B35',
                             backgroundColor: 'rgba(255, 107, 53, 0.1)',
@@ -12539,7 +12541,7 @@ function showView(view) {
                             pointHoverRadius: 7
                         },
                         {
-                            label: 'Forecasted Performance (Jan-Mar 2026)',
+                            label: 'Forecasted Performance (Feb-Apr 2026)',
                             data: [...new Array(months.length - 1).fill(null), lastHistoricalRate, ...forecastRates],
                             borderColor: '#4A90E2',
                             backgroundColor: 'rgba(74, 144, 226, 0.1)',
@@ -13312,7 +13314,7 @@ function showView(view) {
             
             // Generate 3-month forecasts (Jan, Feb, Mar 2026)
             const monthlyForecasts = [];
-            const futureMonths = ['Jan', 'Feb', 'Mar'];
+            const futureMonths = ['Feb', 'Mar', 'Apr'];
             
             for (let i = 0; i < 3; i++) {
                 const monthForecast = Math.max(0, Math.min(100, Math.round(medianCompliance + (trendAdjustment * (i + 1)))));
@@ -14388,7 +14390,7 @@ function showView(view) {
         // Auto-load Excel file from server on page load
         async function autoLoadExcelFile() {
             console.log('🔄 Auto-loading Excel file from server...');
-            console.log('📅 Dashboard Version: 4.0.0 - DECEMBER 2025 DATA - NUCLEAR CACHE FIX (New Filename)');
+            console.log('📅 Dashboard Version: 5.2.0 - JAN26 COLUMN ADDED TO DRILL-DOWN + Cache Busted');
             console.log('🕐 Load Time:', new Date().toLocaleString());
             
             try {
@@ -14396,12 +14398,12 @@ function showView(view) {
                 const timestamp = new Date().getTime();
                 const random = Math.random().toString(36).substring(7);
                 
-                console.log('🚨 LOADING NEW FILE: SLA_Data_20260127.xlsx with DECEMBER 2025 DATA');
-                console.log('📅 This file contains December Met/Not Met + YTD columns');
+                console.log('🚨 LOADING NEW FILE: SLA_Data_20260228_Final.xlsx with UPDATED JANUARY 2026 DATA');
+                console.log('📅 This file contains updated January numbers + organizational changes');
                 
-                // Try NEW filename first (guaranteed December 2025 data)
+                // Try NEW filename first (guaranteed updated January 2026 data)
                 // Use relative path (no leading slash) for GitHub Pages compatibility
-                let response = await fetch(`SLA_Data_20260127.xlsx?v=${timestamp}&r=${random}`, {
+                let response = await fetch(`SLA_Data_20260228_Final.xlsx?v=${timestamp}&r=${random}`, {
                     cache: 'no-store',
                     headers: {
                         'Cache-Control': 'no-cache, no-store, must-revalidate',
@@ -14503,6 +14505,14 @@ function showView(view) {
                     const decNotMetValues = fy25_26.slice(0, 5).map(row => row.Dec_Not_Met);
                     console.log('📊 Sample Dec_Met values:', decMetValues);
                     console.log('📊 Sample Dec_Not_Met values:', decNotMetValues);
+                    
+                    // Check for January 2026 data
+                    const janColumns = columns.filter(col => col.includes('Jan'));
+                    console.log('✅ January columns found in FY 25-26:', janColumns);
+                    const janMetValues = fy25_26.slice(0, 5).map(row => row.Jan_Met);
+                    const janNotMetValues = fy25_26.slice(0, 5).map(row => row.Jan_Not_Met);
+                    console.log('📊 Sample Jan_Met values:', janMetValues);
+                    console.log('📊 Sample Jan_Not_Met values:', janNotMetValues);
                 }
                 
                 if (fy24_25.length === 0 || fy25_26.length === 0) {
