@@ -7467,14 +7467,419 @@ function showView(view) {
             }
         }
 
+        // Generate Account Health Status Tiles (for main dashboard views)
+        function generateAccountHealthTiles() {
+            if (!metricsDetailsData || metricsDetailsData.length === 0) {
+                return ''; // Return empty if no data
+            }
+            
+            // Apply current filters to metricsDetailsData using activeFilters object
+            let filteredMetricsData = metricsDetailsData;
+            
+            // Apply Region filter (array from multiselect)
+            if (activeFilters.region && activeFilters.region.length > 0) {
+                filteredMetricsData = filteredMetricsData.filter(r => activeFilters.region.includes(r.Region));
+            }
+            
+            // Apply Practice Head filter (array from multiselect)
+            if (activeFilters.practice && activeFilters.practice.length > 0) {
+                filteredMetricsData = filteredMetricsData.filter(r => activeFilters.practice.includes(r['Practice Head']));
+            }
+            
+            // Apply Account/Project filter (array from multiselect)
+            if (activeFilters.account && activeFilters.account.length > 0) {
+                filteredMetricsData = filteredMetricsData.filter(r => activeFilters.account.includes(r.Project));
+            }
+            
+            // Get month filter (single value)
+            const monthFilter = activeFilters.month;
+            
+            // Determine which months to include based on month filter
+            let months = [];
+            let periodLabel = '';
+            
+            if (monthFilter && monthFilter !== 'all') {
+                // Single month selected - use only that month
+                const monthMap = {
+                    'Apr': 'April', 'May': 'May', 'Jun': 'June', 'Jul': 'July',
+                    'Aug': 'Aug', 'Sep': 'Sep', 'Oct': 'Oct', 'Nov': 'Nov',
+                    'Dec': 'Dec', 'Jan': 'Jan', 'Feb': 'Feb', 'Mar': 'Mar'
+                };
+                const fullMonth = monthMap[monthFilter];
+                months = [fullMonth];
+                periodLabel = `(${fullMonth} ${fullMonth === 'Jan' || fullMonth === 'Feb' || fullMonth === 'Mar' ? '2026' : '2025'} Only)`;
+            } else {
+                // All months - use Apr-Jan (current FY so far, include Jan'26)
+                months = ['April', 'May', 'June', 'July', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec', 'Jan'];
+                periodLabel = '(Current FY 25-26 - Apr 2025 to Jan 2026)';
+            }
+            
+            // Calculate account health across filtered projects (FY 25-26, monthly data)
+            const allProjects = {};
+            
+            filteredMetricsData.forEach(row => {
+                const proj = row.Project;
+                if (!proj) return;
+                
+                if (!allProjects[proj]) {
+                    allProjects[proj] = {
+                        name: proj,
+                        region: row.Region || 'N/A',
+                        practiceHead: row['Practice Head'] || 'N/A',
+                        met: 0,
+                        notMet: 0,
+                        notReported: 0
+                    };
+                }
+                
+                // Count Met/Not Met across selected month(s) - ONLY individual months
+                months.forEach(month => {
+                    // Map month names to correct column names
+                    let statusCol;
+                    if (month === 'June') {
+                        statusCol = 'June MET/NOT_MET';
+                    } else if (month === 'Jan') {
+                        statusCol = 'Jan MET/NOT_MET';  // January 2026
+                    } else {
+                        statusCol = `${month} MET/NOT_MET`;  // April, May, July, Aug, Sep, Oct, Nov, Dec
+                    }
+                    
+                    const status = row[statusCol];
+                    if (status === 'Met') {
+                        allProjects[proj].met++;
+                    } else if (status === 'Not Met') {
+                        allProjects[proj].notMet++;
+                    } else if (status === 'Not Reported' || status === 'NA' || status === 'N/A') {
+                        allProjects[proj].notReported++;
+                    }
+                });
+            });
+            
+            // Categorize projects (excluding Not Reported)
+            const red = [], amber = [], green = [];
+            Object.values(allProjects).forEach(proj => {
+                proj.total = proj.met + proj.notMet;
+                proj.metPct = proj.total > 0 ? ((proj.met / proj.total) * 100).toFixed(1) : 0;
+                
+                if (proj.total > 0) {
+                    if (proj.metPct < 50) red.push(proj);
+                    else if (proj.metPct < 75) amber.push(proj);
+                    else green.push(proj);
+                }
+            });
+            
+            // Sort by Met% descending
+            red.sort((a, b) => b.metPct - a.metPct);
+            amber.sort((a, b) => b.metPct - a.metPct);
+            green.sort((a, b) => b.metPct - a.metPct);
+            
+            // Store globally for onclick handlers
+            window.accountHealthData = { red, amber, green };
+            
+            return `
+                <div class="card" style="margin-bottom: 20px;">
+                    <h3 style="margin: 0 0 15px 0;">
+                        <i class="bi bi-speedometer2"></i> Account Health Status 
+                        <span style="font-size: 0.75em; color: #6b7280; font-weight: 500; margin-left: 10px;">
+                            ${periodLabel}
+                        </span>
+                    </h3>
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px;">
+                        
+                        <!-- RED Accounts -->
+                        <div onclick="showAccountList('red', window.accountHealthData.red)" 
+                             style="background: linear-gradient(135deg, #fecaca 0%, #ef4444 100%); padding: 30px; border-radius: 16px; cursor: pointer; box-shadow: 0 4px 15px rgba(239,68,68,0.3); transition: all 0.3s ease; border: 3px solid transparent; position: relative; overflow: hidden;"
+                             onmouseover="this.style.transform='translateY(-8px)'; this.style.boxShadow='0 12px 25px rgba(239,68,68,0.5)'; this.style.borderColor='#dc2626';"
+                             onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 15px rgba(239,68,68,0.3)'; this.style.borderColor='transparent';">
+                            
+                            <div style="position: absolute; top: -20px; right: -20px; width: 100px; height: 100px; background: rgba(255,255,255,0.1); border-radius: 50%;"></div>
+                            
+                            <div style="position: relative; z-index: 1;">
+                                <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 20px;">
+                                    <div>
+                                        <div style="font-size: 1em; color: #7f1d1d; font-weight: 700; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 1.5px;">
+                                            <i class="bi bi-exclamation-circle-fill"></i> RED ACCOUNTS
+                                        </div>
+                                        <div style="font-size: 0.85em; color: #991b1b; font-weight: 600; line-height: 1.4;">
+                                            < 50% Compliance<br>
+                                            <span style="background: rgba(127,29,29,0.3); padding: 3px 8px; border-radius: 6px; margin-top: 5px; display: inline-block;">Critical Attention</span>
+                                        </div>
+                                    </div>
+                                    <div style="font-size: 4em; font-weight: 900; color: #7f1d1d; text-shadow: 3px 3px 6px rgba(0,0,0,0.3); line-height: 0.9;">
+                                        ${red.length}
+                                    </div>
+                                </div>
+                                
+                                <div style="margin-top: 20px; padding-top: 20px; border-top: 2px solid rgba(127,29,29,0.4); font-size: 0.85em; color: #7f1d1d; font-weight: 700; display: flex; align-items: center; gap: 8px;">
+                                    <i class="bi bi-hand-index" style="font-size: 1.2em;"></i>
+                                    Click to view all accounts
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- AMBER Accounts -->
+                        <div onclick="showAccountList('amber', window.accountHealthData.amber)" 
+                             style="background: linear-gradient(135deg, #fef3c7 0%, #f59e0b 100%); padding: 30px; border-radius: 16px; cursor: pointer; box-shadow: 0 4px 15px rgba(245,158,11,0.3); transition: all 0.3s ease; border: 3px solid transparent; position: relative; overflow: hidden;"
+                             onmouseover="this.style.transform='translateY(-8px)'; this.style.boxShadow='0 12px 25px rgba(245,158,11,0.5)'; this.style.borderColor='#d97706';"
+                             onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 15px rgba(245,158,11,0.3)'; this.style.borderColor='transparent';">
+                            
+                            <div style="position: absolute; top: -20px; right: -20px; width: 100px; height: 100px; background: rgba(255,255,255,0.1); border-radius: 50%;"></div>
+                            
+                            <div style="position: relative; z-index: 1;">
+                                <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 20px;">
+                                    <div>
+                                        <div style="font-size: 1em; color: #78350f; font-weight: 700; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 1.5px;">
+                                            <i class="bi bi-dash-circle-fill"></i> AMBER ACCOUNTS
+                                        </div>
+                                        <div style="font-size: 0.85em; color: #92400e; font-weight: 600; line-height: 1.4;">
+                                            50-74% Compliance<br>
+                                            <span style="background: rgba(120,53,15,0.3); padding: 3px 8px; border-radius: 6px; margin-top: 5px; display: inline-block;">Monitor Closely</span>
+                                        </div>
+                                    </div>
+                                    <div style="font-size: 4em; font-weight: 900; color: #78350f; text-shadow: 3px 3px 6px rgba(0,0,0,0.3); line-height: 0.9;">
+                                        ${amber.length}
+                                    </div>
+                                </div>
+                                
+                                <div style="margin-top: 20px; padding-top: 20px; border-top: 2px solid rgba(120,53,15,0.4); font-size: 0.85em; color: #78350f; font-weight: 700; display: flex; align-items: center; gap: 8px;">
+                                    <i class="bi bi-hand-index" style="font-size: 1.2em;"></i>
+                                    Click to view all accounts
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- GREEN Accounts -->
+                        <div onclick="showAccountList('green', window.accountHealthData.green)" 
+                             style="background: linear-gradient(135deg, #d1fae5 0%, #10b981 100%); padding: 30px; border-radius: 16px; cursor: pointer; box-shadow: 0 4px 15px rgba(16,185,129,0.3); transition: all 0.3s ease; border: 3px solid transparent; position: relative; overflow: hidden;"
+                             onmouseover="this.style.transform='translateY(-8px)'; this.style.boxShadow='0 12px 25px rgba(16,185,129,0.5)'; this.style.borderColor='#059669';"
+                             onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 15px rgba(16,185,129,0.3)'; this.style.borderColor='transparent';">
+                            
+                            <div style="position: absolute; top: -20px; right: -20px; width: 100px; height: 100px; background: rgba(255,255,255,0.1); border-radius: 50%;"></div>
+                            
+                            <div style="position: relative; z-index: 1;">
+                                <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 20px;">
+                                    <div>
+                                        <div style="font-size: 1em; color: #064e3b; font-weight: 700; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 1.5px;">
+                                            <i class="bi bi-check-circle-fill"></i> GREEN ACCOUNTS
+                                        </div>
+                                        <div style="font-size: 0.85em; color: #065f46; font-weight: 600; line-height: 1.4;">
+                                            ≥ 75% Compliance<br>
+                                            <span style="background: rgba(6,78,59,0.3); padding: 3px 8px; border-radius: 6px; margin-top: 5px; display: inline-block;">Excellent Performance</span>
+                                        </div>
+                                    </div>
+                                    <div style="font-size: 4em; font-weight: 900; color: #064e3b; text-shadow: 3px 3px 6px rgba(0,0,0,0.3); line-height: 0.9;">
+                                        ${green.length}
+                                    </div>
+                                </div>
+                                
+                                <div style="margin-top: 20px; padding-top: 20px; border-top: 2px solid rgba(6,78,59,0.4); font-size: 0.85em; color: #064e3b; font-weight: 700; display: flex; align-items: center; gap: 8px;">
+                                    <i class="bi bi-hand-index" style="font-size: 1.2em;"></i>
+                                    Click to view all accounts
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        // Generate KPI Bifurcation Tiles (for main dashboard views)
+        function generateKPIBifurcationTiles() {
+            if (!metricsDetailsData || metricsDetailsData.length === 0) {
+                return ''; // Return empty if no data
+            }
+            
+            // Apply current filters to metricsDetailsData using activeFilters object
+            let filteredMetricsData = metricsDetailsData;
+            
+            // Apply Region filter (array from multiselect)
+            if (activeFilters.region && activeFilters.region.length > 0) {
+                filteredMetricsData = filteredMetricsData.filter(r => activeFilters.region.includes(r.Region));
+            }
+            
+            // Apply Practice Head filter (array from multiselect)
+            if (activeFilters.practice && activeFilters.practice.length > 0) {
+                filteredMetricsData = filteredMetricsData.filter(r => activeFilters.practice.includes(r['Practice Head']));
+            }
+            
+            // Apply Account/Project filter (array from multiselect)
+            if (activeFilters.account && activeFilters.account.length > 0) {
+                filteredMetricsData = filteredMetricsData.filter(r => activeFilters.account.includes(r.Project));
+            }
+            
+            // Get month filter (single value)
+            const monthFilter = activeFilters.month;
+            
+            // Calculate bifurcation Met% using Category Sub Type (FY 25-26)
+            const contractual = filteredMetricsData.filter(r => r['Category Sub Type'] === 'Contractual SLA');
+            const internal = filteredMetricsData.filter(r => r['Category Sub Type'] === 'Internal KPI');
+            const penalty = filteredMetricsData.filter(r => r.Penalty === 'Yes');
+            const nonPenalty = filteredMetricsData.filter(r => r.Penalty === 'No');
+            
+            // Determine which months to include based on month filter
+            let months = [];
+            let periodLabel = '';
+            
+            if (monthFilter && monthFilter !== 'all') {
+                // Single month selected - use only that month
+                const monthMap = {
+                    'Apr': 'April', 'May': 'May', 'Jun': 'June', 'Jul': 'July',
+                    'Aug': 'Aug', 'Sep': 'Sep', 'Oct': 'Oct', 'Nov': 'Nov',
+                    'Dec': 'Dec', 'Jan': 'Jan', 'Feb': 'Feb', 'Mar': 'Mar'
+                };
+                const fullMonth = monthMap[monthFilter];
+                months = [fullMonth];
+                periodLabel = `(${fullMonth} ${fullMonth === 'Jan' || fullMonth === 'Feb' || fullMonth === 'Mar' ? '2026' : '2025'} Only)`;
+            } else {
+                // All months - use Apr-Jan (current FY so far, include Jan'26)
+                months = ['April', 'May', 'June', 'July', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec', 'Jan'];
+                periodLabel = '(Current FY 25-26 - Apr 2025 to Jan 2026)';
+            }
+            
+            const calcMetPct = (data) => {
+                let totalMet = 0;
+                let totalNotMet = 0;
+                
+                // Count Met/Not Met across selected month(s) - ONLY individual months, exclude quarters (AMJ, JAS, OND) and YTD
+                data.forEach(row => {
+                    months.forEach(month => {
+                        // Map month names to correct column names
+                        let statusCol;
+                        if (month === 'June') {
+                            statusCol = 'June MET/NOT_MET';
+                        } else if (month === 'Jan') {
+                            statusCol = 'Jan MET/NOT_MET';  // January 2026
+                        } else {
+                            statusCol = `${month} MET/NOT_MET`;  // April, May, July, Aug, Sep, Oct, Nov, Dec
+                        }
+                        
+                        const status = row[statusCol];
+                        if (status === 'Met') totalMet++;
+                        else if (status === 'Not Met') totalNotMet++;
+                        // Exclude 'Not Reported', 'NA', null, undefined
+                        // Also exclude quarterly columns (AMJ, JAS, OND) and YTD by design - we don't loop over them
+                    });
+                });
+                
+                const total = totalMet + totalNotMet;
+                const pct = total > 0 ? ((totalMet / total) * 100).toFixed(1) : '0.0';
+                return { pct, met: totalMet, notMet: totalNotMet, total, measures: data.length };
+            };
+            
+            const contractualData = calcMetPct(contractual);
+            const internalData = calcMetPct(internal);
+            const penaltyData = calcMetPct(penalty);
+            const nonPenaltyData = calcMetPct(nonPenalty);
+            
+            return `
+                <div class="card" style="margin-bottom: 20px;">
+                    <h3 style="margin: 0 0 15px 0;">
+                        <i class="bi bi-diagram-3"></i> SLA Bifurcation Analysis 
+                        <span style="font-size: 0.75em; color: #6b7280; font-weight: 500; margin-left: 10px;">
+                            ${periodLabel}
+                        </span>
+                    </h3>
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 20px;">
+                        
+                        <!-- Contractual SLA -->
+                        <div style="background: linear-gradient(135deg, #e0f2fe 0%, #bae6fd 100%); padding: 25px; border-radius: 14px; border-left: 5px solid #0284c7; box-shadow: 0 3px 12px rgba(0,0,0,0.12); transition: all 0.3s ease;"
+                             onmouseover="this.style.transform='translateY(-5px)'; this.style.boxShadow='0 8px 20px rgba(0,0,0,0.18)';"
+                             onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 3px 12px rgba(0,0,0,0.12)';">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                                <div>
+                                    <div style="font-size: 0.9em; color: #0369a1; font-weight: 700; text-transform: uppercase; letter-spacing: 1px;">
+                                        CONTRACTUAL SLA
+                                    </div>
+                                </div>
+                                <div style="font-size: 2.8em; font-weight: 900; color: #0284c7; line-height: 1;">
+                                    ${contractualData.pct}%
+                                </div>
+                            </div>
+                            <div style="margin-top: 12px; font-size: 0.78em; color: #0c4a6e; opacity: 0.9;">
+                                <i class="bi bi-check-circle"></i> Client Commitments
+                            </div>
+                        </div>
+                        
+                        <!-- Internal SLA -->
+                        <div style="background: linear-gradient(135deg, #ddd6fe 0%, #c4b5fd 100%); padding: 25px; border-radius: 14px; border-left: 5px solid #7c3aed; box-shadow: 0 3px 12px rgba(0,0,0,0.12); transition: all 0.3s ease;"
+                             onmouseover="this.style.transform='translateY(-5px)'; this.style.boxShadow='0 8px 20px rgba(0,0,0,0.18)';"
+                             onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 3px 12px rgba(0,0,0,0.12)';">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                                <div>
+                                    <div style="font-size: 0.9em; color: #6d28d9; font-weight: 700; text-transform: uppercase; letter-spacing: 1px;">
+                                        INTERNAL KPI
+                                    </div>
+                                </div>
+                                <div style="font-size: 2.8em; font-weight: 900; color: #7c3aed; line-height: 1;">
+                                    ${internalData.pct}%
+                                </div>
+                            </div>
+                            <div style="margin-top: 12px; font-size: 0.78em; color: #5b21b6; opacity: 0.9;">
+                                <i class="bi bi-building"></i> Internal Standards
+                            </div>
+                        </div>
+                        
+                        <!-- Penalty SLA -->
+                        <div style="background: linear-gradient(135deg, #fed7aa 0%, #fdba74 100%); padding: 25px; border-radius: 14px; border-left: 5px solid #f97316; box-shadow: 0 3px 12px rgba(0,0,0,0.12); transition: all 0.3s ease;"
+                             onmouseover="this.style.transform='translateY(-5px)'; this.style.boxShadow='0 8px 20px rgba(0,0,0,0.18)';"
+                             onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 3px 12px rgba(0,0,0,0.12)';">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                                <div>
+                                    <div style="font-size: 0.9em; color: #c2410c; font-weight: 700; text-transform: uppercase; letter-spacing: 1px;">
+                                        PENALTY SLA
+                                    </div>
+                                </div>
+                                <div style="font-size: 2.8em; font-weight: 900; color: #ea580c; line-height: 1;">
+                                    ${penaltyData.pct}%
+                                </div>
+                            </div>
+                            <div style="margin-top: 12px; font-size: 0.78em; color: #9a3412; opacity: 0.9;">
+                                <i class="bi bi-exclamation-triangle"></i> Financial Impact Measures
+                            </div>
+                        </div>
+                        
+                        <!-- Non-Penalty SLA -->
+                        <div style="background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%); padding: 25px; border-radius: 14px; border-left: 5px solid #10b981; box-shadow: 0 3px 12px rgba(0,0,0,0.12); transition: all 0.3s ease;"
+                             onmouseover="this.style.transform='translateY(-5px)'; this.style.boxShadow='0 8px 20px rgba(0,0,0,0.18)';"
+                             onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 3px 12px rgba(0,0,0,0.12)';">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                                <div>
+                                    <div style="font-size: 0.9em; color: #059669; font-weight: 700; text-transform: uppercase; letter-spacing: 1px;">
+                                        NON-PENALTY SLA
+                                    </div>
+                                </div>
+                                <div style="font-size: 2.8em; font-weight: 900; color: #10b981; line-height: 1;">
+                                    ${nonPenaltyData.pct}%
+                                </div>
+                            </div>
+                            <div style="margin-top: 12px; font-size: 0.78em; color: #047857; opacity: 0.9;">
+                                <i class="bi bi-shield-check"></i> No Financial Penalty
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
         // Render Monthly View WITH FY COMPARISON
         function renderMonthlyView() {
+            // Calculate Account Health and KPI Bifurcation for FY 25-26
+            const accountHealthTilesHTML = generateAccountHealthTiles();
+            const kpiBifurcationTilesHTML = generateKPIBifurcationTiles();
+            
+            // Check if month filter is active
+            const monthFilter = activeFilters.month;
+            const isMonthFiltered = monthFilter && monthFilter !== 'all';
+            
             // Dynamically extract months for both fiscal years
             const fy24months = extractMonthsFromData(filteredData.fy24_25, null);
             const fy25months = extractMonthsFromData(null, filteredData.fy25_26);
             const allMonths = ['Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec', 'Jan', 'Feb', 'Mar'];
             
-            // Calculate FY 24-25 data for all its available months
+            // If month filter is active, only show that specific month
+            const monthsToShow = isMonthFiltered ? [monthFilter] : allMonths;
+            
+            // Calculate FY 24-25 data using Summary sheet (filteredData.fy24_25)
             const fy24Data = allMonths.map(month => {
                 const met = filteredData.fy24_25.reduce((sum, row) => {
                     return sum + getMonthData(row, month, 'fy24_25', 'Met');
@@ -7486,52 +7891,155 @@ function showView(view) {
                 return total > 0 ? parseFloat(((met / total) * 100).toFixed(1)) : 0;
             });
 
-            // Calculate FY 25-26 data for all its available months
+            // Calculate FY 25-26 data using Metrics Details (metricsDetailsData) for measure-level accuracy
             const fy25Data = allMonths.map(month => {
-                const met = filteredData.fy25_26.reduce((sum, row) => {
-                    return sum + getMonthData(row, month, 'fy25_26', 'Met');
-                }, 0);
-                const notMet = filteredData.fy25_26.reduce((sum, row) => {
-                    return sum + getMonthData(row, month, 'fy25_26', 'Not_Met');
-                }, 0);
+                if (!metricsDetailsData || metricsDetailsData.length === 0) {
+                    // Fallback to summary if metrics details not available
+                    const met = filteredData.fy25_26.reduce((sum, row) => {
+                        return sum + getMonthData(row, month, 'fy25_26', 'Met');
+                    }, 0);
+                    const notMet = filteredData.fy25_26.reduce((sum, row) => {
+                        return sum + getMonthData(row, month, 'fy25_26', 'Not_Met');
+                    }, 0);
+                    const total = met + notMet;
+                    return total > 0 ? parseFloat(((met / total) * 100).toFixed(1)) : 0;
+                }
+                
+                // Use metricsDetailsData (raw measure-level data) for FY 25-26
+                // Apply the same filters that are active
+                let filteredMetrics = metricsDetailsData;
+                
+                // Apply Region filter
+                if (activeFilters.region && activeFilters.region.length > 0) {
+                    filteredMetrics = filteredMetrics.filter(r => activeFilters.region.includes(r.Region));
+                }
+                
+                // Apply Practice Head filter
+                if (activeFilters.practice && activeFilters.practice.length > 0) {
+                    filteredMetrics = filteredMetrics.filter(r => activeFilters.practice.includes(r['Practice Head']));
+                }
+                
+                // Apply Account/Project filter
+                if (activeFilters.account && activeFilters.account.length > 0) {
+                    filteredMetrics = filteredMetrics.filter(r => activeFilters.account.includes(r.Project));
+                }
+                
+                // Map month to column name
+                let statusCol;
+                if (month === 'Apr') statusCol = 'April MET/NOT_MET';
+                else if (month === 'May') statusCol = 'May MET/NOT_MET';
+                else if (month === 'Jun') statusCol = 'June MET/NOT_MET';
+                else if (month === 'Jul') statusCol = 'July MET/NOT_MET';
+                else if (month === 'Aug') statusCol = 'Aug MET/NOT_MET';
+                else if (month === 'Sep') statusCol = 'Sep MET/NOT_MET';
+                else if (month === 'Oct') statusCol = 'Oct MET/NOT_MET';
+                else if (month === 'Nov') statusCol = 'Nov MET/NOT_MET';
+                else if (month === 'Dec') statusCol = 'Dec MET/NOT_MET';
+                else if (month === 'Jan') statusCol = 'Jan MET/NOT_MET';
+                else if (month === 'Feb') statusCol = 'Feb MET/NOT_MET';
+                else if (month === 'Mar') statusCol = 'Mar MET/NOT_MET';
+                else statusCol = `${month} MET/NOT_MET`;
+                
+                // Count Met and Not Met from measure-level data
+                let met = 0;
+                let notMet = 0;
+                filteredMetrics.forEach(row => {
+                    const status = row[statusCol];
+                    if (status === 'Met') met++;
+                    else if (status === 'Not Met') notMet++;
+                    // Exclude 'Not Reported', 'NA', null, undefined
+                });
+                
                 const total = met + notMet;
                 return total > 0 ? parseFloat(((met / total) * 100).toFixed(1)) : 0;
             });
 
-            // Calculate comparison metrics for available FY25 months
-            const fy25NonZeroData = fy25Data.filter(v => v > 0);
-            const compareMonthCount = Math.min(fy24Data.length, fy25NonZeroData.length);
-            const avgFY24 = compareMonthCount > 0 ? (fy24Data.slice(0, compareMonthCount).reduce((a, b) => a + b, 0) / compareMonthCount).toFixed(1) : 0;
-            const avgFY25 = fy25NonZeroData.length > 0 ? (fy25NonZeroData.reduce((a, b) => a + b, 0) / fy25NonZeroData.length).toFixed(1) : 0;
-            const improvement = (avgFY25 - avgFY24).toFixed(1);
+            // Calculate comparison metrics based on filter
+            let avgFY24, avgFY25, improvement, compareMonthCount;
+            
+            if (isMonthFiltered) {
+                // When month filter is active, show only that month's data
+                const monthIdx = allMonths.indexOf(monthFilter);
+                avgFY24 = fy24Data[monthIdx].toFixed(1);
+                avgFY25 = fy25Data[monthIdx].toFixed(1);
+                improvement = (fy25Data[monthIdx] - fy24Data[monthIdx]).toFixed(1);
+                compareMonthCount = 1;
+            } else {
+                // When no month filter, calculate averages across all available months
+                const fy25NonZeroData = fy25Data.filter(v => v > 0);
+                compareMonthCount = Math.min(fy24Data.length, fy25NonZeroData.length);
+                avgFY24 = compareMonthCount > 0 ? (fy24Data.slice(0, compareMonthCount).reduce((a, b) => a + b, 0) / compareMonthCount).toFixed(1) : 0;
+                avgFY25 = fy25NonZeroData.length > 0 ? (fy25NonZeroData.reduce((a, b) => a + b, 0) / fy25NonZeroData.length).toFixed(1) : 0;
+                improvement = (avgFY25 - avgFY24).toFixed(1);
+            }
 
-            const insightsHTML = `
-                <div class="insights-section">
-                    <h3><i class="bi bi-lightbulb-fill"></i> Monthly Performance Comparison</h3>
-                    <div class="insight-item">
-                        <h4>📊 FY 24-25 vs FY 25-26 (First ${fy25months.length} Months)</h4>
-                        <p>FY 24-25 Average: ${avgFY24}% | FY 25-26 Average: ${avgFY25}% | Change: ${improvement > 0 ? '+' : ''}${improvement}%</p>
-                    </div>
-                    <div class="insight-item">
-                        <h4>${improvement > 0 ? '📈 Performance Improvement' : '📉 Performance Decline'}</h4>
-                        <p>${improvement > 0 ? `FY 25-26 shows ${improvement}% improvement in monthly average compliance.` : `FY 25-26 shows ${Math.abs(improvement)}% decline in monthly average compliance. Focus on recovery strategies.`}</p>
-                    </div>
-                </div>`;
+            // Build insights and comparison widgets based on filter
+            let insightsHTML, comparisonWidget;
+            
+            if (isMonthFiltered) {
+                // Month-specific insights
+                const monthNames = {
+                    'Apr': 'April', 'May': 'May', 'Jun': 'June', 'Jul': 'July',
+                    'Aug': 'August', 'Sep': 'September', 'Oct': 'October', 'Nov': 'November',
+                    'Dec': 'December', 'Jan': 'January', 'Feb': 'February', 'Mar': 'March'
+                };
+                const fullMonthName = monthNames[monthFilter] || monthFilter;
+                const year24 = ['Jan', 'Feb', 'Mar'].includes(monthFilter) ? '2025' : '2024';
+                const year25 = ['Jan', 'Feb', 'Mar'].includes(monthFilter) ? '2026' : '2025';
+                
+                insightsHTML = `
+                    <div class="insights-section">
+                        <h3><i class="bi bi-lightbulb-fill"></i> ${fullMonthName} Performance Comparison</h3>
+                        <div class="insight-item">
+                            <h4>📊 FY 24-25 vs FY 25-26 - ${fullMonthName} ${year25}</h4>
+                            <p>FY 24-25 (${fullMonthName} ${year24}): ${avgFY24}% | FY 25-26 (${fullMonthName} ${year25}): ${avgFY25}% | Change: ${improvement > 0 ? '+' : ''}${improvement}%</p>
+                        </div>
+                        <div class="insight-item">
+                            <h4>${improvement > 0 ? '📈 Performance Improvement' : '📉 Performance Decline'}</h4>
+                            <p>${improvement > 0 ? `${fullMonthName} ${year25} shows ${improvement}% improvement compared to ${fullMonthName} ${year24}.` : `${fullMonthName} ${year25} shows ${Math.abs(improvement)}% decline compared to ${fullMonthName} ${year24}. Focus on recovery strategies.`}</p>
+                        </div>
+                    </div>`;
+                
+                comparisonWidget = `
+                    <div class="comparison-widget">
+                        <div class="metric-box fy24">
+                            <div class="metric-label">FY 24-25 ${fullMonthName} ${year24}</div>
+                            <div class="metric-value" style="color: #ff6b35;">${avgFY24}%</div>
+                        </div>
+                        <div class="metric-box fy25">
+                            <div class="metric-label">FY 25-26 ${fullMonthName} ${year25}</div>
+                            <div class="metric-value" style="color: var(--primary-color);">${avgFY25}%</div>
+                        </div>
+                    </div>`;
+            } else {
+                // Average across all months insights
+                insightsHTML = `
+                    <div class="insights-section">
+                        <h3><i class="bi bi-lightbulb-fill"></i> Monthly Performance Comparison</h3>
+                        <div class="insight-item">
+                            <h4>📊 FY 24-25 vs FY 25-26 (First ${fy25months.length} Months)</h4>
+                            <p>FY 24-25 Average: ${avgFY24}% | FY 25-26 Average: ${avgFY25}% | Change: ${improvement > 0 ? '+' : ''}${improvement}%</p>
+                        </div>
+                        <div class="insight-item">
+                            <h4>${improvement > 0 ? '📈 Performance Improvement' : '📉 Performance Decline'}</h4>
+                            <p>${improvement > 0 ? `FY 25-26 shows ${improvement}% improvement in monthly average compliance.` : `FY 25-26 shows ${Math.abs(improvement)}% decline in monthly average compliance. Focus on recovery strategies.`}</p>
+                        </div>
+                    </div>`;
+                
+                comparisonWidget = `
+                    <div class="comparison-widget">
+                        <div class="metric-box fy24">
+                            <div class="metric-label">FY 24-25 Avg (${compareMonthCount} months)</div>
+                            <div class="metric-value" style="color: #ff6b35;">${avgFY24}%</div>
+                        </div>
+                        <div class="metric-box fy25">
+                            <div class="metric-label">FY 25-26 Avg (${fy25months.length} months)</div>
+                            <div class="metric-value" style="color: var(--primary-color);">${avgFY25}%</div>
+                        </div>
+                    </div>`;
+            }
 
-            // Create comparison widgets
-            const comparisonWidget = `
-                <div class="comparison-widget">
-                    <div class="metric-box fy24">
-                        <div class="metric-label">FY 24-25 Avg (${compareMonthCount} months)</div>
-                        <div class="metric-value" style="color: #ff6b35;">${avgFY24}%</div>
-                    </div>
-                    <div class="metric-box fy25">
-                        <div class="metric-label">FY 25-26 Avg (${fy25months.length} months)</div>
-                        <div class="metric-value" style="color: var(--primary-color);">${avgFY25}%</div>
-                    </div>
-                </div>`;
-
-            // Build comparison table
+            // Build comparison table - show only selected month when filter is active
             let tableHTML = `
                 <table style="margin-top: 20px;">
                     <thead>
@@ -7544,20 +8052,42 @@ function showView(view) {
                     </thead>
                     <tbody>`;
             
-            fy25months.forEach((month, idx) => {
-                const diff = fy25Data[idx] - fy24Data[idx];
+            if (isMonthFiltered) {
+                // Show only the selected month
+                const monthIdx = allMonths.indexOf(monthFilter);
+                const diff = fy25Data[monthIdx] - fy24Data[monthIdx];
                 const diffColor = diff >= 0 ? 'var(--success-color)' : 'var(--danger-color)';
+                const monthNames = {
+                    'Apr': 'April', 'May': 'May', 'Jun': 'June', 'Jul': 'July',
+                    'Aug': 'August', 'Sep': 'September', 'Oct': 'October', 'Nov': 'November',
+                    'Dec': 'December', 'Jan': 'January', 'Feb': 'February', 'Mar': 'March'
+                };
                 tableHTML += `
                     <tr>
-                        <td><strong>${month}</strong></td>
-                        <td style="color: #ff6b35;">${fy24Data[idx].toFixed(1)}%</td>
-                        <td style="color: var(--primary-color);">${fy25Data[idx].toFixed(1)}%</td>
+                        <td><strong>${monthNames[monthFilter]}</strong></td>
+                        <td style="color: #ff6b35;">${fy24Data[monthIdx].toFixed(1)}%</td>
+                        <td style="color: var(--primary-color);">${fy25Data[monthIdx].toFixed(1)}%</td>
                         <td style="color: ${diffColor}; font-weight: bold;">${diff >= 0 ? '+' : ''}${diff.toFixed(1)}%</td>
                     </tr>`;
-            });
+            } else {
+                // Show all available months
+                fy25months.forEach((month, idx) => {
+                    const diff = fy25Data[idx] - fy24Data[idx];
+                    const diffColor = diff >= 0 ? 'var(--success-color)' : 'var(--danger-color)';
+                    tableHTML += `
+                        <tr>
+                            <td><strong>${month}</strong></td>
+                            <td style="color: #ff6b35;">${fy24Data[idx].toFixed(1)}%</td>
+                            <td style="color: var(--primary-color);">${fy25Data[idx].toFixed(1)}%</td>
+                            <td style="color: ${diffColor}; font-weight: bold;">${diff >= 0 ? '+' : ''}${diff.toFixed(1)}%</td>
+                        </tr>`;
+                });
+            }
             tableHTML += '</tbody></table>';
             
             const html = `
+                ${accountHealthTilesHTML}
+                ${kpiBifurcationTilesHTML}
                 ${insightsHTML}
                 ${comparisonWidget}
                 <div class="card">
@@ -7577,17 +8107,33 @@ function showView(view) {
             
             const ctx = document.getElementById('monthlyChart').getContext('2d');
             
-            // Only show months with actual data - use the maximum months available from either FY
-            const maxMonthsToShow = Math.max(fy24months.length, fy25months.length);
-            const labelsToShow = allMonths.slice(0, maxMonthsToShow);
-            const fy24DataToShow = fy24Data.slice(0, maxMonthsToShow);
-            // For FY25, replace 0 values beyond available data with null to avoid showing 0%
-            const fy25DataToShow = fy25Data.slice(0, maxMonthsToShow).map((val, idx) => 
-                idx < fy25months.length ? val : null
-            );
+            // Determine what to show in chart based on month filter
+            let labelsToShow, fy24DataToShow, fy25DataToShow;
+            
+            if (isMonthFiltered) {
+                // Show only the selected month as a bar/point
+                const monthNames = {
+                    'Apr': 'April', 'May': 'May', 'Jun': 'June', 'Jul': 'July',
+                    'Aug': 'August', 'Sep': 'September', 'Oct': 'October', 'Nov': 'November',
+                    'Dec': 'December', 'Jan': 'January', 'Feb': 'February', 'Mar': 'March'
+                };
+                const monthIdx = allMonths.indexOf(monthFilter);
+                labelsToShow = [monthNames[monthFilter]];
+                fy24DataToShow = [fy24Data[monthIdx]];
+                fy25DataToShow = [fy25Data[monthIdx]];
+            } else {
+                // Show all available months
+                const maxMonthsToShow = Math.max(fy24months.length, fy25months.length);
+                labelsToShow = allMonths.slice(0, maxMonthsToShow);
+                fy24DataToShow = fy24Data.slice(0, maxMonthsToShow);
+                // For FY25, replace 0 values beyond available data with null to avoid showing 0%
+                fy25DataToShow = fy25Data.slice(0, maxMonthsToShow).map((val, idx) => 
+                    idx < fy25months.length ? val : null
+                );
+            }
             
             charts.monthly = new Chart(ctx, {
-                type: 'line',
+                type: isMonthFiltered ? 'bar' : 'line',  // Use bar chart for single month, line for multiple
                 data: {
                     labels: labelsToShow,
                     datasets: [
@@ -7595,24 +8141,24 @@ function showView(view) {
                             label: 'FY 24-25',
                             data: fy24DataToShow,
                             borderColor: '#3a1c71',  // Purple from gradient
-                            backgroundColor: 'rgba(58, 28, 113, 0.1)',
+                            backgroundColor: isMonthFiltered ? 'rgba(58, 28, 113, 0.7)' : 'rgba(58, 28, 113, 0.1)',
                             borderWidth: 3,
-                            fill: true,
+                            fill: !isMonthFiltered,
                             tension: 0.4,
                             pointRadius: 5,
                             pointHoverRadius: 7
                         },
                         {
-                            label: `FY 25-26 (${fy25months.join('-')})`,
+                            label: `FY 25-26${isMonthFiltered ? '' : ' (' + fy25months.join('-') + ')'}`,
                             data: fy25DataToShow,
                             borderColor: '#d76d77',  // Pink from gradient
-                            backgroundColor: 'rgba(215, 109, 119, 0.1)',
+                            backgroundColor: isMonthFiltered ? 'rgba(215, 109, 119, 0.7)' : 'rgba(215, 109, 119, 0.1)',
                             borderWidth: 3,
-                            fill: true,
+                            fill: !isMonthFiltered,
                             tension: 0.4,
                             pointRadius: 5,
                             pointHoverRadius: 7,
-                            borderDash: [5, 5],  // Dashed line for FY 25-26
+                            borderDash: isMonthFiltered ? [] : [5, 5],  // Dashed line for FY 25-26 in line chart
                             spanGaps: false  // Don't connect null values
                         }
                     ]
@@ -11402,9 +11948,15 @@ function showView(view) {
                 return;
             }
             
-            // Build drill-down HTML
+            // Calculate bifurcation Met% (no longer displayed in drill-down, kept for potential future use)
+            const contractual = projectData.filter(r => r.Category === 'Category (A)');
+            const internal = projectData.filter(r => r.Category === 'Category (B)');
+            const penalty = projectData.filter(r => r.Penalty === 'Yes');
+            const nonPenalty = projectData.filter(r => r.Penalty === 'No');
+            
+            // Build drill-down HTML with bifurcation tiles
             let html = `
-                <div style="background: linear-gradient(135deg, var(--primary-light) 0%, var(--primary-color) 100%); padding: 20px; border-radius: 8px; margin-bottom: 30px; color: white;">
+                <div style="background: linear-gradient(135deg, var(--primary-light) 0%, var(--primary-color) 100%); padding: 20px; border-radius: 8px; margin-bottom: 20px; color: white;">
                     <h3 style="margin: 0 0 10px 0; color: white;"><i class="bi bi-bar-chart-line"></i> Performance Measures Overview</h3>
                     <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-top: 15px;">
                         <div>
@@ -11532,10 +12084,13 @@ function showView(view) {
             if (rawTarget !== null && rawTarget !== undefined && rawTarget !== '') {
                 // If it's a number between 0 and 1 (inclusive), likely a percentage
                 if (typeof rawTarget === 'number' && rawTarget >= 0 && rawTarget <= 1) {
-                    // Smart percentage formatting: 0→0%, 0.4→40%, 0.4643→46.43%
+                    // Convert to percentage and preserve exact precision from Excel
                     const percentage = rawTarget * 100;
-                    // Round to 2 decimals, then remove trailing .00
-                    formattedTarget = (Math.round(percentage * 100) / 100).toString().replace(/\.00$/, '') + '%';
+                    // Keep up to 4 decimal places, then remove trailing zeros
+                    formattedTarget = percentage.toFixed(4).replace(/\.?0+$/, '') + '%';
+                } else if (typeof rawTarget === 'number') {
+                    // For values > 1, show as integer or with minimal decimals
+                    formattedTarget = Number.isInteger(rawTarget) ? rawTarget : rawTarget.toFixed(2).replace(/\.?0+$/, '');
                 } else {
                     formattedTarget = rawTarget;
                 }
@@ -11563,12 +12118,14 @@ function showView(view) {
                 let formattedScore = '-';
                 if (rawScore !== null && rawScore !== undefined && rawScore !== '' && rawScore !== 'NA' && rawScore !== 'Not Reported') {
                     if (typeof rawScore === 'number' && rawScore >= 0 && rawScore <= 1) {
-                        // Smart percentage formatting: 0→0%, 0.4→40%, 0.4643→46.43%
+                        // Convert to percentage and preserve exact precision from Excel
+                        // Use toFixed with enough decimals to preserve precision, then remove trailing zeros
                         const percentage = rawScore * 100;
-                        // Round to 2 decimals, then remove trailing .00
-                        formattedScore = (Math.round(percentage * 100) / 100).toString().replace(/\.00$/, '') + '%';
+                        // Keep up to 4 decimal places, then remove trailing zeros and decimal point if not needed
+                        formattedScore = percentage.toFixed(4).replace(/\.?0+$/, '') + '%';
                     } else if (typeof rawScore === 'number') {
-                        formattedScore = rawScore;
+                        // For values > 1 (days, counts), show as integer or with minimal decimals
+                        formattedScore = Number.isInteger(rawScore) ? rawScore : rawScore.toFixed(2).replace(/\.?0+$/, '');
                     } else {
                         formattedScore = rawScore;
                     }
@@ -11601,12 +12158,13 @@ function showView(view) {
             let formattedYtdScore = '-';
             if (rawYtdScore !== null && rawYtdScore !== undefined && rawYtdScore !== '' && rawYtdScore !== 'NA' && rawYtdScore !== 'Not Reported') {
                 if (typeof rawYtdScore === 'number' && rawYtdScore >= 0 && rawYtdScore <= 1) {
-                    // Smart percentage formatting: 0→0%, 0.4→40%, 0.4643→46.43%
+                    // Convert to percentage and preserve exact precision from Excel
                     const percentage = rawYtdScore * 100;
-                    // Round to 2 decimals, then remove trailing .00
-                    formattedYtdScore = (Math.round(percentage * 100) / 100).toString().replace(/\.00$/, '') + '%';
+                    // Keep up to 4 decimal places, then remove trailing zeros
+                    formattedYtdScore = percentage.toFixed(4).replace(/\.?0+$/, '') + '%';
                 } else if (typeof rawYtdScore === 'number') {
-                    formattedYtdScore = rawYtdScore;
+                    // For values > 1, show as integer or with minimal decimals
+                    formattedYtdScore = Number.isInteger(rawYtdScore) ? rawYtdScore : rawYtdScore.toFixed(2).replace(/\.?0+$/, '');
                 } else {
                     formattedYtdScore = rawYtdScore;
                 }
@@ -11648,6 +12206,345 @@ function showView(view) {
             if (modal) {
                 modal.style.display = 'none';
             }
+        }
+
+        // Show Account List Modal (for Health Status tiles)
+        function showAccountList(status, accounts) {
+            console.log(`📋 Showing ${status.toUpperCase()} accounts:`, accounts.length);
+            
+            // Define status-specific styling
+            const statusConfig = {
+                red: {
+                    title: 'RED Accounts - Critical (<50% Compliance)',
+                    icon: 'bi-exclamation-circle-fill',
+                    headerBg: 'linear-gradient(135deg, #dc2626 0%, #991b1b 100%)',
+                    rowBg: '#fef2f2',
+                    rowHover: '#fee2e2',
+                    badgeBg: '#dc2626',
+                    badgeText: '#ffffff'
+                },
+                amber: {
+                    title: 'AMBER Accounts - Monitor (50-74% Compliance)',
+                    icon: 'bi-dash-circle-fill',
+                    headerBg: 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)',
+                    rowBg: '#fffbeb',
+                    rowHover: '#fef3c7',
+                    badgeBg: '#f59e0b',
+                    badgeText: '#ffffff'
+                },
+                green: {
+                    title: 'GREEN Accounts - Excellent (≥75% Compliance)',
+                    icon: 'bi-check-circle-fill',
+                    headerBg: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
+                    rowBg: '#f0fdf4',
+                    rowHover: '#d1fae5',
+                    badgeBg: '#10b981',
+                    badgeText: '#ffffff'
+                }
+            };
+            
+            const config = statusConfig[status];
+            
+            // Build account list HTML
+            let html = `
+                <div style="background: ${config.headerBg}; padding: 20px; border-radius: 8px 8px 0 0; color: white; margin: -20px -20px 20px -20px;">
+                    <h3 style="margin: 0; display: flex; align-items: center; gap: 10px;">
+                        <i class="${config.icon}"></i>
+                        ${config.title}
+                        <span style="background: rgba(255,255,255,0.3); padding: 5px 12px; border-radius: 20px; font-size: 0.9em; margin-left: auto;">
+                            ${accounts.length} ${accounts.length === 1 ? 'Account' : 'Accounts'}
+                        </span>
+                    </h3>
+                </div>
+                
+                <div style="max-height: 60vh; overflow-y: auto;">
+                    <table style="width: 100%; border-collapse: collapse; font-size: 0.9em;">
+                        <thead style="position: sticky; top: 0; background: var(--card-bg); box-shadow: 0 2px 4px rgba(0,0,0,0.1); z-index: 10;">
+                            <tr>
+                                <th style="text-align: left; padding: 12px 15px; border-bottom: 2px solid var(--border-color);">#</th>
+                                <th style="text-align: left; padding: 12px 15px; border-bottom: 2px solid var(--border-color);">Account Name</th>
+                                <th style="text-align: center; padding: 12px 15px; border-bottom: 2px solid var(--border-color);">Region</th>
+                                <th style="text-align: left; padding: 12px 15px; border-bottom: 2px solid var(--border-color);">Practice Head</th>
+                                <th style="text-align: center; padding: 12px 15px; border-bottom: 2px solid var(--border-color);">Met</th>
+                                <th style="text-align: center; padding: 12px 15px; border-bottom: 2px solid var(--border-color);">Not Met</th>
+                                <th style="text-align: center; padding: 12px 15px; border-bottom: 2px solid var(--border-color);">Met %</th>
+                                <th style="text-align: center; padding: 12px 15px; border-bottom: 2px solid var(--border-color);">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+            `;
+            
+            accounts.forEach((account, index) => {
+                html += `
+                    <tr style="background: ${config.rowBg}; cursor: pointer; transition: all 0.2s ease;"
+                        onmouseover="this.style.background='${config.rowHover}'; this.style.transform='scale(1.01)';"
+                        onmouseout="this.style.background='${config.rowBg}'; this.style.transform='scale(1)';"
+                        onclick="showProjectDrilldown('${account.name.replace(/'/g, "\\'")}')">
+                        <td style="padding: 12px 15px; border-bottom: 1px solid var(--border-color); font-weight: 600; color: var(--text-muted);">
+                            ${index + 1}
+                        </td>
+                        <td style="padding: 12px 15px; border-bottom: 1px solid var(--border-color); font-weight: 600; color: var(--text-color);">
+                            <i class="bi bi-building"></i> ${account.name}
+                        </td>
+                        <td style="padding: 12px 15px; border-bottom: 1px solid var(--border-color); text-align: center;">
+                            <span style="background: var(--primary-light); color: var(--primary-color); padding: 4px 10px; border-radius: 12px; font-size: 0.85em; font-weight: 600;">
+                                ${account.region}
+                            </span>
+                        </td>
+                        <td style="padding: 12px 15px; border-bottom: 1px solid var(--border-color); color: var(--text-muted);">
+                            <i class="bi bi-person-badge"></i> ${account.practiceHead}
+                        </td>
+                        <td style="padding: 12px 15px; border-bottom: 1px solid var(--border-color); text-align: center; font-weight: 700; color: #059669;">
+                            ${account.met}
+                        </td>
+                        <td style="padding: 12px 15px; border-bottom: 1px solid var(--border-color); text-align: center; font-weight: 700; color: #dc2626;">
+                            ${account.notMet}
+                        </td>
+                        <td style="padding: 12px 15px; border-bottom: 1px solid var(--border-color); text-align: center;">
+                            <span style="background: ${config.badgeBg}; color: ${config.badgeText}; padding: 6px 14px; border-radius: 20px; font-weight: 700; font-size: 1em; box-shadow: 0 2px 4px rgba(0,0,0,0.2);">
+                                ${account.metPct}%
+                            </span>
+                        </td>
+                        <td style="padding: 12px 15px; border-bottom: 1px solid var(--border-color); text-align: center;">
+                            <button style="background: var(--primary-color); color: white; border: none; padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 0.85em; font-weight: 600; transition: all 0.2s ease;"
+                                    onmouseover="this.style.background='var(--primary-dark)'; this.style.transform='scale(1.05)';"
+                                    onmouseout="this.style.background='var(--primary-color)'; this.style.transform='scale(1)';">
+                                <i class="bi bi-zoom-in"></i> View
+                            </button>
+                        </td>
+                    </tr>
+                `;
+            });
+            
+            html += `
+                        </tbody>
+                    </table>
+                </div>
+                
+                <div style="margin-top: 20px; padding: 15px; background: var(--bg-light); border-radius: 8px; border-left: 4px solid ${config.badgeBg};">
+                    <div style="font-size: 0.9em; color: var(--text-muted);">
+                        <i class="bi bi-info-circle"></i> <strong>Tip:</strong> Click on any row or the "View" button to see detailed performance metrics for that account.
+                    </div>
+                </div>
+            `;
+            
+            // Create and show modal
+            const modal = document.createElement('div');
+            modal.id = 'accountHealthModal';
+            modal.style.cssText = `
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background: rgba(0, 0, 0, 0.7);
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                z-index: 10001;
+                animation: fadeIn 0.3s ease;
+            `;
+            
+            const modalContent = document.createElement('div');
+            modalContent.style.cssText = `
+                background: var(--card-bg);
+                width: 90%;
+                max-width: 1200px;
+                max-height: 90vh;
+                border-radius: 12px;
+                box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+                overflow: hidden;
+                animation: slideIn 0.3s ease;
+                padding: 20px;
+            `;
+            
+            const closeBtn = document.createElement('button');
+            closeBtn.innerHTML = '<i class="bi bi-x-lg"></i> Close';
+            closeBtn.style.cssText = `
+                position: absolute;
+                top: 20px;
+                right: 20px;
+                background: rgba(255, 255, 255, 0.2);
+                color: white;
+                border: none;
+                padding: 8px 16px;
+                border-radius: 6px;
+                cursor: pointer;
+                font-weight: 600;
+                font-size: 0.9em;
+                transition: all 0.2s ease;
+                backdrop-filter: blur(10px);
+            `;
+            closeBtn.onmouseover = () => {
+                closeBtn.style.background = 'rgba(255, 255, 255, 0.3)';
+                closeBtn.style.transform = 'scale(1.05)';
+            };
+            closeBtn.onmouseout = () => {
+                closeBtn.style.background = 'rgba(255, 255, 255, 0.2)';
+                closeBtn.style.transform = 'scale(1)';
+            };
+            closeBtn.onclick = () => {
+                document.body.removeChild(modal);
+                document.body.style.overflow = 'auto';
+            };
+            
+            modalContent.innerHTML = html;
+            modal.appendChild(modalContent);
+            modalContent.appendChild(closeBtn);
+            document.body.appendChild(modal);
+            document.body.style.overflow = 'hidden';
+            
+            // Close on background click
+            modal.onclick = (e) => {
+                if (e.target === modal) {
+                    document.body.removeChild(modal);
+                    document.body.style.overflow = 'auto';
+                }
+            };
+        }
+
+        // Filter accounts by health status (Red/Amber/Green)
+        function filterAccountsByHealth(healthStatus) {
+            console.log(`🔍 Filtering accounts by health: ${healthStatus}`);
+            
+            // Get all accounts from FY 25-26 data
+            const fy25months = extractMonthsFromData(null, filteredData.fy25_26);
+            let accountsData = [];
+
+            const uniqueAccounts = new Set(filteredData.fy25_26.map(row => row.Project));
+
+            uniqueAccounts.forEach(accountName => {
+                const fy25Rows = filteredData.fy25_26.filter(row => row.Project === accountName);
+                let fy25Met = 0, fy25NotMet = 0;
+                
+                fy25months.forEach(month => {
+                    fy25Rows.forEach(row => {
+                        fy25Met += getMonthData(row, month, 'fy25_26', 'Met');
+                        fy25NotMet += getMonthData(row, month, 'fy25_26', 'Not_Met');
+                    });
+                });
+                
+                const fy25Total = fy25Met + fy25NotMet;
+                const fy25Compliance = fy25Total > 0 ? parseFloat(((fy25Met / fy25Total) * 100).toFixed(1)) : 0;
+
+                const sampleRow = fy25Rows.length > 0 ? fy25Rows[0] : null;
+                
+                if (sampleRow && fy25Total > 0) {
+                    accountsData.push({
+                        account: accountName,
+                        region: sampleRow.Region,
+                        practice: sampleRow['Practice Head'],
+                        compliance: fy25Compliance,
+                        met: fy25Met,
+                        notMet: fy25NotMet,
+                        total: fy25Total
+                    });
+                }
+            });
+
+            // Filter by health status
+            let filteredAccounts;
+            let statusLabel, statusColor, statusIcon, thresholdText;
+            
+            if (healthStatus === 'red') {
+                filteredAccounts = accountsData.filter(a => a.compliance < 50);
+                statusLabel = 'RED ACCOUNTS';
+                statusColor = '#dc2626';
+                statusIcon = '🔴';
+                thresholdText = 'Compliance < 50% - Critical Attention Required';
+            } else if (healthStatus === 'amber') {
+                filteredAccounts = accountsData.filter(a => a.compliance >= 50 && a.compliance < 75);
+                statusLabel = 'AMBER ACCOUNTS';
+                statusColor = '#f59e0b';
+                statusIcon = '🟡';
+                thresholdText = 'Compliance 50-74% - Moderate Performance';
+            } else if (healthStatus === 'green') {
+                filteredAccounts = accountsData.filter(a => a.compliance >= 75);
+                statusLabel = 'GREEN ACCOUNTS';
+                statusColor = '#10b981';
+                statusIcon = '🟢';
+                thresholdText = 'Compliance ≥ 75% - Excellent Performance';
+            }
+
+            // Sort by compliance (ascending for red/amber to show worst first, descending for green)
+            if (healthStatus === 'green') {
+                filteredAccounts.sort((a, b) => b.compliance - a.compliance);
+            } else {
+                filteredAccounts.sort((a, b) => a.compliance - b.compliance);
+            }
+
+            // Build HTML
+            let html = `
+                <div style="background: linear-gradient(135deg, ${statusColor}15 0%, ${statusColor}30 100%); padding: 20px; border-radius: 8px; margin-bottom: 20px; border-left: 6px solid ${statusColor};">
+                    <h3 style="margin: 0 0 10px 0; color: ${statusColor};"><i class="bi bi-heart-pulse"></i> ${statusIcon} ${statusLabel}</h3>
+                    <p style="margin: 0; color: #64748b; font-size: 0.95em;">${thresholdText}</p>
+                    <div style="margin-top: 15px; padding: 15px; background: white; border-radius: 6px;">
+                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 15px;">
+                            <div>
+                                <small style="color: #64748b;">Total Accounts</small>
+                                <div style="font-size: 1.8em; font-weight: bold; color: ${statusColor};">${filteredAccounts.length}</div>
+                            </div>
+                            <div>
+                                <small style="color: #64748b;">Avg Compliance</small>
+                                <div style="font-size: 1.8em; font-weight: bold; color: ${statusColor};">${filteredAccounts.length > 0 ? (filteredAccounts.reduce((sum, a) => sum + a.compliance, 0) / filteredAccounts.length).toFixed(1) : 0}%</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="card">
+                    <table style="width: 100%;">
+                        <thead>
+                            <tr style="background: ${statusColor}15;">
+                                <th style="text-align: left; padding: 12px;">Account</th>
+                                <th>Region</th>
+                                <th>Practice Head</th>
+                                <th>Met</th>
+                                <th>Not Met</th>
+                                <th>Total</th>
+                                <th>Compliance %</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+            `;
+
+            filteredAccounts.forEach(acc => {
+                const complianceBar = `
+                    <div style="width: 100%; background: #e5e7eb; border-radius: 4px; overflow: hidden; height: 8px;">
+                        <div style="width: ${acc.compliance}%; background: ${statusColor}; height: 100%;"></div>
+                    </div>
+                `;
+                
+                html += `
+                    <tr style="border-bottom: 1px solid #e5e7eb;">
+                        <td style="padding: 12px; font-weight: 600;">${acc.account}</td>
+                        <td style="text-align: center;">${acc.region}</td>
+                        <td style="text-align: center;">${acc.practice}</td>
+                        <td style="text-align: center; color: #10b981; font-weight: 600;">${acc.met}</td>
+                        <td style="text-align: center; color: #dc2626; font-weight: 600;">${acc.notMet}</td>
+                        <td style="text-align: center; font-weight: 600;">${acc.total}</td>
+                        <td style="text-align: center;">
+                            <div style="font-weight: bold; color: ${statusColor}; font-size: 1.1em;">${acc.compliance}%</div>
+                            ${complianceBar}
+                        </td>
+                        <td style="text-align: center;">
+                            <button onclick="showProjectDrilldown('${acc.account}')" style="padding: 6px 12px; background: ${statusColor}; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 0.85em; font-weight: 600;" onmouseover="this.style.opacity='0.8'" onmouseout="this.style.opacity='1'">
+                                <i class="bi bi-zoom-in"></i> Details
+                            </button>
+                        </td>
+                    </tr>
+                `;
+            });
+
+            html += `
+                        </tbody>
+                    </table>
+                </div>
+            `;
+
+            // Show in drilldown modal
+            openDrilldown(html);
         }
 
         // Close on outside click
