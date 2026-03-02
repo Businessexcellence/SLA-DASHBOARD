@@ -13943,22 +13943,60 @@ function showView(view) {
             `;
             
             // Destroy old charts before creating new ones
+            console.log('🗑️ Destroying old Not Reported charts...');
             ['notReportedProjectChart', 'notReportedRegionChart', 'notReportedPracticeChart', 'notReportedTrendChart'].forEach(chartId => {
                 if (charts[chartId]) {
-                    console.log('Destroying old chart:', chartId);
-                    charts[chartId].destroy();
+                    console.log('   Destroying:', chartId);
+                    try {
+                        charts[chartId].destroy();
+                    } catch(e) {
+                        console.warn('   Error destroying chart:', chartId, e);
+                    }
                     delete charts[chartId];
                 }
             });
             
+            // Log breakdown data counts for debugging
+            console.log('📊 Chart data counts:');
+            console.log('   Projects:', projectBreakdown.length, 'items');
+            console.log('   Regions:', regionBreakdown.length, 'items');
+            console.log('   Practice Heads:', practiceBreakdown.length, 'items');
+            console.log('   Sample project data:', projectBreakdown.slice(0, 3));
+            console.log('   Sample region data:', regionBreakdown);
+            
             // Render charts with filtered data
             setTimeout(() => {
-                console.log('Creating new charts with filtered data...');
-                charts.notReportedProjectChart = renderNotReportedProjectChart(projectBreakdown);
-                charts.notReportedRegionChart = renderNotReportedRegionChart(regionBreakdown);
-                charts.notReportedPracticeChart = renderNotReportedPracticeChart(practiceBreakdown);
-                charts.notReportedTrendChart = renderNotReportedTrendChart(monthlyTrend);
-            }, 100);
+                console.log('🎨 Creating new charts with filtered data...');
+                try {
+                    charts.notReportedProjectChart = renderNotReportedProjectChart(projectBreakdown);
+                    console.log('   ✅ Project chart created');
+                } catch(e) {
+                    console.error('   ❌ Project chart error:', e);
+                }
+                
+                try {
+                    charts.notReportedRegionChart = renderNotReportedRegionChart(regionBreakdown);
+                    console.log('   ✅ Region chart created');
+                } catch(e) {
+                    console.error('   ❌ Region chart error:', e);
+                }
+                
+                try {
+                    charts.notReportedPracticeChart = renderNotReportedPracticeChart(practiceBreakdown);
+                    console.log('   ✅ Practice chart created');
+                } catch(e) {
+                    console.error('   ❌ Practice chart error:', e);
+                }
+                
+                try {
+                    charts.notReportedTrendChart = renderNotReportedTrendChart(monthlyTrend);
+                    console.log('   ✅ Trend chart created');
+                } catch(e) {
+                    console.error('   ❌ Trend chart error:', e);
+                }
+                
+                console.log('✅ All Not Reported charts recreated with filtered data');
+            }, 150);
         }
 
         // ============================================================================
