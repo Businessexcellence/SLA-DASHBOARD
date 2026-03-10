@@ -2928,6 +2928,156 @@
     
 </head>
 <body>
+    <!-- Password Protection Login Screen -->
+    <div id="loginScreen" style="
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(135deg, #3c3530 0%, #ff6b35 50%, #ff8c5a 100%);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 99999;
+        animation: fadeIn 0.5s ease;
+    ">
+        <div style="
+            background: white;
+            padding: 50px 40px;
+            border-radius: 24px;
+            box-shadow: 0 30px 80px rgba(0, 0, 0, 0.3);
+            max-width: 450px;
+            width: 90%;
+            text-align: center;
+            animation: slideInUp 0.6s ease;
+        ">
+            <!-- Logo/Icon -->
+            <div style="
+                width: 80px;
+                height: 80px;
+                background: linear-gradient(135deg, #ff6b35 0%, #ff8c5a 100%);
+                border-radius: 50%;
+                margin: 0 auto 25px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                box-shadow: 0 10px 30px rgba(255, 107, 53, 0.3);
+            ">
+                <i class="bi bi-shield-lock-fill" style="font-size: 42px; color: white;"></i>
+            </div>
+            
+            <!-- Welcome Message -->
+            <h2 style="
+                color: #3c3530;
+                font-size: 28px;
+                font-weight: 800;
+                margin-bottom: 10px;
+                letter-spacing: -0.5px;
+            ">Welcome Tagger</h2>
+            
+            <p style="
+                color: #666;
+                font-size: 16px;
+                margin-bottom: 35px;
+                line-height: 1.6;
+            ">Please sign in to access<br><strong style="color: #ff6b35;">Customer SLA Dashboard</strong></p>
+            
+            <!-- Password Input Form -->
+            <form id="loginForm" onsubmit="return checkPassword(event);">
+                <div style="
+                    position: relative;
+                    margin-bottom: 25px;
+                ">
+                    <input 
+                        type="password" 
+                        id="passwordInput" 
+                        placeholder="Enter Password"
+                        style="
+                            width: 100%;
+                            padding: 16px 50px 16px 20px;
+                            border: 2px solid #e5e7eb;
+                            border-radius: 12px;
+                            font-size: 16px;
+                            transition: all 0.3s ease;
+                            outline: none;
+                        "
+                        onfocus="this.style.borderColor='#ff6b35'; this.style.boxShadow='0 0 0 4px rgba(255, 107, 53, 0.1)';"
+                        onblur="this.style.borderColor='#e5e7eb'; this.style.boxShadow='none';"
+                        required
+                    />
+                    <i class="bi bi-lock-fill" style="
+                        position: absolute;
+                        right: 18px;
+                        top: 50%;
+                        transform: translateY(-50%);
+                        color: #9ca3af;
+                        font-size: 20px;
+                    "></i>
+                </div>
+                
+                <!-- Error Message -->
+                <div id="loginError" style="
+                    display: none;
+                    background: #fef2f2;
+                    color: #dc2626;
+                    padding: 12px;
+                    border-radius: 8px;
+                    margin-bottom: 20px;
+                    font-size: 14px;
+                    border-left: 4px solid #dc2626;
+                ">
+                    <i class="bi bi-exclamation-circle-fill"></i> Incorrect password. Please try again.
+                </div>
+                
+                <!-- Login Button -->
+                <button type="submit" style="
+                    width: 100%;
+                    background: linear-gradient(135deg, #ff6b35 0%, #ff8c5a 100%);
+                    color: white;
+                    border: none;
+                    padding: 16px;
+                    border-radius: 12px;
+                    font-size: 17px;
+                    font-weight: 700;
+                    cursor: pointer;
+                    transition: all 0.3s ease;
+                    box-shadow: 0 4px 15px rgba(255, 107, 53, 0.3);
+                    letter-spacing: 0.5px;
+                "
+                onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 6px 20px rgba(255, 107, 53, 0.4)';"
+                onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 15px rgba(255, 107, 53, 0.3)';"
+                >
+                    <i class="bi bi-box-arrow-in-right"></i> Sign In
+                </button>
+            </form>
+            
+            <!-- Footer -->
+            <div style="
+                margin-top: 35px;
+                padding-top: 25px;
+                border-top: 1px solid #e5e7eb;
+            ">
+                <p style="
+                    color: #9ca3af;
+                    font-size: 13px;
+                    margin-bottom: 8px;
+                ">Made by <strong style="color: #ff6b35;">Tagger</strong></p>
+                <p style="
+                    color: #9ca3af;
+                    font-size: 13px;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    gap: 5px;
+                ">
+                    Powered by <strong style="color: #3c3530;">AI</strong> 
+                    <i class="bi bi-cpu-fill" style="color: #ff6b35;"></i>
+                </p>
+            </div>
+        </div>
+    </div>
+
     <!-- Festival Celebration Overlay -->
     <div id="festivalOverlay" class="festival-overlay">
         <div class="festival-content">
@@ -15964,6 +16114,131 @@ function showView(view) {
         });
         
         console.log('🔐 Admin Panel available - Press Ctrl+Shift+A or call openAdminPanel()');
+        
+        // ========================================
+        // PASSWORD PROTECTION SYSTEM
+        // ========================================
+        
+        // Check if user is already authenticated (session)
+        function checkAuthentication() {
+            const authenticated = sessionStorage.getItem('taggd_authenticated');
+            if (authenticated === 'true') {
+                hideLoginScreen();
+            } else {
+                showLoginScreen();
+            }
+        }
+        
+        // Show login screen
+        function showLoginScreen() {
+            const loginScreen = document.getElementById('loginScreen');
+            if (loginScreen) {
+                loginScreen.style.display = 'flex';
+                document.getElementById('passwordInput').focus();
+            }
+        }
+        
+        // Hide login screen
+        function hideLoginScreen() {
+            const loginScreen = document.getElementById('loginScreen');
+            if (loginScreen) {
+                loginScreen.style.animation = 'fadeOut 0.5s ease';
+                setTimeout(() => {
+                    loginScreen.style.display = 'none';
+                }, 500);
+            }
+        }
+        
+        // Check password on form submit
+        function checkPassword(event) {
+            event.preventDefault();
+            
+            const passwordInput = document.getElementById('passwordInput');
+            const loginError = document.getElementById('loginError');
+            const enteredPassword = passwordInput.value;
+            const correctPassword = 'GoGetter@2026';
+            
+            if (enteredPassword === correctPassword) {
+                // Correct password - grant access
+                sessionStorage.setItem('taggd_authenticated', 'true');
+                loginError.style.display = 'none';
+                
+                // Success animation
+                passwordInput.style.borderColor = '#10b981';
+                passwordInput.style.backgroundColor = '#f0fdf4';
+                
+                // Play success sound if available
+                const successSound = new Audio('data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2/LDciUFLIHO8tiJNwgZaLvt559NEAxQp+PwtmMcBjiR1/LMeSwFJHfH8N2QQAoUXrTp66hVFApGn+DyvmwhBiV7zPDWhzIIFmS56+KcSgwOUpzh8KdeFQ==');
+                successSound.volume = 0.3;
+                successSound.play().catch(() => {});
+                
+                // Show success message and hide login
+                setTimeout(() => {
+                    hideLoginScreen();
+                    showToast('✅ Welcome Tagger! Access granted to Customer SLA Dashboard', 'success');
+                    speakMessage('Welcome Tagger! You have successfully signed in to the Customer SLA Dashboard.');
+                }, 800);
+                
+            } else {
+                // Incorrect password - show error
+                loginError.style.display = 'block';
+                passwordInput.style.borderColor = '#dc2626';
+                passwordInput.style.backgroundColor = '#fef2f2';
+                passwordInput.value = '';
+                passwordInput.focus();
+                
+                // Shake animation
+                passwordInput.style.animation = 'shake 0.5s ease';
+                setTimeout(() => {
+                    passwordInput.style.animation = '';
+                    passwordInput.style.backgroundColor = 'white';
+                }, 500);
+            }
+            
+            return false;
+        }
+        
+        // Add shake animation CSS
+        const shakeStyle = document.createElement('style');
+        shakeStyle.textContent = `
+            @keyframes shake {
+                0%, 100% { transform: translateX(0); }
+                10%, 30%, 50%, 70%, 90% { transform: translateX(-10px); }
+                20%, 40%, 60%, 80% { transform: translateX(10px); }
+            }
+            
+            @keyframes fadeIn {
+                from { opacity: 0; }
+                to { opacity: 1; }
+            }
+            
+            @keyframes fadeOut {
+                from { opacity: 1; }
+                to { opacity: 0; }
+            }
+            
+            @keyframes slideInUp {
+                from { 
+                    opacity: 0;
+                    transform: translateY(30px);
+                }
+                to { 
+                    opacity: 1;
+                    transform: translateY(0);
+                }
+            }
+        `;
+        document.head.appendChild(shakeStyle);
+        
+        // Check authentication on page load
+        checkAuthentication();
+        
+        // Clear authentication on tab/window close (optional - comment out if you want persistent login)
+        // window.addEventListener('beforeunload', () => {
+        //     sessionStorage.removeItem('taggd_authenticated');
+        // });
+        
+        console.log('🔐 Password Protection System initialized');
     </script>
 
 </body>
