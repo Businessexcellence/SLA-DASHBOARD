@@ -12276,7 +12276,7 @@ function showView(view) {
             categoryData.forEach(row => {
                 const project = row.Project;
                 if (!projectStats[project]) {
-                    projectStats[project] = { met: 0, notMet: 0, total: 0, measures: 0 };
+                    projectStats[project] = { met: 0, notMet: 0, notReported: 0, total: 0, measures: 0 };
                 }
                 projectStats[project].measures++;
                 
@@ -12293,6 +12293,9 @@ function showView(view) {
                     } else if (status === 'Not Met') {
                         projectStats[project].notMet++;
                         projectStats[project].total++;
+                    } else if (status === 'Not Reported' || status === 'NA' || !status || status === null || status === undefined) {
+                        projectStats[project].notReported++;
+                        // Don't add to total - Not Reported/NA is excluded from percentage calculation
                     }
                 });
             });
@@ -12303,8 +12306,16 @@ function showView(view) {
                 ...projectStats[project],
                 pct: projectStats[project].total > 0 
                     ? ((projectStats[project].met / projectStats[project].total) * 100).toFixed(1)
-                    : '0.0'
-            })).sort((a, b) => parseFloat(b.pct) - parseFloat(a.pct));
+                    : 'N/A'
+            })).sort((a, b) => {
+                // Sort by percentage (N/A goes to bottom)
+                const aPct = a.pct === 'N/A' ? -1 : parseFloat(a.pct);
+                const bPct = b.pct === 'N/A' ? -1 : parseFloat(b.pct);
+                return bPct - aPct;
+            });
+            
+            // Calculate total Not Reported / NA count
+            const totalNotReported = projectArray.reduce((sum, p) => sum + (p.notReported || 0), 0);
             
             // Define category-specific colors
             let colorScheme = {};
@@ -12334,7 +12345,7 @@ function showView(view) {
                     </div>
                     
                     <!-- Summary Cards -->
-                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 30px;">
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 15px; margin-bottom: 30px;">
                         <div style="background: linear-gradient(135deg, ${colorScheme.bg} 0%, ${colorScheme.bg} 100%); padding: 20px; border-radius: 12px; border-left: 4px solid ${colorScheme.border};">
                             <div style="font-size: 0.85em; color: ${colorScheme.text}; font-weight: 600; margin-bottom: 8px;">Compliance Rate</div>
                             <div style="font-size: 2.2em; font-weight: 900; color: ${colorScheme.border};">${pct}%</div>
@@ -12346,6 +12357,10 @@ function showView(view) {
                         <div style="background: #fef2f2; padding: 20px; border-radius: 12px; border-left: 4px solid #ef4444;">
                             <div style="font-size: 0.85em; color: #991b1b; font-weight: 600; margin-bottom: 8px;">Not Met</div>
                             <div style="font-size: 2.2em; font-weight: 900; color: #ef4444;">${notMet}</div>
+                        </div>
+                        <div style="background: #fffbeb; padding: 20px; border-radius: 12px; border-left: 4px solid #f59e0b;">
+                            <div style="font-size: 0.85em; color: #92400e; font-weight: 600; margin-bottom: 8px;">Not Reported (NA)</div>
+                            <div style="font-size: 2.2em; font-weight: 900; color: #f59e0b;">${totalNotReported}</div>
                         </div>
                         <div style="background: #f3f4f6; padding: 20px; border-radius: 12px; border-left: 4px solid #6b7280;">
                             <div style="font-size: 0.85em; color: #374151; font-weight: 600; margin-bottom: 8px;">Total Measures</div>
@@ -12369,6 +12384,7 @@ function showView(view) {
                                         <th style="padding: 12px 15px; text-align: center; border-bottom: 2px solid #e5e7eb; font-weight: 700; color: #374151;">Measures</th>
                                         <th style="padding: 12px 15px; text-align: center; border-bottom: 2px solid #e5e7eb; font-weight: 700; color: #10b981;">Met</th>
                                         <th style="padding: 12px 15px; text-align: center; border-bottom: 2px solid #e5e7eb; font-weight: 700; color: #ef4444;">Not Met</th>
+                                        <th style="padding: 12px 15px; text-align: center; border-bottom: 2px solid #e5e7eb; font-weight: 700; color: #f59e0b;">Not Reported (NA)</th>
                                         <th style="padding: 12px 15px; text-align: center; border-bottom: 2px solid #e5e7eb; font-weight: 700; color: #374151;">Compliance %</th>
                                     </tr>
                                 </thead>
@@ -12388,6 +12404,7 @@ function showView(view) {
                         <td style="padding: 12px 15px; border-bottom: 1px solid #e5e7eb; text-align: center;">${item.measures}</td>
                         <td style="padding: 12px 15px; border-bottom: 1px solid #e5e7eb; text-align: center; color: #10b981; font-weight: 600;">${item.met}</td>
                         <td style="padding: 12px 15px; border-bottom: 1px solid #e5e7eb; text-align: center; color: #ef4444; font-weight: 600;">${item.notMet}</td>
+                        <td style="padding: 12px 15px; border-bottom: 1px solid #e5e7eb; text-align: center; color: #f59e0b; font-weight: 600;">${item.notReported || 0}</td>
                         <td style="padding: 12px 15px; border-bottom: 1px solid #e5e7eb; text-align: center;">
                             <span style="padding: 4px 12px; border-radius: 12px; background: ${complianceColor}20; color: ${complianceColor}; font-weight: 700;">
                                 ${item.pct}%
@@ -12405,7 +12422,7 @@ function showView(view) {
                     
                     <div style="margin-top: 20px; padding: 15px; background: #f3f4f6; border-radius: 8px; border-left: 4px solid ${colorScheme.border};">
                         <div style="font-size: 0.9em; color: #6b7280;">
-                            <i class="bi bi-info-circle"></i> <strong>Tip:</strong> This breakdown shows performance for ${category} across all filtered projects and months.
+                            <i class="bi bi-info-circle"></i> <strong>Note:</strong> Compliance percentage is calculated as Met / (Met + Not Met) × 100. "Not Reported" and "NA" entries are excluded from the percentage calculation but displayed separately for reference.
                         </div>
                     </div>
                 </div>
