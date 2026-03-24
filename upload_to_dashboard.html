@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Auto Upload to Dashboard</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+</head>
+<body>
+    <h1>Uploading file to dashboard...</h1>
+    <div id="status"></div>
+    
+    <script>
+        async function uploadFile() {
+            const status = document.getElementById('status');
+            
+            try {
+                // Fetch the Excel file
+                status.innerHTML += '<p>Loading Excel file...</p>';
+                const response = await fetch('/SLA_UPDATED_FEB26.xlsx');
+                const blob = await response.blob();
+                
+                status.innerHTML += '<p>File loaded: ' + blob.size + ' bytes</p>';
+                status.innerHTML += '<p>File ready for manual upload</p>';
+                status.innerHTML += '<p><a href="/SLA_UPDATED_FEB26.xlsx" download>Download File</a></p>';
+                
+            } catch (error) {
+                status.innerHTML += '<p>Error: ' + error.message + '</p>';
+            }
+        }
+        
+        uploadFile();
+    </script>
+</body>
+</html>

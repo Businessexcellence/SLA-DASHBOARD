@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>February Data Detection Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 40px; max-width: 800px; margin: 0 auto; }
+        .result { padding: 20px; margin: 20px 0; border-radius: 8px; }
+        .success { background: #d1fae5; border: 2px solid #10b981; }
+        .error { background: #fee2e2; border: 2px solid #ef4444; }
+        .info { background: #dbeafe; border: 2px solid #3b82f6; }
+        h1 { color: #1f2937; }
+        pre { background: #f3f4f6; padding: 15px; border-radius: 4px; overflow-x: auto; }
+        .loading { color: #6b7280; }
+    </style>
+</head>
+<body>
+    <h1>🔍 February 2026 Data Detection Test</h1>
+    
+    <div id="loadingDiv" class="result info">
+        <h3>⏳ Loading data...</h3>
+        <p class="loading">Please wait while we fetch and analyze the data...</p>
+    </div>
+    
+    <div id="resultsDiv" style="display: none;"></div>
+    
+    <script>
+        async function testFebruaryDetection() {
+            const loadingDiv = document.getElementById('loadingDiv');
+            const resultsDiv = document.getElementById('resultsDiv');
+            
+            try {
+                // Fetch data from GitHub
+                const response = await fetch('https://raw.githubusercontent.com/Businessexcellence/SLA-DASHBOARD/main/sample_data.json');
+                const data = await response.json();
+                
+                // Test 1: Check if Feb columns exist
+                const hasFebMet = 'Feb_Met' in data.fy25_26[0];
+                const hasFebNotMet = 'Feb_Not_Met' in data.fy25_26[0];
+                
+                // Test 2: Run the detection logic
+                const monthsOrder = ['Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec', 'Jan', 'Feb', 'Mar'];
+                const yearMapping = {
+                    'Apr': 2025, 'May': 2025, 'Jun': 2025, 'Jul': 2025, 'Aug': 2025, 'Sep': 2025,
+                    'Oct': 2025, 'Nov': 2025, 'Dec': 2025, 'Jan': 2026, 'Feb': 2026, 'Mar': 2026
+                };
+                
+                let latestMonth = null;
+                let latestYear = null;
+                let detectionLog = [];
+                
+                for (let i = monthsOrder.length - 1; i >= 0; i--) {
+                    const month = monthsOrder[i];
+                    const metKey = month + '_Met';
+                    const notMetKey = month + '_Not_Met';
+                    
+                    const hasColumn = data.fy25_26.length > 0 && 
+                                     (metKey in data.fy25_26[0] || notMetKey in data.fy25_26[0]);
+                    
+                    detectionLog.push(`${month}: ${hasColumn ? '✅ Found' : '❌ Not found'}`);
+                    
+                    if (hasColumn) {
+                        latestMonth = month;
+                        latestYear = yearMapping[month];
+                        break;
+                    }
+                }
+                
+                // Test 3: Count February data
+                const febMet = data.fy25_26_metrics_details.filter(r => r['Feb MET/NOT_MET'] === 'Met').length;
+                const febNotMet = data.fy25_26_metrics_details.filter(r => r['Feb MET/NOT_MET'] === 'Not Met').length;
+                const febTotal = febMet + febNotMet;
+                const febCompliance = febTotal > 0 ? ((febMet / febTotal) * 100).toFixed(1) : 0;
+                
+                // Display results
+                loadingDiv.style.display = 'none';
+                resultsDiv.style.display = 'block';
+                
+                const monthFullNames = {
+                    'Apr': 'April', 'May': 'May', 'Jun': 'June', 'Jul': 'July',
+                    'Aug': 'August', 'Sep': 'September', 'Oct': 'October',
+                    'Nov': 'November', 'Dec': 'December', 'Jan': 'January',
+                    'Feb': 'February', 'Mar': 'March'
+                };
+                
+                const success = latestMonth === 'Feb' && latestYear === 2026;
+                
+                resultsDiv.innerHTML = `
+                    <div class="result ${success ? 'success' : 'error'}">
+                        <h2>${success ? '✅' : '❌'} Detection Result</h2>
+                        <h3>Latest Month Detected: <strong>${monthFullNames[latestMonth]} ${latestYear}</strong></h3>
+                        ${success ? 
+                            '<p style="color: #10b981; font-weight: 600;">✓ February 2026 detected correctly!</p>' :
+                            '<p style="color: #ef4444; font-weight: 600;">✗ February 2026 NOT detected!</p>'
+                        }
+                    </div>
+                    
+                    <div class="result info">
+                        <h3>📊 February 2026 Data Statistics</h3>
+                        <ul>
+                            <li><strong>Met:</strong> ${febMet} measures</li>
+                            <li><strong>Not Met:</strong> ${febNotMet} measures</li>
+                            <li><strong>Total:</strong> ${febTotal} measures</li>
+                            <li><strong>Compliance:</strong> ${febCompliance}%</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="result info">
+                        <h3>🔍 Column Detection Results</h3>
+                        <ul>
+                            <li><strong>Feb_Met column exists:</strong> ${hasFebMet ? '✅ Yes' : '❌ No'}</li>
+                            <li><strong>Feb_Not_Met column exists:</strong> ${hasFebNotMet ? '✅ Yes' : '❌ No'}</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="result info">
+                        <h3>📝 Month Detection Log (Reverse Order)</h3>
+                        <pre>${detectionLog.join('\n')}</pre>
+                    </div>
+                    
+                    <div class="result info">
+                        <h3>ℹ️ Data Source</h3>
+                        <p>Fetched from: <code>https://raw.githubusercontent.com/Businessexcellence/SLA-DASHBOARD/main/sample_data.json</code></p>
+                        <p>Test performed at: <strong>${new Date().toLocaleString()}</strong></p>
+                    </div>
+                `;
+                
+            } catch (error) {
+                loadingDiv.style.display = 'none';
+                resultsDiv.style.display = 'block';
+                resultsDiv.innerHTML = `
+                    <div class="result error">
+                        <h2>❌ Error Loading Data</h2>
+                        <p><strong>Error:</strong> ${error.message}</p>
+                        <pre>${error.stack}</pre>
+                    </div>
+                `;
+            }
+        }
+        
+        // Run test on page load
+        testFebruaryDetection();
+    </script>
+</body>
+</html>
