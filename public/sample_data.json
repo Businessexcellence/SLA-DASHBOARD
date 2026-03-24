@@ -24073,6 +24073,1071 @@
       "null": null
     }
   ],
-  "fy25_26_not_reported": [],
+  "fy25_26_not_reported": [
+    {
+      "Project": "HPE",
+      "Region": "South 1 ",
+      "Practice Head": "Mahak",
+      "Regional Head ": "",
+      "Industry Type ": "",
+      "BE SPOC": "Debashreeta",
+      "not_reported_measures": [
+        {
+          "measure": "Diversity",
+          "category": "Category (B)",
+          "target": "Technical - (>80% of filled to include at least one or more diverse candidate)"
+        },
+        {
+          "measure": "Diversity",
+          "category": "Category (B)",
+          "target": "Enterprise - (>80% of filled to include at least one or more diverse candidate)"
+        },
+        {
+          "measure": "New Hire Satisfaction - Technical",
+          "category": "Category (B)",
+          "target": ">=90%"
+        },
+        {
+          "measure": "New Hire Satisfaction - Enterprise",
+          "category": "Category (B)",
+          "target": ">=90%"
+        },
+        {
+          "measure": "New Hire Satisfaction - Technical",
+          "category": "Category (B)",
+          "target": ">=90%"
+        },
+        {
+          "measure": "New Hire Satisfaction - Enterprise",
+          "category": "Category (B)",
+          "target": ">=90%"
+        },
+        {
+          "measure": "New Hire Satisfaction - Technical",
+          "category": "Category (B)",
+          "target": ">=90%"
+        },
+        {
+          "measure": "New Hire Satisfaction - Enterprise",
+          "category": "Category (B)",
+          "target": ">=90%"
+        },
+        {
+          "measure": "Source Mix ",
+          "category": "Category (B)",
+          "target": "Not Shared"
+        },
+        {
+          "measure": "Source Mix ",
+          "category": "Category (B)",
+          "target": "Not Shared"
+        },
+        {
+          "measure": "Time to Hire",
+          "category": "Category (B)",
+          "target": "Technical - Not Shared"
+        },
+        {
+          "measure": "Time to Hire",
+          "category": "Category (B)",
+          "target": "Enterprise - Not Shared"
+        },
+        {
+          "measure": "Hit Ratio",
+          "category": "Category (B)",
+          "target": "Not Shared"
+        },
+        {
+          "measure": "Hit Ratio",
+          "category": "Category (B)",
+          "target": "Not Shared"
+        },
+        {
+          "measure": "Offer Drop",
+          "category": "Category (B)",
+          "target": "Technical - Not Shared"
+        },
+        {
+          "measure": "Offer Drop",
+          "category": "Category (B)",
+          "target": "Enterprise - Not Shared"
+        },
+        {
+          "measure": "First Time Right Ratio",
+          "category": "Category (B)",
+          "target": "Technical - Not Shared"
+        },
+        {
+          "measure": "First Time Right Ratio",
+          "category": "Category (B)",
+          "target": "Enterprise - Not Shared"
+        },
+        {
+          "measure": "Fulfilment ",
+          "category": "Category (B)",
+          "target": "Technical - Not Shared"
+        },
+        {
+          "measure": "Fulfilment ",
+          "category": "Category (B)",
+          "target": "Enterprise - Not Shared"
+        }
+      ],
+      "not_reported_count": 20
+    },
+    {
+      "Project": "Atomberg",
+      "Region": "West 1",
+      "Practice Head": "Geetu",
+      "Regional Head ": "",
+      "Industry Type ": "",
+      "BE SPOC": "Mehvish Naz",
+      "not_reported_measures": [
+        {
+          "measure": "Time to Hire (Corp Sales)",
+          "category": "Category (A)",
+          "target": "100 Days"
+        },
+        {
+          "measure": "Time to Hire (Supply Chain)",
+          "category": "Category (A)",
+          "target": "100 Days"
+        },
+        {
+          "measure": "Time to Fill (Channel Sales)",
+          "category": "Category (A)",
+          "target": "25 Days"
+        },
+        {
+          "measure": "Time to Fill (Corp Sales)",
+          "category": "Category (A)",
+          "target": "40 Days"
+        },
+        {
+          "measure": "Time to Fill (Supply Chain)",
+          "category": "Category (A)",
+          "target": "40 Days"
+        },
+        {
+          "measure": "Time to Fill (Fin & HR)",
+          "category": "Category (A)",
+          "target": "40 Days"
+        },
+        {
+          "measure": "Ageing (Channel Sales)",
+          "category": "Category (A)",
+          "target": 0.1
+        },
+        {
+          "measure": "Ageing (Corp Sales)",
+          "category": "Category (A)",
+          "target": 0.1
+        },
+        {
+          "measure": "FTR (Channel Sales)",
+          "category": "Category (A)",
+          "target": 0.6
+        },
+        {
+          "measure": "FTR (Cust Exp)",
+          "category": "Category (A)",
+          "target": 0.6
+        },
+        {
+          "measure": "Hit Ratio (Channel Sales)",
+          "category": "Category (A)",
+          "target": 0.2
+        },
+        {
+          "measure": "Hit Ratio (Cust Exp)",
+          "category": "Category (A)",
+          "target": 0.2
+        },
+        {
+          "measure": "Offer drop (Channel Sales)",
+          "category": "Category (A)",
+          "target": 0.1
+        },
+        {
+          "measure": "Offer drop (Corp Sales)",
+          "category": "Category (A)",
+          "target": 0.1
+        },
+        {
+          "measure": "Offer drop (Supply Chain)",
+          "category": "Category (A)",
+          "target": 0.1
+        },
+        {
+          "measure": "Offer drop (Fin & HR)",
+          "category": "Category (A)",
+          "target": 0.1
+        },
+        {
+          "measure": "Diversity (Corp Sales)",
+          "category": "Category (A)",
+          "target": 0.1
+        },
+        {
+          "measure": "Diversity (Supply Chain)",
+          "category": "Category (A)",
+          "target": 0.1
+        }
+      ],
+      "not_reported_count": 18
+    },
+    {
+      "Project": "SKF",
+      "Region": "North",
+      "Practice Head": "Archana Trikha",
+      "Regional Head ": "",
+      "Industry Type ": "",
+      "BE SPOC": "Rishab",
+      "not_reported_measures": [
+        {
+          "measure": "Time to Fill",
+          "category": "Category (B)",
+          "target": "45 Days"
+        },
+        {
+          "measure": "Source Mix (PS)",
+          "category": "Category (B)",
+          "target": 0.6
+        },
+        {
+          "measure": "Source Mix (ER & IJP)",
+          "category": "Category (B)",
+          "target": 0.4
+        },
+        {
+          "measure": "CSAT",
+          "category": "Category (B)",
+          "target": 0.8
+        },
+        {
+          "measure": "HM SAT",
+          "category": "Category (B)",
+          "target": 0.8
+        },
+        {
+          "measure": "Diversity",
+          "category": "Category (B)",
+          "target": 0.35
+        },
+        {
+          "measure": "Offer Drop",
+          "category": "Category (B)",
+          "target": 0.15
+        },
+        {
+          "measure": "Ageing",
+          "category": "Category (B)",
+          "target": 0.2
+        },
+        {
+          "measure": "Time to Hire",
+          "category": "Category (B)",
+          "target": "135 Days"
+        },
+        {
+          "measure": "Hit Ratio",
+          "category": "Category (B)",
+          "target": "01:08:00"
+        },
+        {
+          "measure": "Fulfilment ",
+          "category": "Category (B)",
+          "target": 0.85
+        },
+        {
+          "measure": "First Time Right Ratio",
+          "category": "Category (B)",
+          "target": 0.75
+        },
+        {
+          "measure": "Supply of CVs",
+          "category": "Category (B)",
+          "target": 0.8
+        },
+        {
+          "measure": "Early Attrition",
+          "category": "Category (B)",
+          "target": 0.05
+        }
+      ],
+      "not_reported_count": 14
+    },
+    {
+      "Project": "Ultratech",
+      "Region": "West 2",
+      "Practice Head": "Shweta",
+      "Regional Head ": "",
+      "Industry Type ": "",
+      "BE SPOC": "Himanshu Srivastava",
+      "not_reported_measures": [
+        {
+          "measure": "Time to Hire",
+          "category": "Category (B)",
+          "target": "45 Days for TM"
+        },
+        {
+          "measure": "Time to Hire",
+          "category": "Category (B)",
+          "target": "60 Days for Process Heads"
+        },
+        {
+          "measure": "Time to Hire",
+          "category": "Category (B)",
+          "target": "90 Days for leadership"
+        },
+        {
+          "measure": "Offer Drop",
+          "category": "Category (B)",
+          "target": "<=10%"
+        },
+        {
+          "measure": "Early Attrition",
+          "category": "Category (B)",
+          "target": "<=5%"
+        },
+        {
+          "measure": "Resource Cost",
+          "category": "Category (B)",
+          "target": 0.99
+        },
+        {
+          "measure": "Diversity",
+          "category": "Category (B)",
+          "target": 0.2
+        },
+        {
+          "measure": "Hiring Manager SAT",
+          "category": "Category (B)",
+          "target": ">=80%"
+        },
+        {
+          "measure": "CSAT",
+          "category": "Category (B)",
+          "target": ">=80%"
+        },
+        {
+          "measure": "Time to Fill",
+          "category": "Category (B)",
+          "target": "Not Shared"
+        },
+        {
+          "measure": "Ageing",
+          "category": "Category (B)",
+          "target": "Not Shared"
+        },
+        {
+          "measure": "First Time Right Ratio",
+          "category": "Category (B)",
+          "target": "Not Shared"
+        },
+        {
+          "measure": "Hit Ratio",
+          "category": "Category (B)",
+          "target": "Not Shared"
+        },
+        {
+          "measure": "Fulfilment ",
+          "category": "Category (B)",
+          "target": "Not Shared"
+        }
+      ],
+      "not_reported_count": 14
+    },
+    {
+      "Project": "Ametek",
+      "Region": "South 1 ",
+      "Practice Head": "TBH",
+      "Regional Head ": "",
+      "Industry Type ": "",
+      "BE SPOC": "Debashreeta",
+      "not_reported_measures": [
+        {
+          "measure": "Time to Fill",
+          "category": "Category (A)",
+          "target": "50 Days"
+        },
+        {
+          "measure": "Ageing",
+          "category": "Category (A)",
+          "target": 0.4
+        },
+        {
+          "measure": "First Time Right Ratio",
+          "category": "Category (A)",
+          "target": 0.2
+        },
+        {
+          "measure": "Fulfilment ",
+          "category": "Category (A)",
+          "target": 0.9
+        },
+        {
+          "measure": "Time to Hire",
+          "category": "Category (A)",
+          "target": "140 Days"
+        },
+        {
+          "measure": "Hit Ratio",
+          "category": "Category (A)",
+          "target": 0.2
+        },
+        {
+          "measure": "Offer Drop",
+          "category": "Category (A)",
+          "target": 0.25
+        }
+      ],
+      "not_reported_count": 7
+    },
+    {
+      "Project": "AMNS",
+      "Region": "West 1",
+      "Practice Head": "Alifiya",
+      "Regional Head ": "",
+      "Industry Type ": "",
+      "BE SPOC": "Rishab",
+      "not_reported_measures": [
+        {
+          "measure": "Time to Fill",
+          "category": "Category (B)",
+          "target": "45 Days"
+        },
+        {
+          "measure": "Time to Hire",
+          "category": "Category (B)",
+          "target": "105 Days"
+        },
+        {
+          "measure": "Offer Drop",
+          "category": "Category (B)",
+          "target": 0.3
+        },
+        {
+          "measure": "FTR (Recruiter Screening to HM Shortlisting Ratio)",
+          "category": "Category (B)",
+          "target": 0.6
+        },
+        {
+          "measure": "Ageing",
+          "category": "Category (A)",
+          "target": "<=20%"
+        },
+        {
+          "measure": "Fulfilment ",
+          "category": "Category (A)",
+          "target": 0.8
+        },
+        {
+          "measure": "Hit Ratio",
+          "category": "Category (A)",
+          "target": 0.2
+        }
+      ],
+      "not_reported_count": 7
+    },
+    {
+      "Project": "Excelacom",
+      "Region": "South 2",
+      "Practice Head": "Krishna",
+      "Regional Head ": "",
+      "Industry Type ": "",
+      "BE SPOC": "Himanshu Srivastava",
+      "not_reported_measures": [
+        {
+          "measure": "Time to Hire",
+          "category": "Category (B)",
+          "target": "60 Days"
+        },
+        {
+          "measure": "Time to Fill",
+          "category": "Category (B)",
+          "target": "30 days"
+        },
+        {
+          "measure": "Ageing",
+          "category": "Category (B)",
+          "target": 0.2
+        },
+        {
+          "measure": "First Time Right Ratio",
+          "category": "Category (B)",
+          "target": 0.65
+        },
+        {
+          "measure": "Hit Ratio",
+          "category": "Category (B)",
+          "target": 0.2
+        },
+        {
+          "measure": "Offer Drop",
+          "category": "Category (B)",
+          "target": 0.2
+        },
+        {
+          "measure": "Fulfilment ",
+          "category": "Category (B)",
+          "target": 0.8
+        }
+      ],
+      "not_reported_count": 7
+    },
+    {
+      "Project": "Mahindra Finance",
+      "Region": "West 1",
+      "Practice Head": "Geetu",
+      "Regional Head ": "",
+      "Industry Type ": "",
+      "BE SPOC": "Sahil",
+      "not_reported_measures": [
+        {
+          "measure": "Time to Hire",
+          "category": "Category (B)",
+          "target": "90 Days"
+        },
+        {
+          "measure": "Time to Fill",
+          "category": "Category (B)",
+          "target": "30 Days"
+        },
+        {
+          "measure": "Ageing",
+          "category": "Category (B)",
+          "target": 0.1
+        },
+        {
+          "measure": "First Time Right Ratio",
+          "category": "Category (B)",
+          "target": 0.6
+        },
+        {
+          "measure": "Hit Ratio",
+          "category": "Category (B)",
+          "target": "01:07:00"
+        },
+        {
+          "measure": "Offer Drop",
+          "category": "Category (B)",
+          "target": 0.2
+        },
+        {
+          "measure": "Fulfilment ",
+          "category": "Category (B)",
+          "target": 0.9
+        }
+      ],
+      "not_reported_count": 7
+    },
+    {
+      "Project": "Robert Bosch",
+      "Region": "South 1 ",
+      "Practice Head": "TBH",
+      "Regional Head ": "",
+      "Industry Type ": "",
+      "BE SPOC": "Debashreeta",
+      "not_reported_measures": [
+        {
+          "measure": "Time to Fill",
+          "category": "Category (B)",
+          "target": "30 Days"
+        },
+        {
+          "measure": "Time to Hire",
+          "category": "Category (B)",
+          "target": "120 Days"
+        },
+        {
+          "measure": "Ageing",
+          "category": "Category (B)",
+          "target": 0.2
+        },
+        {
+          "measure": "First Time Right Ratio",
+          "category": "Category (B)",
+          "target": 0.7
+        },
+        {
+          "measure": "Hit Ratio",
+          "category": "Category (B)",
+          "target": 0.5
+        },
+        {
+          "measure": "Offer Drop",
+          "category": "Category (B)",
+          "target": 0.2
+        },
+        {
+          "measure": "Fulfilment ",
+          "category": "Category (B)",
+          "target": 0.2
+        }
+      ],
+      "not_reported_count": 7
+    },
+    {
+      "Project": "TATA Power",
+      "Region": "West 1",
+      "Practice Head": "Elton",
+      "Regional Head ": "",
+      "Industry Type ": "",
+      "BE SPOC": "Sahil",
+      "not_reported_measures": [
+        {
+          "measure": "Time to Hire",
+          "category": "Category (B)",
+          "target": "90 Days"
+        },
+        {
+          "measure": "Hit Ratio",
+          "category": "Category (B)",
+          "target": 0.2
+        },
+        {
+          "measure": "Offer Drop",
+          "category": "Category (B)",
+          "target": 0.2
+        },
+        {
+          "measure": "Turn Around Time (TAT) for Recruitment",
+          "category": "Category (B)",
+          "target": "45 Days"
+        },
+        {
+          "measure": "First Time Right Ratio",
+          "category": "Category (B)",
+          "target": 0.6
+        },
+        {
+          "measure": "Ageing",
+          "category": "Category (B)",
+          "target": "<=15%"
+        },
+        {
+          "measure": "Fulfilment ",
+          "category": "Category (B)",
+          "target": "90% (Within 45days TTO)"
+        }
+      ],
+      "not_reported_count": 7
+    },
+    {
+      "Project": "TATA Tele",
+      "Region": "West 1",
+      "Practice Head": "Elton",
+      "Regional Head ": "",
+      "Industry Type ": "",
+      "BE SPOC": "Sahil",
+      "not_reported_measures": [
+        {
+          "measure": "Fulfilment ",
+          "category": "Category (A)",
+          "target": 0.95
+        },
+        {
+          "measure": "Time to Fill",
+          "category": "Category (A)",
+          "target": "30 Days"
+        },
+        {
+          "measure": "First Time Right Ratio",
+          "category": "Category (A)",
+          "target": 0.75
+        },
+        {
+          "measure": "Time to Hire",
+          "category": "Category (A)",
+          "target": "90 Days "
+        },
+        {
+          "measure": "Ageing",
+          "category": "Category (A)",
+          "target": 0.2
+        },
+        {
+          "measure": "Hit Ratio",
+          "category": "Category (A)",
+          "target": 0.2
+        },
+        {
+          "measure": "Offer Drop",
+          "category": "Category (A)",
+          "target": 0.05
+        }
+      ],
+      "not_reported_count": 7
+    },
+    {
+      "Project": "TITAN",
+      "Region": "South 1 ",
+      "Practice Head": "TBH",
+      "Regional Head ": "",
+      "Industry Type ": "",
+      "BE SPOC": "Debashreeta",
+      "not_reported_measures": [
+        {
+          "measure": "Time to Fill",
+          "category": "Category (A)",
+          "target": "30 days"
+        },
+        {
+          "measure": "Ageing",
+          "category": "Category (A)",
+          "target": "Target not shared"
+        },
+        {
+          "measure": "First Time Right Ratio",
+          "category": "Category (A)",
+          "target": "Target not shared"
+        },
+        {
+          "measure": "Fulfilment ",
+          "category": "Category (A)",
+          "target": "Target not shared"
+        },
+        {
+          "measure": "Time to Hire",
+          "category": "Category (A)",
+          "target": "90 days"
+        },
+        {
+          "measure": "Hit Ratio",
+          "category": "Category (A)",
+          "target": "Target not shared"
+        },
+        {
+          "measure": "Offer Drop",
+          "category": "Category (A)",
+          "target": 0.3
+        }
+      ],
+      "not_reported_count": 7
+    },
+    {
+      "Project": "WTW (Ops & Tech)",
+      "Region": "West 1",
+      "Practice Head": "Elton",
+      "Regional Head ": "",
+      "Industry Type ": "",
+      "BE SPOC": "Sahil",
+      "not_reported_measures": [
+        {
+          "measure": "Time to Hire",
+          "category": "Category (B)",
+          "target": "90 Days "
+        },
+        {
+          "measure": "Hit Ratio",
+          "category": "Category (B)",
+          "target": 0.2
+        },
+        {
+          "measure": "Offer Drop",
+          "category": "Category (B)",
+          "target": 0.05
+        },
+        {
+          "measure": "First Time Right Ratio",
+          "category": "Category (B)",
+          "target": 0.75
+        },
+        {
+          "measure": "Time to Fill",
+          "category": "Category (B)",
+          "target": "30 Days "
+        },
+        {
+          "measure": "Ageing",
+          "category": "Category (B)",
+          "target": 0.2
+        },
+        {
+          "measure": "Fulfilment ",
+          "category": "Category (B)",
+          "target": 0.95
+        }
+      ],
+      "not_reported_count": 7
+    },
+    {
+      "Project": "Honeywell",
+      "Region": "South 1 ",
+      "Practice Head": "Bapi Reddy",
+      "Regional Head ": "",
+      "Industry Type ": "",
+      "BE SPOC": "Debashreeta",
+      "not_reported_measures": [
+        {
+          "measure": "new hire leavers in first 3 months / total new hires within same timeframe",
+          "category": "Category (B)",
+          "target": "<5%"
+        },
+        {
+          "measure": "First Time Right Ratio",
+          "category": "Category (B)",
+          "target": "Not Shared"
+        },
+        {
+          "measure": "Hit Ratio",
+          "category": "Category (B)",
+          "target": "Not Shared"
+        },
+        {
+          "measure": "Offer Drop",
+          "category": "Category (B)",
+          "target": "Not Shared"
+        },
+        {
+          "measure": "Fulfilment ",
+          "category": "Category (B)",
+          "target": "Not Shared"
+        }
+      ],
+      "not_reported_count": 5
+    },
+    {
+      "Project": "SBI Card",
+      "Region": "North",
+      "Practice Head": "Archana Trikha",
+      "Regional Head ": "",
+      "Industry Type ": "",
+      "BE SPOC": "Rishab",
+      "not_reported_measures": [
+        {
+          "measure": "Time to Fill (Band-3)",
+          "category": "Category (B)",
+          "target": "40 Days"
+        },
+        {
+          "measure": "Time to Fill (Band-2)",
+          "category": "Category (B)",
+          "target": "45 Days"
+        },
+        {
+          "measure": "First Time Right Ratio",
+          "category": "Category (A)",
+          "target": 0.7
+        },
+        {
+          "measure": "Hit Ratio",
+          "category": "Category (A)",
+          "target": 0.8
+        },
+        {
+          "measure": "Fulfilment ",
+          "category": "Category (A)",
+          "target": 0.6
+        }
+      ],
+      "not_reported_count": 5
+    },
+    {
+      "Project": "Servify",
+      "Region": "West 1",
+      "Practice Head": "Ashish",
+      "Regional Head ": "",
+      "Industry Type ": "",
+      "BE SPOC": "Sahil",
+      "not_reported_measures": [
+        {
+          "measure": "Time to Fill",
+          "category": "Category (A)",
+          "target": "Not Shared"
+        },
+        {
+          "measure": "Time to Hire",
+          "category": "Category (A)",
+          "target": "Not Shared"
+        },
+        {
+          "measure": "Hit Ratio",
+          "category": "Category (A)",
+          "target": "Not Shared"
+        },
+        {
+          "measure": "Source Mix : % Closed through Employee Referral",
+          "category": "Category (A)",
+          "target": "Not Shared"
+        },
+        {
+          "measure": "Offer Drop",
+          "category": "Category (A)",
+          "target": "Not Shared"
+        }
+      ],
+      "not_reported_count": 5
+    },
+    {
+      "Project": "WTW (Ops)",
+      "Region": "West 1",
+      "Practice Head": "Elton",
+      "Regional Head ": "",
+      "Industry Type ": "",
+      "BE SPOC": "Sahil",
+      "not_reported_measures": [
+        {
+          "measure": "fulfilment Ratio",
+          "category": "Category (B)",
+          "target": 0.85
+        },
+        {
+          "measure": "Source Mix",
+          "category": "Category (B)",
+          "target": 0.95
+        },
+        {
+          "measure": "Time to Fill",
+          "category": "Category (B)",
+          "target": "15 Days"
+        },
+        {
+          "measure": "Compensation Range Adherence",
+          "category": "Category (B)",
+          "target": 0.8
+        },
+        {
+          "measure": "Hiring Manager Satisfaction ",
+          "category": "Category (B)",
+          "target": 7
+        }
+      ],
+      "not_reported_count": 5
+    },
+    {
+      "Project": "WTW (Tech)",
+      "Region": "West 1",
+      "Practice Head": "Elton",
+      "Regional Head ": "",
+      "Industry Type ": "",
+      "BE SPOC": "Sahil",
+      "not_reported_measures": [
+        {
+          "measure": "fulfilment Ratio",
+          "category": "Category (B)",
+          "target": 0.85
+        },
+        {
+          "measure": "Source Mix",
+          "category": "Category (B)",
+          "target": 0.95
+        },
+        {
+          "measure": "Time to Fill",
+          "category": "Category (B)",
+          "target": "15 Days"
+        },
+        {
+          "measure": "Compensation Range Adherence",
+          "category": "Category (B)",
+          "target": 0.8
+        },
+        {
+          "measure": "Hiring Manager Satisfaction ",
+          "category": "Category (B)",
+          "target": 7
+        }
+      ],
+      "not_reported_count": 5
+    },
+    {
+      "Project": "BITS",
+      "Region": "South 2",
+      "Practice Head": "Krishna",
+      "Regional Head ": "",
+      "Industry Type ": "",
+      "BE SPOC": "Himanshu Srivastava",
+      "not_reported_measures": [
+        {
+          "measure": "% candidates informed about required documents within timeline for offer",
+          "category": "Category (B)",
+          "target": 1
+        }
+      ],
+      "not_reported_count": 1
+    },
+    {
+      "Project": "Jindal",
+      "Region": "North",
+      "Practice Head": "Archana Trikha",
+      "Regional Head ": "",
+      "Industry Type ": "",
+      "BE SPOC": "Rishab",
+      "not_reported_measures": [
+        {
+          "measure": "CSAT",
+          "category": "Category (A)",
+          "target": ">=80%"
+        }
+      ],
+      "not_reported_count": 1
+    },
+    {
+      "Project": "Maruti Suzuki",
+      "Region": "North",
+      "Practice Head": "Archana Trikha",
+      "Regional Head ": "",
+      "Industry Type ": "",
+      "BE SPOC": "Rishab",
+      "not_reported_measures": [
+        {
+          "measure": "diversity",
+          "category": "Category (A)",
+          "target": 0.1
+        }
+      ],
+      "not_reported_count": 1
+    },
+    {
+      "Project": "Pernod Ricard ",
+      "Region": "North",
+      "Practice Head": "Archana Trikha",
+      "Regional Head ": "",
+      "Industry Type ": "",
+      "BE SPOC": "Rishab",
+      "not_reported_measures": [
+        {
+          "measure": "Diversity",
+          "category": "Category (A)",
+          "target": 0.2
+        }
+      ],
+      "not_reported_count": 1
+    },
+    {
+      "Project": "Subros",
+      "Region": "North",
+      "Practice Head": "Archana Trikha",
+      "Regional Head ": "",
+      "Industry Type ": "",
+      "BE SPOC": "Rishab",
+      "not_reported_measures": [
+        {
+          "measure": "Diversity",
+          "category": "Category (A)",
+          "target": 0.15
+        }
+      ],
+      "not_reported_count": 1
+    },
+    {
+      "Project": "Wipro",
+      "Region": "South 1 ",
+      "Practice Head": "TBH",
+      "Regional Head ": "",
+      "Industry Type ": "",
+      "BE SPOC": "Himanshu Srivastava",
+      "not_reported_measures": [
+        {
+          "measure": "Minimum Guaranteed",
+          "category": "Category (B)",
+          "target": 1
+        }
+      ],
+      "not_reported_count": 1
+    }
+  ],
   "last_updated": "2026-03-24 11:36:49"
 }
