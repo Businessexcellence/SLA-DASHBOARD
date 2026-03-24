@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Dashboard Data Diagnostic</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Arial, sans-serif;
+            padding: 40px;
+            max-width: 1000px;
+            margin: 0 auto;
+            background: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 { color: #ff6b35; margin-top: 0; }
+        h2 { color: #333; border-bottom: 2px solid #ff6b35; padding-bottom: 10px; }
+        .status { padding: 15px; margin: 15px 0; border-radius: 5px; font-weight: 600; }
+        .success { background: #d1fae5; border-left: 4px solid #10b981; color: #065f46; }
+        .error { background: #fee2e2; border-left: 4px solid #ef4444; color: #991b1b; }
+        .warning { background: #fef3c7; border-left: 4px solid #f59e0b; color: #92400e; }
+        .info { background: #dbeafe; border-left: 4px solid #3b82f6; color: #1e40af; }
+        pre { background: #f3f4f6; padding: 15px; border-radius: 5px; overflow-x: auto; font-size: 13px; }
+        .loading { text-align: center; padding: 40px; color: #6b7280; }
+        table { width: 100%; border-collapse: collapse; margin: 20px 0; }
+        th, td { padding: 12px; text-align: left; border-bottom: 1px solid #e5e7eb; }
+        th { background: #f9fafb; font-weight: 600; color: #374151; }
+        .badge { 
+            display: inline-block; 
+            padding: 4px 12px; 
+            border-radius: 12px; 
+            font-size: 12px; 
+            font-weight: 600;
+            margin-right: 8px;
+        }
+        .badge-success { background: #d1fae5; color: #065f46; }
+        .badge-error { background: #fee2e2; color: #991b1b; }
+        .badge-info { background: #dbeafe; color: #1e40af; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔍 SLA Dashboard Data Diagnostic</h1>
+        <p><strong>Purpose:</strong> This page tests if February 2026 data is correctly loaded and detected.</p>
+        
+        <div id="loadingDiv" class="loading">
+            <h2>⏳ Running diagnostics...</h2>
+            <p>Testing data from GitHub repository...</p>
+        </div>
+        
+        <div id="resultsDiv" style="display: none;"></div>
+    </div>
+    
+    <script>
+        async function runDiagnostics() {
+            const loadingDiv = document.getElementById('loadingDiv');
+            const resultsDiv = document.getElementById('resultsDiv');
+            
+            const results = {
+                dataSource: 'Unknown',
+                dataLoaded: false,
+                febColumnsExist: false,
+                febDataCount: { met: 0, notMet: 0, total: 0 },
+                detectedMonth: null,
+                detectedYear: null,
+                errors: [],
+                logs: []
+            };
+            
+            try {
+                results.logs.push('Starting diagnostic...');
+                
+                // Test 1: Try to load from current domain (relative path)
+                results.logs.push('Test 1: Attempting to load sample_data.json from current domain...');
+                let response = await fetch('sample_data.json?v=' + Date.now());
+                
+                if (!response.ok) {
+                    results.logs.push('❌ Failed to load from current domain, trying GitHub...');
+                    // Test 2: Load from GitHub raw
+                    results.dataSource = 'GitHub Raw';
+                    response = await fetch('https://raw.githubusercontent.com/Businessexcellence/SLA-DASHBOARD/main/sample_data.json?v=' + Date.now());
+                } else {
+                    results.dataSource = 'Current Domain';
+                }
+                
+                if (!response.ok) {
+                    throw new Error('Failed to load data from any source');
+                }
+                
+                const data = await response.json();
+                results.dataLoaded = true;
+                results.logs.push('✅ Data loaded successfully from: ' + results.dataSource);
+                
+                // Test 3: Check if Feb columns exist
+                if (data.fy25_26 && data.fy25_26.length > 0) {
+                    const firstRow = data.fy25_26[0];
+                    results.febColumnsExist = 'Feb_Met' in firstRow || 'Feb_Not_Met' in firstRow;
+                    results.logs.push('Feb_Met exists: ' + ('Feb_Met' in firstRow));
+                    results.logs.push('Feb_Not_Met exists: ' + ('Feb_Not_Met' in firstRow));
+                    
+                    // List all month columns
+                    const allColumns = Object.keys(firstRow);
+                    const monthColumns = allColumns.filter(col => 
+                        col.includes('_Met') || col.includes('_Not_Met')
+                    );
+                    results.logs.push('All month columns found: ' + monthColumns.join(', '));
+                } else {
+                    results.errors.push('No fy25_26 data found');
+                }
+                
+                // Test 4: Count February data in metrics details
+                if (data.fy25_26_metrics_details) {
+                    const febMet = data.fy25_26_metrics_details.filter(r => 
+                        r['Feb MET/NOT_MET'] === 'Met'
+                    ).length;
+                    const febNotMet = data.fy25_26_metrics_details.filter(r => 
+                        r['Feb MET/NOT_MET'] === 'Not Met'
+                    ).length;
+                    const febTotal = febMet + febNotMet;
+                    
+                    results.febDataCount = { met: febMet, notMet: febNotMet, total: febTotal };
+                    results.logs.push(`February metrics: ${febMet} Met, ${febNotMet} Not Met (${febTotal} total)`);
+                }
+                
+                // Test 5: Run the exact detection logic from dashboard
+                const monthsOrder = ['Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec', 'Jan', 'Feb', 'Mar'];
+                const yearMapping = {
+                    'Apr': 2025, 'May': 2025, 'Jun': 2025, 'Jul': 2025, 'Aug': 2025, 'Sep': 2025,
+                    'Oct': 2025, 'Nov': 2025, 'Dec': 2025, 'Jan': 2026, 'Feb': 2026, 'Mar': 2026
+                };
+                
+                let latestMonth = null;
+                let latestYear = null;
+                const detectionLog = [];
+                
+                for (let i = monthsOrder.length - 1; i >= 0; i--) {
+                    const month = monthsOrder[i];
+                    const metKey = month + '_Met';
+                    const notMetKey = month + '_Not_Met';
+                    
+                    const hasColumn = data.fy25_26.length > 0 && 
+                                     (metKey in data.fy25_26[0] || notMetKey in data.fy25_26[0]);
+                    
+                    detectionLog.push({
+                        month: month,
+                        metKey: metKey,
+                        notMetKey: notMetKey,
+                        found: hasColumn
+                    });
+                    
+                    if (hasColumn) {
+                        latestMonth = month;
+                        latestYear = yearMapping[month];
+                        results.logs.push(`✅ Latest month detected: ${month} ${latestYear}`);
+                        break;
+                    }
+                }
+                
+                results.detectedMonth = latestMonth;
+                results.detectedYear = latestYear;
+                results.detectionLog = detectionLog;
+                
+                // Display results
+                displayResults(results);
+                
+            } catch (error) {
+                results.errors.push(error.message);
+                results.logs.push('❌ Error: ' + error.message);
+                displayResults(results);
+            }
+        }
+        
+        function displayResults(results) {
+            const loadingDiv = document.getElementById('loadingDiv');
+            const resultsDiv = document.getElementById('resultsDiv');
+            
+            loadingDiv.style.display = 'none';
+            resultsDiv.style.display = 'block';
+            
+            const monthNames = {
+                'Apr': 'April', 'May': 'May', 'Jun': 'June', 'Jul': 'July',
+                'Aug': 'August', 'Sep': 'September', 'Oct': 'October',
+                'Nov': 'November', 'Dec': 'December', 'Jan': 'January',
+                'Feb': 'February', 'Mar': 'March'
+            };
+            
+            const success = results.detectedMonth === 'Feb' && results.detectedYear === 2026;
+            
+            let html = `
+                <h2>📊 Diagnostic Results</h2>
+                
+                <div class="status ${success ? 'success' : 'error'}">
+                    <h3>${success ? '✅ SUCCESS' : '❌ FAILURE'}: 
+                        ${results.detectedMonth ? monthNames[results.detectedMonth] + ' ' + results.detectedYear : 'No month detected'}
+                    </h3>
+                    ${success ? 
+                        '<p>February 2026 is correctly detected! The dashboard should show this.</p>' :
+                        '<p>February 2026 was NOT detected. There may be an issue with the data or detection logic.</p>'
+                    }
+                </div>
+                
+                <h2>📋 Test Summary</h2>
+                <table>
+                    <tr>
+                        <th>Test</th>
+                        <th>Result</th>
+                        <th>Details</th>
+                    </tr>
+                    <tr>
+                        <td>Data Source</td>
+                        <td><span class="badge ${results.dataLoaded ? 'badge-success' : 'badge-error'}">
+                            ${results.dataLoaded ? '✓' : '✗'}
+                        </span></td>
+                        <td>${results.dataSource}</td>
+                    </tr>
+                    <tr>
+                        <td>Feb Columns Exist</td>
+                        <td><span class="badge ${results.febColumnsExist ? 'badge-success' : 'badge-error'}">
+                            ${results.febColumnsExist ? '✓' : '✗'}
+                        </span></td>
+                        <td>${results.febColumnsExist ? 'Feb_Met and Feb_Not_Met found' : 'Columns missing'}</td>
+                    </tr>
+                    <tr>
+                        <td>Feb Data Count</td>
+                        <td><span class="badge ${results.febDataCount.total > 0 ? 'badge-success' : 'badge-error'}">
+                            ${results.febDataCount.total > 0 ? '✓' : '✗'}
+                        </span></td>
+                        <td>${results.febDataCount.met} Met, ${results.febDataCount.notMet} Not Met (${results.febDataCount.total} total)</td>
+                    </tr>
+                    <tr>
+                        <td>Detection Result</td>
+                        <td><span class="badge ${success ? 'badge-success' : 'badge-error'}">
+                            ${success ? '✓' : '✗'}
+                        </span></td>
+                        <td>${results.detectedMonth ? monthNames[results.detectedMonth] + ' ' + results.detectedYear : 'None'}</td>
+                    </tr>
+                </table>
+                
+                ${results.detectionLog ? `
+                    <h2>🔍 Month Detection Log</h2>
+                    <table>
+                        <tr>
+                            <th>Month</th>
+                            <th>Checking For</th>
+                            <th>Found</th>
+                        </tr>
+                        ${results.detectionLog.map(log => `
+                            <tr style="${log.found ? 'background: #d1fae5;' : ''}">
+                                <td><strong>${log.month}</strong></td>
+                                <td><code>${log.metKey}</code> / <code>${log.notMetKey}</code></td>
+                                <td>${log.found ? '✅ Found' : '❌ Not found'}</td>
+                            </tr>
+                        `).join('')}
+                    </table>
+                ` : ''}
+                
+                <h2>📝 Execution Log</h2>
+                <pre>${results.logs.join('\n')}</pre>
+                
+                ${results.errors.length > 0 ? `
+                    <h2>⚠️ Errors</h2>
+                    <div class="status error">
+                        ${results.errors.map(err => `<p>❌ ${err}</p>`).join('')}
+                    </div>
+                ` : ''}
+                
+                <h2>💡 What This Means</h2>
+                ${success ? `
+                    <div class="status success">
+                        <p><strong>✅ Everything is working correctly!</strong></p>
+                        <p>The data file contains February 2026 data, and the detection logic correctly identifies it.</p>
+                        <p><strong>If your dashboard still shows "January 2026":</strong></p>
+                        <ul>
+                            <li>Make sure you're viewing the correct URL</li>
+                            <li>Try opening the dashboard in a new incognito/private window</li>
+                            <li>Check browser console (F12) for JavaScript errors</li>
+                            <li>Verify the dashboard is loading sample_data.json (check Network tab)</li>
+                        </ul>
+                    </div>
+                ` : `
+                    <div class="status error">
+                        <p><strong>❌ Issue detected!</strong></p>
+                        <p>February 2026 data is ${results.febColumnsExist ? '' : 'NOT '}present in the data file, 
+                        but was ${results.detectedMonth ? 'detected as ' + monthNames[results.detectedMonth] + ' ' + results.detectedYear : 'not detected'}.</p>
+                        <p>This needs to be fixed in the data file or detection logic.</p>
+                    </div>
+                `}
+                
+                <h2>🔗 Useful Links</h2>
+                <ul>
+                    <li><a href="https://github.com/Businessexcellence/SLA-DASHBOARD" target="_blank">GitHub Repository</a></li>
+                    <li><a href="https://raw.githubusercontent.com/Businessexcellence/SLA-DASHBOARD/main/sample_data.json" target="_blank">View Raw Data File</a></li>
+                    <li><a href="https://github.com/Businessexcellence/SLA-DASHBOARD/commits/main" target="_blank">Recent Commits</a></li>
+                </ul>
+                
+                <p style="margin-top: 40px; padding-top: 20px; border-top: 1px solid #e5e7eb; color: #6b7280; font-size: 14px;">
+                    <strong>Test completed:</strong> ${new Date().toLocaleString()}<br>
+                    <strong>Data source:</strong> ${results.dataSource}
+                </p>
+            `;
+            
+            resultsDiv.innerHTML = html;
+        }
+        
+        // Run diagnostics on page load
+        runDiagnostics();
+    </script>
+</body>
+</html>
