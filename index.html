@@ -6766,6 +6766,10 @@ function showView(view) {
             
             data.forEach(row => {
                 const region = row.Region;
+                // Skip projects with null/undefined/empty region
+                if (!region || region === 'null' || String(region).trim() === '') {
+                    return;
+                }
                 if (!regionData[region]) {
                     regionData[region] = { met: 0, notMet: 0, projects: new Set() };
                 }
@@ -7076,6 +7080,10 @@ function showView(view) {
             const regionData = {};
             filteredData.fy25_26.forEach(row => {
                 const region = row.Region;
+                // Skip projects with null/undefined/empty region
+                if (!region || region === 'null' || String(region).trim() === '') {
+                    return;
+                }
                 if (!regionData[region]) {
                     regionData[region] = { met: 0, notMet: 0 };
                 }
@@ -7659,9 +7667,9 @@ function showView(view) {
                 months = [fullMonth];
                 periodLabel = `(${fullMonth} ${fullMonth === 'Jan' || fullMonth === 'Feb' || fullMonth === 'Mar' ? '2026' : '2025'} Only)`;
             } else {
-                // All months - use Apr-Jan (current FY so far, include Jan'26)
-                months = ['April', 'May', 'June', 'July', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec', 'Jan'];
-                periodLabel = '(Current FY 25-26 - Apr 2025 to Jan 2026)';
+                // All months - use Apr-Feb (current FY so far, include Feb'26)
+                months = ['April', 'May', 'June', 'July', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec', 'Jan', 'Feb'];
+                periodLabel = '(Current FY 25-26 - Apr 2025 to Feb 2026)';
             }
             
             // Calculate account health across filtered projects (FY 25-26, monthly data)
@@ -7690,6 +7698,8 @@ function showView(view) {
                         statusCol = 'June MET/NOT_MET';
                     } else if (month === 'Jan') {
                         statusCol = 'Jan MET/NOT_MET';  // January 2026
+                    } else if (month === 'Feb') {
+                        statusCol = 'Feb MET/NOT_MET';  // February 2026
                     } else {
                         statusCol = `${month} MET/NOT_MET`;  // April, May, July, Aug, Sep, Oct, Nov, Dec
                     }
@@ -7881,9 +7891,9 @@ function showView(view) {
                 months = [fullMonth];
                 periodLabel = `(${fullMonth} ${fullMonth === 'Jan' || fullMonth === 'Feb' || fullMonth === 'Mar' ? '2026' : '2025'} Only)`;
             } else {
-                // All months - use Apr-Jan (current FY so far, include Jan'26)
-                months = ['April', 'May', 'June', 'July', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec', 'Jan'];
-                periodLabel = '(Current FY 25-26 - Apr 2025 to Jan 2026)';
+                // All months - use Apr-Feb (current FY so far, include Feb'26)
+                months = ['April', 'May', 'June', 'July', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec', 'Jan', 'Feb'];
+                periodLabel = '(Current FY 25-26 - Apr 2025 to Feb 2026)';
             }
             
             const calcMetPct = (data) => {
@@ -7899,6 +7909,8 @@ function showView(view) {
                             statusCol = 'June MET/NOT_MET';
                         } else if (month === 'Jan') {
                             statusCol = 'Jan MET/NOT_MET';  // January 2026
+                        } else if (month === 'Feb') {
+                            statusCol = 'Feb MET/NOT_MET';  // February 2026
                         } else {
                             statusCol = `${month} MET/NOT_MET`;  // April, May, July, Aug, Sep, Oct, Nov, Dec
                         }
@@ -8895,6 +8907,10 @@ function showView(view) {
             // FY 24-25 data
             filteredData.fy24_25.forEach(row => {
                 const region = row.Region;
+                // Skip projects with null/undefined/empty region
+                if (!region || region === 'null' || String(region).trim() === '') {
+                    return;
+                }
                 if (!regionData[region]) {
                     regionData[region] = { fy24Met: 0, fy24NotMet: 0, fy25Met: 0, fy25NotMet: 0 };
                 }
@@ -8908,6 +8924,10 @@ function showView(view) {
             // FY 25-26 data
             filteredData.fy25_26.forEach(row => {
                 const region = row.Region;
+                // Skip projects with null/undefined/empty region
+                if (!region || region === 'null' || String(region).trim() === '') {
+                    return;
+                }
                 if (!regionData[region]) {
                     regionData[region] = { fy24Met: 0, fy24NotMet: 0, fy25Met: 0, fy25NotMet: 0 };
                 }
@@ -12153,7 +12173,8 @@ function showView(view) {
                                 <th style="min-width: 90px;">Nov'25</th>
                                 <th style="min-width: 90px;">Dec'25</th>
                                 <th style="min-width: 90px; background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);">Jan'26</th>
-                                <th style="min-width: 100px; background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);">YTD</th>
+                                <th style="min-width: 90px; background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);">Feb'26</th>
+                                <th style="min-width: 100px; background: linear-gradient(135deg, #fce7f3 0%, #fbcfe8 100%);">YTD</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -12229,7 +12250,8 @@ function showView(view) {
                 {name: 'Oct', scoreCol: 'Oct25 Score', statusCol: 'Oct MET/NOT_MET'},
                 {name: 'Nov', scoreCol: 'Nov25 Score', statusCol: 'Nov MET/NOT_MET'},
                 {name: 'Dec', scoreCol: 'Dec25 Score', statusCol: 'Dec MET/NOT_MET'},
-                {name: 'Jan', scoreCol: 'Jan26 Score', statusCol: 'Jan MET/NOT_MET'}
+                {name: 'Jan', scoreCol: 'Jan26 Score', statusCol: 'Jan MET/NOT_MET'},
+                {name: 'Feb', scoreCol: 'Feb26 Score', statusCol: 'Feb MET/NOT_MET'}
             ];
             
             // Determine penalty status and styling
