@@ -2423,7 +2423,7 @@
     {
       "Project": "Ametek",
       "Industry Type ": "Industrial Manufacturing (Instruments/Electronics)",
-      "Region": "South 1 ",
+      "Region": "South 1",
       "Practice Head": "TBH",
       "Regional Head ": "TBH",
       "BE SPOC": "Debashreeta",
@@ -2693,7 +2693,7 @@
     {
       "Project": "Honeywell",
       "Industry Type ": "Industrial (Automation & Aerospace)",
-      "Region": "South 1 ",
+      "Region": "South 1",
       "Practice Head": "Bapi Reddy",
       "Regional Head ": "TBH",
       "BE SPOC": "Debashreeta",
@@ -2723,7 +2723,7 @@
     {
       "Project": "HPE",
       "Industry Type ": "IT (Hardware/Enterprise Technology)",
-      "Region": "South 1 ",
+      "Region": "South 1",
       "Practice Head": "Mahak",
       "Regional Head ": "TBH",
       "BE SPOC": "Debashreeta",
@@ -2813,7 +2813,7 @@
     {
       "Project": "ISUZU (UD Trucks)",
       "Industry Type ": "Automotive (Commercial Vehicles)",
-      "Region": "South 1 ",
+      "Region": "South 1",
       "Practice Head": "TBH",
       "Regional Head ": "TBH",
       "BE SPOC": "Debashreeta",
@@ -3143,7 +3143,7 @@
     {
       "Project": "Robert Bosch",
       "Industry Type ": "Automotive (Auto Components) / Industrial Technology",
-      "Region": "South 1 ",
+      "Region": "South 1",
       "Practice Head": "TBH",
       "Regional Head ": "TBH",
       "BE SPOC": "Debashreeta",
@@ -3293,7 +3293,7 @@
     {
       "Project": "Siemens - Advanta",
       "Industry Type ": "IT / Digital Services (Industrial Digitalization)",
-      "Region": "South 1 ",
+      "Region": "South 1",
       "Practice Head": "TBH",
       "Regional Head ": "TBH",
       "BE SPOC": "Debashreeta",
@@ -3323,7 +3323,7 @@
     {
       "Project": "Siemens - Energy",
       "Industry Type ": "Energy (Power Generation/Transmission)",
-      "Region": "South 1 ",
+      "Region": "South 1",
       "Practice Head": "TBH",
       "Regional Head ": "TBH",
       "BE SPOC": "Debashreeta",
@@ -3353,7 +3353,7 @@
     {
       "Project": "Siemens - GBS",
       "Industry Type ": "Industrial / Engineering Services (Shared Services)",
-      "Region": "South 1 ",
+      "Region": "South 1",
       "Practice Head": "TBH",
       "Regional Head ": "TBH",
       "BE SPOC": "Debashreeta",
@@ -3683,7 +3683,7 @@
     {
       "Project": "TITAN",
       "Industry Type ": "Retail (Watches & Jewellery)",
-      "Region": "South 1 ",
+      "Region": "South 1",
       "Practice Head": "TBH",
       "Regional Head ": "TBH",
       "BE SPOC": "Debashreeta",
@@ -3773,7 +3773,7 @@
     {
       "Project": "Wipro",
       "Industry Type ": "IT Services",
-      "Region": "South 1 ",
+      "Region": "South 1",
       "Practice Head": "TBH",
       "Regional Head ": "TBH",
       "BE SPOC": "Himanshu Srivastava",
@@ -24585,5 +24585,5 @@
       "Feb MET/NOT_MET_NotReported": 0
     }
   ],
-  "last_updated": "2026-03-24 12:01:58"
+  "last_updated": "2026-03-24 12:08:42"
 }
