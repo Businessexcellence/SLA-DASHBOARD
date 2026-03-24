@@ -16057,9 +16057,10 @@ function showView(view) {
         // Auto-load on page load
         window.addEventListener('load', () => {
             console.log('🚀 Page loaded, initiating auto-load...');
-            setTimeout(() => {
-                autoLoadExcelFile();
-            }, 1000); // Wait 1 second for XLSX library to be ready
+            // DISABLED: Auto-load was loading old January data and overwriting February data from sample_data.json
+            // setTimeout(() => {
+            //     autoLoadExcelFile();
+            // }, 1000); // Wait 1 second for XLSX library to be ready
         });
 
     </script>
