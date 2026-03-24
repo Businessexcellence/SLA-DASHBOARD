@@ -3922,12 +3922,18 @@
         // Update latest data information in notification
         function updateLatestDataInfo() {
             try {
+                console.log('📅 updateLatestDataInfo() called');
+                
                 if (!rawData || !rawData.fy25_26) {
+                    console.log('❌ No rawData or fy25_26 data');
                     document.getElementById('latestMonthYear').textContent = 'No data available';
                     document.getElementById('updateTimestamp').textContent = 'Data not loaded';
                     return;
                 }
 
+                console.log('✅ Data available, checking months...');
+                console.log('   FY 25-26 rows:', rawData.fy25_26.length);
+                
                 // Extract all month columns from FY 25-26 data
                 const monthsOrder = ['Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec', 'Jan', 'Feb', 'Mar'];
                 const yearMapping = {
@@ -3948,9 +3954,12 @@
                     const hasColumn = rawData.fy25_26.length > 0 && 
                                      (metKey in rawData.fy25_26[0] || notMetKey in rawData.fy25_26[0]);
                     
+                    console.log(`   Checking ${month}: ${metKey}/${notMetKey} → ${hasColumn ? '✓ Found' : '✗ Not found'}`);
+                    
                     if (hasColumn) {
                         latestMonth = month;
                         latestYear = yearMapping[month];
+                        console.log(`   ✅ Latest month detected: ${month} ${latestYear}`);
                         break;
                     }
                 }
@@ -3965,6 +3974,7 @@
                     
                     const monthName = monthFullNames[latestMonth];
                     document.getElementById('latestMonthYear').textContent = `${monthName} ${latestYear}`;
+                    console.log(`   📅 Display set to: ${monthName} ${latestYear}`);
                     
                     const now = new Date();
                     const formatted = `Updated: ${now.toLocaleDateString('en-US', { 
@@ -3976,11 +3986,12 @@
                     })}`;
                     document.getElementById('updateTimestamp').textContent = formatted;
                 } else {
+                    console.log('   ❌ No month data found');
                     document.getElementById('latestMonthYear').textContent = 'No recent data';
                     document.getElementById('updateTimestamp').textContent = 'Please check data source';
                 }
             } catch (error) {
-                console.error('Error updating latest data info:', error);
+                console.error('❌ Error in updateLatestDataInfo:', error);
                 document.getElementById('latestMonthYear').textContent = 'Error loading data';
                 document.getElementById('updateTimestamp').textContent = 'Please refresh the page';
             }
@@ -5371,6 +5382,10 @@ let rawData = null;
                     console.log('Applying filters...');
                     applyFilters();
                     
+                    // Update latest data info in notification popup
+                    console.log('Updating latest data info...');
+                    updateLatestDataInfo();
+                    
                     showToast('✓ Default data loaded successfully! You can upload your own Excel file to override.');
                     speak('Default data loaded. Dashboard is ready. You can upload your own data anytime.');
                 })
@@ -5539,6 +5554,10 @@ let rawData = null;
                     
                     // Update last updated timestamp
                     updateLastUpdatedTimestamp();
+                    
+                    // Update latest data info in notification popup
+                    console.log('Updating latest data info...');
+                    updateLatestDataInfo();
                     
                     showToast('✓ Data loaded successfully!');
                     speak('Data loaded successfully. Dashboard is now ready.');
