@@ -6773,9 +6773,10 @@ function showView(view) {
             const regionData = {};
             
             data.forEach(row => {
-                const region = row.Region;
+                // Normalize region name: trim whitespace to avoid 'South 1 ' vs 'South 1' mismatch
+                const region = row.Region ? String(row.Region).trim() : null;
                 // Skip projects with null/undefined/empty region
-                if (!region || region === 'null' || String(region).trim() === '') {
+                if (!region || region === 'null' || region === '') {
                     return;
                 }
                 if (!regionData[region]) {
@@ -6886,21 +6887,21 @@ function showView(view) {
                     </g>
 
                     <!-- South 1 Region -->
-                    <g class="map-region" data-region="South 1 " onclick="showRegionDetails('South 1 ')" style="cursor: pointer;">
+                    <g class="map-region" data-region="South 1" onclick="showRegionDetails('South 1')" style="cursor: pointer;">
                         <!-- Inverted Droplet/Pin Icon -->
                         <g transform="translate(250, 560)" class="region-pin">
                             <path d="M 0,-15 C -8,-15 -12,-11 -12,-4 C -12,3 0,15 0,15 C 0,15 12,3 12,-4 C 12,-11 8,-15 0,-15 Z" 
-                                  fill="${regionStats['South 1 '] ? getRegionColor(regionStats['South 1 '].compliance) : '#ccc'}" 
+                                  fill="${regionStats['South 1'] ? getRegionColor(regionStats['South 1'].compliance) : '#ccc'}" 
                                   stroke="#fff" 
                                   stroke-width="2"
                                   filter="drop-shadow(0 2px 4px rgba(0,0,0,0.3))"/>
                             <circle cx="0" cy="-6" r="5" fill="#fff"/>
-                            <text x="0" y="-3.5" text-anchor="middle" font-size="7" font-weight="bold" fill="${regionStats['South 1 '] ? getRegionColor(regionStats['South 1 '].compliance) : '#666'}" pointer-events="none">
+                            <text x="0" y="-3.5" text-anchor="middle" font-size="7" font-weight="bold" fill="${regionStats['South 1'] ? getRegionColor(regionStats['South 1'].compliance) : '#666'}" pointer-events="none">
                                 S1
                             </text>
                         </g>
                         <text x="250" y="605" text-anchor="middle" fill="#FF6B35" font-size="14" font-weight="600" pointer-events="none">
-                            South 1 ${regionStats['South 1 '] ? regionStats['South 1 '].compliance + '%' : 'N/A'}
+                            South 1 ${regionStats['South 1'] ? regionStats['South 1'].compliance + '%' : 'N/A'}
                         </text>
                     </g>
 
