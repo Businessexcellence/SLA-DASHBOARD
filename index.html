@@ -3474,8 +3474,7 @@
                 
                 <div class="filter-group">
                     <label><i class="bi bi-calendar-month"></i> Month:</label>
-                    <select id="monthFilter" onchange="applyFilters()">
-                        <option value="all">All Months</option>
+                    <select id="monthFilter" multiple="multiple" style="width: 100%;">
                         <option value="Apr">April</option>
                         <option value="May">May</option>
                         <option value="Jun">June</option>
@@ -4595,7 +4594,7 @@ let rawData = null;
             region: [],
             practice: [],
             account: [],
-            month: 'all'
+            months: []
         };
 
         // Industry Benchmarks (Investment column removed)
@@ -5314,6 +5313,14 @@ let rawData = null;
             }).on('change', function() {
                 applyFilters();
             });
+            
+            // Initialize Select2 for month filter (multi-select)
+            $('#monthFilter').select2({
+                placeholder: 'Select months...',
+                allowClear: true
+            }).on('change', function() {
+                applyFilters();
+            });
         };
 
         // Load initial data
@@ -5818,7 +5825,7 @@ let rawData = null;
             activeFilters.region = $('#regionFilter').val() || [];
             activeFilters.practice = $('#practiceFilter').val() || [];
             activeFilters.account = $('#accountFilter').val() || [];
-            activeFilters.month = document.getElementById('monthFilter').value;
+            activeFilters.months = $('#monthFilter').val() || []; // Multi-select months
 
             // Start with all data
             let fy24Data = [...rawData.fy24_25];
@@ -5941,7 +5948,7 @@ let rawData = null;
             $('#regionFilter').val(null).trigger('change');
             $('#practiceFilter').val(null).trigger('change');
             $('#accountFilter').val(null).trigger('change');
-            document.getElementById('monthFilter').value = 'all';
+            $('#monthFilter').val(null).trigger('change');
             
             activeFilters = {
                 fy: 'all',
@@ -5949,7 +5956,7 @@ let rawData = null;
                 region: [],
                 practice: [],
                 account: [],
-                month: 'all'
+                months: []
             };
             
             applyFilters();
@@ -6536,12 +6543,9 @@ function showView(view) {
         
         // Helper function to dynamically extract months from data
         function extractMonthsFromData(data2425, data2526) {
-            // If month filter is active and not 'all', return only that month
-            if (activeFilters.month && activeFilters.month !== 'all' && activeFilters.month !== 'All') {
-                const selectedMonth = activeFilters.month;
-                // Normalize the selected month (e.g., "June" -> "Jun")
-                const normalizedMonth = normalizeMonthName(selectedMonth);
-                return [normalizedMonth];
+            // If month filter is active, return only selected months
+            if (activeFilters.months && activeFilters.months.length > 0) {
+                return activeFilters.months;
             }
             
             const monthsSet = new Set();
