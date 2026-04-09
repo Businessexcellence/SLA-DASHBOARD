@@ -8055,16 +8055,16 @@ function showView(view) {
             const kpiBifurcationTilesHTML = generateKPIBifurcationTiles();
             
             // Check if month filter is active
-            const monthFilter = activeFilters.month;
-            const isMonthFiltered = monthFilter && monthFilter !== 'all';
+            const selectedMonths = activeFilters.months || [];
+            const isMonthFiltered = selectedMonths.length > 0;
             
             // Dynamically extract months for both fiscal years
             const fy24months = extractMonthsFromData(filteredData.fy24_25, null);
             const fy25months = extractMonthsFromData(null, filteredData.fy25_26);
             const allMonths = ['Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec', 'Jan', 'Feb', 'Mar'];
             
-            // If month filter is active, only show that specific month
-            const monthsToShow = isMonthFiltered ? [monthFilter] : allMonths;
+            // If month filter is active, only show selected months
+            const monthsToShow = isMonthFiltered ? selectedMonths : allMonths;
             
             // Calculate FY 24-25 data using Summary sheet (filteredData.fy24_25)
             const fy24Data = allMonths.map(month => {
@@ -8145,12 +8145,21 @@ function showView(view) {
             let avgFY24, avgFY25, improvement, compareMonthCount;
             
             if (isMonthFiltered) {
-                // When month filter is active, show only that month's data
-                const monthIdx = allMonths.indexOf(monthFilter);
-                avgFY24 = fy24Data[monthIdx].toFixed(1);
-                avgFY25 = fy25Data[monthIdx].toFixed(1);
-                improvement = (fy25Data[monthIdx] - fy24Data[monthIdx]).toFixed(1);
-                compareMonthCount = 1;
+                // When month filter is active, calculate across selected months
+                let fy24Sum = 0, fy25Sum = 0, fy24Count = 0, fy25Count = 0;
+                selectedMonths.forEach(month => {
+                    const monthIdx = allMonths.indexOf(month);
+                    if (monthIdx >= 0) {
+                        fy24Sum += fy24Data[monthIdx];
+                        fy24Count++;
+                        fy25Sum += fy25Data[monthIdx];
+                        fy25Count++;
+                    }
+                });
+                avgFY24 = fy24Count > 0 ? (fy24Sum / fy24Count).toFixed(1) : 0;
+                avgFY25 = fy25Count > 0 ? (fy25Sum / fy25Count).toFixed(1) : 0;
+                improvement = (avgFY25 - avgFY24).toFixed(1);
+                compareMonthCount = selectedMonths.length;
             } else {
                 // When no month filter, calculate averages across all available months
                 const fy25NonZeroData = fy25Data.filter(v => v > 0);
@@ -8164,22 +8173,20 @@ function showView(view) {
             let insightsHTML, comparisonWidget;
             
             if (isMonthFiltered) {
-                // Month-specific insights
+                // Multi-month insights
                 const monthNames = {
                     'Apr': 'April', 'May': 'May', 'Jun': 'June', 'Jul': 'July',
                     'Aug': 'August', 'Sep': 'September', 'Oct': 'October', 'Nov': 'November',
                     'Dec': 'December', 'Jan': 'January', 'Feb': 'February', 'Mar': 'March'
                 };
-                const fullMonthName = monthNames[monthFilter] || monthFilter;
-                const year24 = ['Jan', 'Feb', 'Mar'].includes(monthFilter) ? '2025' : '2024';
-                const year25 = ['Jan', 'Feb', 'Mar'].includes(monthFilter) ? '2026' : '2025';
+                const fullMonthNames = selectedMonths.map(m => monthNames[m] || m).join(', ');
                 
                 insightsHTML = `
                     <div class="insights-section">
-                        <h3><i class="bi bi-lightbulb-fill"></i> ${fullMonthName} Performance Comparison</h3>
+                        <h3><i class="bi bi-lightbulb-fill"></i> Selected Months Performance (${fullMonthNames})</h3>
                         <div class="insight-item">
-                            <h4>📊 FY 24-25 vs FY 25-26 - ${fullMonthName} ${year25}</h4>
-                            <p>FY 24-25 (${fullMonthName} ${year24}): ${avgFY24}% | FY 25-26 (${fullMonthName} ${year25}): ${avgFY25}% | Change: ${improvement > 0 ? '+' : ''}${improvement}%</p>
+                            <h4>📊 FY 24-25 vs FY 25-26 - Average across ${compareMonthCount} month(s)</h4>
+                            <p>FY 24-25: ${avgFY24}% | FY 25-26: ${avgFY25}% | Change: ${improvement > 0 ? '+' : ''}${improvement}%</p>
                         </div>
                         <div class="insight-item">
                             <h4>${improvement > 0 ? '📈 Performance Improvement' : '📉 Performance Decline'}</h4>
@@ -8298,16 +8305,21 @@ function showView(view) {
             let labelsToShow, fy24DataToShow, fy25DataToShow;
             
             if (isMonthFiltered) {
-                // Show only the selected month as a bar/point
+                // Show only the selected months
                 const monthNames = {
                     'Apr': 'April', 'May': 'May', 'Jun': 'June', 'Jul': 'July',
                     'Aug': 'August', 'Sep': 'September', 'Oct': 'October', 'Nov': 'November',
                     'Dec': 'December', 'Jan': 'January', 'Feb': 'February', 'Mar': 'March'
                 };
-                const monthIdx = allMonths.indexOf(monthFilter);
-                labelsToShow = [monthNames[monthFilter]];
-                fy24DataToShow = [fy24Data[monthIdx]];
-                fy25DataToShow = [fy25Data[monthIdx]];
+                labelsToShow = selectedMonths.map(m => monthNames[m] || m);
+                fy24DataToShow = selectedMonths.map(m => {
+                    const idx = allMonths.indexOf(m);
+                    return idx >= 0 ? fy24Data[idx] : 0;
+                });
+                fy25DataToShow = selectedMonths.map(m => {
+                    const idx = allMonths.indexOf(m);
+                    return idx >= 0 ? fy25Data[idx] : 0;
+                });
             } else {
                 // Show all available months
                 const maxMonthsToShow = Math.max(fy24months.length, fy25months.length);
