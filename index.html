@@ -8154,17 +8154,17 @@ function showView(view) {
                         fy25Count++;
                     }
                 });
-                avgFY24 = fy24Count > 0 ? (fy24Sum / fy24Count).toFixed(1) : 0;
-                avgFY25 = fy25Count > 0 ? (fy25Sum / fy25Count).toFixed(1) : 0;
-                improvement = (avgFY25 - avgFY24).toFixed(1);
+                avgFY24 = fy24Count > 0 ? parseFloat((fy24Sum / fy24Count).toFixed(1)) : 0;
+                avgFY25 = fy25Count > 0 ? parseFloat((fy25Sum / fy25Count).toFixed(1)) : 0;
+                improvement = parseFloat((avgFY25 - avgFY24).toFixed(1));
                 compareMonthCount = selectedMonths.length;
             } else {
                 // When no month filter, calculate averages across all available months
                 const fy25NonZeroData = fy25Data.filter(v => v > 0);
                 compareMonthCount = Math.min(fy24Data.length, fy25NonZeroData.length);
-                avgFY24 = compareMonthCount > 0 ? (fy24Data.slice(0, compareMonthCount).reduce((a, b) => a + b, 0) / compareMonthCount).toFixed(1) : 0;
-                avgFY25 = fy25NonZeroData.length > 0 ? (fy25NonZeroData.reduce((a, b) => a + b, 0) / fy25NonZeroData.length).toFixed(1) : 0;
-                improvement = (avgFY25 - avgFY24).toFixed(1);
+                avgFY24 = compareMonthCount > 0 ? parseFloat((fy24Data.slice(0, compareMonthCount).reduce((a, b) => a + b, 0) / compareMonthCount).toFixed(1)) : 0;
+                avgFY25 = fy25NonZeroData.length > 0 ? parseFloat((fy25NonZeroData.reduce((a, b) => a + b, 0) / fy25NonZeroData.length).toFixed(1)) : 0;
+                improvement = parseFloat((avgFY25 - avgFY24).toFixed(1));
             }
 
             // Build insights and comparison widgets based on filter
@@ -8188,18 +8188,18 @@ function showView(view) {
                         </div>
                         <div class="insight-item">
                             <h4>${improvement > 0 ? '📈 Performance Improvement' : '📉 Performance Decline'}</h4>
-                            <p>${improvement > 0 ? `${fullMonthName} ${year25} shows ${improvement}% improvement compared to ${fullMonthName} ${year24}.` : `${fullMonthName} ${year25} shows ${Math.abs(improvement)}% decline compared to ${fullMonthName} ${year24}. Focus on recovery strategies.`}</p>
+                            <p>${improvement > 0 ? `${fullMonthNames} shows ${improvement}% improvement in FY 25-26 compared to FY 24-25.` : `${fullMonthNames} shows ${Math.abs(improvement)}% decline in FY 25-26 compared to FY 24-25. Focus on recovery strategies.`}</p>
                         </div>
                     </div>`;
                 
                 comparisonWidget = `
                     <div class="comparison-widget">
                         <div class="metric-box fy24">
-                            <div class="metric-label">FY 24-25 ${fullMonthName} ${year24}</div>
+                            <div class="metric-label">FY 24-25 Avg (${compareMonthCount} months)</div>
                             <div class="metric-value" style="color: #ff6b35;">${avgFY24}%</div>
                         </div>
                         <div class="metric-box fy25">
-                            <div class="metric-label">FY 25-26 ${fullMonthName} ${year25}</div>
+                            <div class="metric-label">FY 25-26 Avg (${compareMonthCount} months)</div>
                             <div class="metric-value" style="color: var(--primary-color);">${avgFY25}%</div>
                         </div>
                     </div>`;
@@ -11341,7 +11341,7 @@ function showView(view) {
                 // === FILTERS INFO ===
                 // Check ALL filter types including FY, month, region, practice, regional head, and accounts
                 const hasFilters = activeFilters.fy !== 'all' || 
-                                   (activeFilters.month && activeFilters.month !== 'all') ||
+                                   (activeFilters.months && activeFilters.months.length > 0) ||
                                    activeFilters.region.length > 0 || 
                                    activeFilters.practice.length > 0 || 
                                    activeFilters.regionalHead.length > 0 ||
@@ -11357,9 +11357,8 @@ function showView(view) {
                     }
                     
                     // Month Filter
-                    if (activeFilters.month && activeFilters.month !== 'all') {
-                        const monthFullName = getFullMonthName(activeFilters.month);
-                        filterLines.push('Month: ' + monthFullName);
+                    if (activeFilters.months && activeFilters.months.length > 0) {
+                        filterLines.push('Months: ' + activeFilters.months.join(', '));
                     }
                     
                     // Region Filter
@@ -12475,16 +12474,16 @@ function showView(view) {
                 categoryData = filteredMetricsData.filter(r => r.Penalty === 'No');
             }
             
-            // Get month filter
-            const monthFilter = activeFilters.month;
+            // Get month filter (multi-select array)
+            const _selMonths = activeFilters.months || [];
             let months = [];
-            if (monthFilter && monthFilter !== 'all') {
+            if (_selMonths.length > 0) {
                 const monthMap = {
                     'Apr': 'April', 'May': 'May', 'Jun': 'June', 'Jul': 'July',
                     'Aug': 'Aug', 'Sep': 'Sep', 'Oct': 'Oct', 'Nov': 'Nov',
                     'Dec': 'Dec', 'Jan': 'Jan', 'Feb': 'Feb', 'Mar': 'Mar'
                 };
-                months = [monthMap[monthFilter]];
+                months = _selMonths.map(m => monthMap[m] || m);
             } else {
                 months = ['April', 'May', 'June', 'July', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec', 'Jan'];
             }
@@ -14314,72 +14313,51 @@ function showView(view) {
             }
             
             // Month filter - filter by specific month columns
-            if (activeFilters.month && activeFilters.month !== 'all') {
-                console.log('📆 Applying month filter:', activeFilters.month);
+            const _notRepMonths = activeFilters.months || [];
+            if (_notRepMonths.length > 0) {
+                console.log('📆 Applying month filter:', _notRepMonths);
                 
-                // The month filter value IS the short name (Apr, May, Jun, etc.)
                 // Column names are like: "Apr MET/NOT_MET_NotReported", "Oct MET/NOT_MET_NotReported"
-                const selectedMonth = activeFilters.month; // Already in short form
-                console.log('   Selected month name:', selectedMonth);
+                const selectedMonths = _notRepMonths;
+                console.log('   Selected months:', selectedMonths);
                 
                 // Apply to FY24-25 if data exists
-                if (selectedMonth && filtered2425.length > 0) {
+                if (selectedMonths.length > 0 && filtered2425.length > 0) {
                     // Log sample column names to see the pattern
                     const sampleCols = Object.keys(filtered2425[0]).filter(k => k.includes('NotReported'));
                     console.log('   FY24-25 Sample NotReported columns:', sampleCols.slice(0, 3));
                     
-                    // For Not Reported data, keep only selected month's NotReported columns
+                    // For Not Reported data, keep only selected months' NotReported columns
                     filtered2425 = filtered2425.map(row => {
                         const newRow = { ...row };
-                        let keptCount = 0;
-                        
                         Object.keys(newRow).forEach(key => {
                             if (key.includes('NotReported')) {
                                 // Column format: "Apr MET/NOT_MET_NotReported"
-                                // Check if column starts with the selected month
-                                if (key.startsWith(selectedMonth + ' ')) {
-                                    keptCount++;
-                                } else {
-                                    newRow[key] = 0;
-                                }
+                                const matchesAny = selectedMonths.some(m => key.startsWith(m + ' '));
+                                if (!matchesAny) newRow[key] = 0;
                             }
                         });
-                        
                         return newRow;
                     });
-                    
                     console.log('   ✅ FY24-25 month filter applied');
                 }
                 
                 // Apply to FY25-26 if data exists
-                if (selectedMonth && filtered2526.length > 0) {
-                    // Log sample column names
-                    const sampleCols2526 = Object.keys(filtered2526[0]).filter(k => k.includes('NotReported'));
-                    console.log('   FY25-26 Sample NotReported columns:', sampleCols2526.slice(0, 3));
-                    
+                if (selectedMonths.length > 0 && filtered2526.length > 0) {
                     filtered2526 = filtered2526.map(row => {
                         const newRow = { ...row };
-                        let keptCount2526 = 0;
-                        let zeroedCount2526 = 0;
-                        
                         Object.keys(newRow).forEach(key => {
                             if (key.includes('NotReported')) {
-                                if (key.startsWith(selectedMonth + ' ')) {
-                                    keptCount2526++;
-                                } else {
-                                    newRow[key] = 0;
-                                    zeroedCount2526++;
-                                }
+                                const matchesAny = selectedMonths.some(m => key.startsWith(m + ' '));
+                                if (!matchesAny) newRow[key] = 0;
                             }
                         });
-                        
                         return newRow;
                     });
-                    
                     console.log('   ✅ FY25-26 month filter applied');
                 }
                 
-                console.log('   ✅ Month filter completed for:', selectedMonth);
+                console.log('   ✅ Month filter completed for:', selectedMonths.join(', '));
             }
             
             console.log('📊 After filtering: FY24-25 =', filtered2425.length, 'rows, FY25-26 =', filtered2526.length, 'rows');
@@ -14412,8 +14390,8 @@ function showView(view) {
             const showYoYCards = activeFilters.fy === 'all' || !activeFilters.fy; // Only show YoY when both FYs visible
             
             // Build month label if month filter is active
-            const monthLabel = activeFilters.month && activeFilters.month !== 'all' 
-                ? ` (${activeFilters.month} only)` 
+            const monthLabel = (activeFilters.months && activeFilters.months.length > 0)
+                ? ` (${activeFilters.months.join(', ')} only)` 
                 : '';
             
             // Build HTML
