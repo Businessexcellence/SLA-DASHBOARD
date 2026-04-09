@@ -8299,7 +8299,13 @@ function showView(view) {
                 speak(`Monthly performance comparison loaded. FY 24-25 average is ${avgFY24} percent. FY 25-26 average is ${avgFY25} percent.`);
             }
             
-            const ctx = document.getElementById('monthlyChart').getContext('2d');
+            const ctx = document.getElementById('monthlyChart');
+            if (!ctx) {
+                console.error('Canvas element not found!');
+                return;
+            }
+            
+            const canvasContext = ctx.getContext('2d');
             
             // Determine what to show in chart based on month filter
             let labelsToShow, fy24DataToShow, fy25DataToShow;
@@ -8320,6 +8326,7 @@ function showView(view) {
                     const idx = allMonths.indexOf(m);
                     return idx >= 0 ? fy25Data[idx] : 0;
                 });
+                console.log('📊 Filtered chart data:', { labelsToShow, fy24DataToShow, fy25DataToShow });
             } else {
                 // Show all available months
                 const maxMonthsToShow = Math.max(fy24months.length, fy25months.length);
@@ -8331,8 +8338,13 @@ function showView(view) {
                 );
             }
             
-            charts.monthly = new Chart(ctx, {
-                type: isMonthFiltered ? 'bar' : 'line',  // Use bar chart for single month, line for multiple
+            console.log('📊 Creating chart with labels:', labelsToShow);
+            
+            // Use bar chart only for single month, line chart for multiple
+            const chartType = (isMonthFiltered && selectedMonths.length === 1) ? 'bar' : 'line';
+            
+            charts.monthly = new Chart(canvasContext, {
+                type: chartType,
                 data: {
                     labels: labelsToShow,
                     datasets: [
@@ -8340,9 +8352,9 @@ function showView(view) {
                             label: 'FY 24-25',
                             data: fy24DataToShow,
                             borderColor: '#3a1c71',  // Purple from gradient
-                            backgroundColor: isMonthFiltered ? 'rgba(58, 28, 113, 0.7)' : 'rgba(58, 28, 113, 0.1)',
+                            backgroundColor: (chartType === 'bar') ? 'rgba(58, 28, 113, 0.7)' : 'rgba(58, 28, 113, 0.1)',
                             borderWidth: 3,
-                            fill: !isMonthFiltered,
+                            fill: (chartType === 'line'),
                             tension: 0.4,
                             pointRadius: 5,
                             pointHoverRadius: 7
@@ -8351,13 +8363,13 @@ function showView(view) {
                             label: `FY 25-26${isMonthFiltered ? '' : ' (' + fy25months.join('-') + ')'}`,
                             data: fy25DataToShow,
                             borderColor: '#d76d77',  // Pink from gradient
-                            backgroundColor: isMonthFiltered ? 'rgba(215, 109, 119, 0.7)' : 'rgba(215, 109, 119, 0.1)',
+                            backgroundColor: (chartType === 'bar') ? 'rgba(215, 109, 119, 0.7)' : 'rgba(215, 109, 119, 0.1)',
                             borderWidth: 3,
-                            fill: !isMonthFiltered,
+                            fill: (chartType === 'line'),
                             tension: 0.4,
                             pointRadius: 5,
                             pointHoverRadius: 7,
-                            borderDash: isMonthFiltered ? [] : [5, 5],  // Dashed line for FY 25-26 in line chart
+                            borderDash: (chartType === 'bar') ? [] : [5, 5],  // Dashed line for FY 25-26 in line chart
                             spanGaps: false  // Don't connect null values
                         }
                     ]
