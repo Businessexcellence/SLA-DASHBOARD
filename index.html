@@ -7662,23 +7662,22 @@ function showView(view) {
                 filteredMetricsData = filteredMetricsData.filter(r => activeFilters.account.includes(r.Project));
             }
             
-            // Get month filter (single value)
-            const monthFilter = activeFilters.month;
+            // Get month filter (multi-select array)
+            const selectedMonths = activeFilters.months || [];
             
             // Determine which months to include based on month filter
             let months = [];
             let periodLabel = '';
             
-            if (monthFilter && monthFilter !== 'all') {
-                // Single month selected - use only that month
+            if (selectedMonths.length > 0) {
+                // Specific months selected - use only those months
                 const monthMap = {
                     'Apr': 'April', 'May': 'May', 'Jun': 'June', 'Jul': 'July',
                     'Aug': 'Aug', 'Sep': 'Sep', 'Oct': 'Oct', 'Nov': 'Nov',
                     'Dec': 'Dec', 'Jan': 'Jan', 'Feb': 'Feb', 'Mar': 'Mar'
                 };
-                const fullMonth = monthMap[monthFilter];
-                months = [fullMonth];
-                periodLabel = `(${fullMonth} ${fullMonth === 'Jan' || fullMonth === 'Feb' || fullMonth === 'Mar' ? '2026' : '2025'} Only)`;
+                months = selectedMonths.map(m => monthMap[m] || m);
+                periodLabel = `(${months.join(', ')})`;
             } else {
                 // All months - use Apr-Feb (current FY so far, include Feb'26)
                 months = ['April', 'May', 'June', 'July', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec', 'Jan', 'Feb'];
@@ -7880,8 +7879,8 @@ function showView(view) {
                 filteredMetricsData = filteredMetricsData.filter(r => activeFilters.account.includes(r.Project));
             }
             
-            // Get month filter (single value)
-            const monthFilter = activeFilters.month;
+            // Get month filter (multi-select array)
+            const selectedMonths = activeFilters.months || [];
             
             // Calculate bifurcation Met% using Category Sub Type (FY 25-26)
             const contractual = filteredMetricsData.filter(r => r['Category Sub Type'] === 'Contractual SLA');
@@ -7893,16 +7892,15 @@ function showView(view) {
             let months = [];
             let periodLabel = '';
             
-            if (monthFilter && monthFilter !== 'all') {
-                // Single month selected - use only that month
+            if (selectedMonths.length > 0) {
+                // Specific months selected - use only those months
                 const monthMap = {
                     'Apr': 'April', 'May': 'May', 'Jun': 'June', 'Jul': 'July',
                     'Aug': 'Aug', 'Sep': 'Sep', 'Oct': 'Oct', 'Nov': 'Nov',
                     'Dec': 'Dec', 'Jan': 'Jan', 'Feb': 'Feb', 'Mar': 'Mar'
                 };
-                const fullMonth = monthMap[monthFilter];
-                months = [fullMonth];
-                periodLabel = `(${fullMonth} ${fullMonth === 'Jan' || fullMonth === 'Feb' || fullMonth === 'Mar' ? '2026' : '2025'} Only)`;
+                months = selectedMonths.map(m => monthMap[m] || m);
+                periodLabel = `(${months.join(', ')})`;
             } else {
                 // All months - use Apr-Feb (current FY so far, include Feb'26)
                 months = ['April', 'May', 'June', 'July', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec', 'Jan', 'Feb'];
@@ -8247,22 +8245,25 @@ function showView(view) {
                     <tbody>`;
             
             if (isMonthFiltered) {
-                // Show only the selected month
-                const monthIdx = allMonths.indexOf(monthFilter);
-                const diff = fy25Data[monthIdx] - fy24Data[monthIdx];
-                const diffColor = diff >= 0 ? 'var(--success-color)' : 'var(--danger-color)';
+                // Show selected months rows
                 const monthNames = {
                     'Apr': 'April', 'May': 'May', 'Jun': 'June', 'Jul': 'July',
                     'Aug': 'August', 'Sep': 'September', 'Oct': 'October', 'Nov': 'November',
                     'Dec': 'December', 'Jan': 'January', 'Feb': 'February', 'Mar': 'March'
                 };
-                tableHTML += `
-                    <tr>
-                        <td><strong>${monthNames[monthFilter]}</strong></td>
-                        <td style="color: #ff6b35;">${fy24Data[monthIdx].toFixed(1)}%</td>
-                        <td style="color: var(--primary-color);">${fy25Data[monthIdx].toFixed(1)}%</td>
-                        <td style="color: ${diffColor}; font-weight: bold;">${diff >= 0 ? '+' : ''}${diff.toFixed(1)}%</td>
-                    </tr>`;
+                selectedMonths.forEach(month => {
+                    const monthIdx = allMonths.indexOf(month);
+                    if (monthIdx < 0) return;
+                    const diff = fy25Data[monthIdx] - fy24Data[monthIdx];
+                    const diffColor = diff >= 0 ? 'var(--success-color)' : 'var(--danger-color)';
+                    tableHTML += `
+                        <tr>
+                            <td><strong>${monthNames[month] || month}</strong></td>
+                            <td style="color: #ff6b35;">${fy24Data[monthIdx].toFixed(1)}%</td>
+                            <td style="color: var(--primary-color);">${fy25Data[monthIdx].toFixed(1)}%</td>
+                            <td style="color: ${diffColor}; font-weight: bold;">${diff >= 0 ? '+' : ''}${diff.toFixed(1)}%</td>
+                        </tr>`;
+                });
             } else {
                 // Show all available months
                 fy25months.forEach((month, idx) => {
@@ -8339,6 +8340,14 @@ function showView(view) {
             }
             
             console.log('📊 Creating chart with labels:', labelsToShow);
+            console.log('📊 Chart data - FY24:', fy24DataToShow);
+            console.log('📊 Chart data - FY25:', fy25DataToShow);
+            
+            // Safety check: ensure we have valid labels and data
+            if (!labelsToShow || labelsToShow.length === 0) {
+                console.error('❌ No labels to show for chart');
+                return;
+            }
             
             // Use bar chart only for single month, line chart for multiple
             const chartType = (isMonthFiltered && selectedMonths.length === 1) ? 'bar' : 'line';
