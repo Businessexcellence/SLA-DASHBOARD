@@ -1967,6 +1967,18 @@
     <!-- Last Updated Timestamp -->
     <div id="lastUpdatedTimestamp" class="last-updated-display">
         Last Updated: <span id="timestampText">Never</span>
+        &nbsp;|&nbsp;
+        <span id="dataSourceBadge" style="
+            display:inline-block;
+            padding:2px 8px;
+            border-radius:10px;
+            font-size:11px;
+            font-weight:700;
+            background:rgba(255,107,53,0.18);
+            color:#ff6b35;
+            border:1px solid #ff6b35;
+            letter-spacing:0.5px;
+        ">📂 Default Data</span>
     </div>
 
     <!-- Voice Control Button -->
@@ -2830,17 +2842,18 @@
                     const metKeySlash = month + ' MET/NOT_MET';
                     const metKeyFullSlash = fullName + ' MET/NOT_MET';
                     
-                    // Check if the column EXISTS in the data under any naming convention
-                    const hasColumn = rawData.fy25_26.length > 0 && (
-                        metKey in rawData.fy25_26[0] || notMetKey in rawData.fy25_26[0] ||
-                        metKeyExcel in rawData.fy25_26[0] || notMetKeyExcel in rawData.fy25_26[0] ||
-                        metKeyFull in rawData.fy25_26[0] || notMetKeyFull in rawData.fy25_26[0] ||
-                        metKeySlash in rawData.fy25_26[0] || metKeyFullSlash in rawData.fy25_26[0]
+                    // Check if the column EXISTS AND has at least one non-zero value across ALL rows
+                    // (column-only check fails when template rows have 0 for future months)
+                    const possibleKeys = [metKey, notMetKey, metKeyExcel, notMetKeyExcel,
+                                          metKeyFull, notMetKeyFull, metKeySlash, metKeyFullSlash];
+                    
+                    const hasNonZeroData = rawData.fy25_26.some(row =>
+                        possibleKeys.some(k => k in row && parseInt(row[k]) > 0)
                     );
                     
-                    console.log(`   Checking ${month}: → ${hasColumn ? '✓ Found' : '✗ Not found'}`);
+                    console.log(`   Checking ${month}: → ${hasNonZeroData ? '✓ Has data' : '✗ No data'}`);
                     
-                    if (hasColumn) {
+                    if (hasNonZeroData) {
                         latestMonth = month;
                         latestYear = yearMapping[month];
                         console.log(`   ✅ Latest month detected: ${month} ${latestYear}`);
@@ -4275,7 +4288,16 @@ let rawData = null;
                     console.log('Updating latest data info...');
                     updateLatestDataInfo();
                     
-                    showToast('✓ Default data loaded successfully! You can upload your own Excel file to override.');
+                    showToast('✓ Default data loaded (Mar 2026 included). Upload your Excel file to override.');
+                    
+                    // Mark badge as default data
+                    const badge = document.getElementById('dataSourceBadge');
+                    if (badge) {
+                        badge.textContent = '📂 Default Data';
+                        badge.style.background = 'rgba(255,107,53,0.18)';
+                        badge.style.color = '#ff6b35';
+                        badge.style.border = '1px solid #ff6b35';
+                    }
                     speak('Default data loaded. Dashboard is ready. You can upload your own data anytime.');
                 })
                 .catch(error => {
@@ -4607,8 +4629,17 @@ let rawData = null;
                     console.log('Updating latest data info...');
                     updateLatestDataInfo();
                     
-                    showToast('✓ Data loaded successfully! Default data has been overridden with your uploaded file.');
+                    showToast('✓ Data loaded successfully! Default data has been overridden with: ' + file.name);
                     speak('Data loaded successfully. Dashboard is now ready.');
+                    
+                    // Update data source badge to show uploaded file name
+                    const badge = document.getElementById('dataSourceBadge');
+                    if (badge) {
+                        badge.textContent = '✅ ' + file.name;
+                        badge.style.background = 'rgba(16,185,129,0.18)';
+                        badge.style.color = '#10b981';
+                        badge.style.border = '1px solid #10b981';
+                    }
                     
                     // SAFE: Track file upload
                     try {
