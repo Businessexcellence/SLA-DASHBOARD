@@ -4891,45 +4891,10 @@ let rawData = null;
         }
         
         Chart.defaults.font.family = "'Inter', 'Segoe UI', sans-serif";
-        Chart.defaults.color = '#9090b0';  // 3D Dark theme: axis text color
+        Chart.defaults.color = '#666666';  // Standard axis text color
         Chart.defaults.plugins.legend.labels.usePointStyle = true;
-        Chart.defaults.plugins.legend.labels.color = '#b0b0d0';
+        Chart.defaults.plugins.legend.labels.color = '#333333';
         Chart.defaults.devicePixelRatio = 3;  // Force high DPI rendering (3x resolution for crisp export)
-
-        // 3D Dark theme grid lines
-        Chart.defaults.scales.x = Chart.defaults.scales.x || {};
-        Chart.defaults.scales.x.grid = {
-            display: true,
-            color: 'rgba(255,107,53,0.06)',
-            drawBorder: false
-        };
-        Chart.defaults.scales.x.ticks = { color: '#7070a0' };
-        Chart.defaults.scales.y = Chart.defaults.scales.y || {};
-        Chart.defaults.scales.y.grid = {
-            display: true,
-            color: 'rgba(255,107,53,0.06)',
-            drawBorder: false
-        };
-        Chart.defaults.scales.y.ticks = { color: '#7070a0' };
-        
-        // 3D Dark background for all charts
-        if (typeof Chart !== 'undefined' && Chart.register) {
-            Chart.register({
-                id: 'chartBackground3D',
-                beforeDraw: (chart) => {
-                    const ctx = chart.canvas.getContext('2d');
-                    ctx.save();
-                    ctx.globalCompositeOperation = 'destination-over';
-                    // Dark glass background
-                    const grad = ctx.createLinearGradient(0, 0, chart.width, chart.height);
-                    grad.addColorStop(0, 'rgba(10,10,30,0.92)');
-                    grad.addColorStop(1, 'rgba(15,15,40,0.92)');
-                    ctx.fillStyle = grad;
-                    ctx.fillRect(0, 0, chart.width, chart.height);
-                    ctx.restore();
-                }
-            });
-        }
         
         Chart.defaults.plugins.datalabels = {
             display: true,
