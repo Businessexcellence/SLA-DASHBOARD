@@ -2792,7 +2792,6 @@
         }
 
     </style>
-
     
     <!-- Google Analytics 4 (GA4) -->
     <script async src="https://www.googletagmanager.com/gtag/js?id=G-C0MLJSWYFS"></script>
@@ -3102,18 +3101,6 @@
     <!-- Last Updated Timestamp -->
     <div id="lastUpdatedTimestamp" class="last-updated-display">
         Last Updated: <span id="timestampText">Never</span>
-        &nbsp;|&nbsp;
-        <span id="dataSourceBadge" style="
-            display:inline-block;
-            padding:2px 8px;
-            border-radius:10px;
-            font-size:11px;
-            font-weight:700;
-            background:rgba(255,107,53,0.15);
-            color:#ff6b35;
-            border:1px solid #ff6b35;
-            letter-spacing:0.5px;
-        ">📂 Default Data</span>
     </div>
 
     <!-- Voice Control Button -->
@@ -3956,39 +3943,19 @@
                 let latestMonth = null;
                 let latestYear = null;
 
-                // Full month name mapping for Excel-uploaded data column names
-                const monthFullNameMap = {
-                    'Apr': 'April', 'May': 'May', 'Jun': 'June', 'Jul': 'July',
-                    'Aug': 'Aug', 'Sep': 'Sep', 'Oct': 'Oct', 'Nov': 'Nov',
-                    'Dec': 'Dec', 'Jan': 'Jan', 'Feb': 'Feb', 'Mar': 'March'
-                };
-
                 // Check each month in reverse order to find the latest with data
                 for (let i = monthsOrder.length - 1; i >= 0; i--) {
                     const month = monthsOrder[i];
-                    // Handle both JSON naming (Apr_Met) and Excel naming (Apr MET / April MET)
                     const metKey = month + '_Met';
                     const notMetKey = month + '_Not_Met';
-                    const metKeyExcel = month + ' MET';
-                    const notMetKeyExcel = month + ' NOT_MET';
-                    const fullName = monthFullNameMap[month] || month;
-                    const metKeyFull = fullName + ' MET';
-                    const notMetKeyFull = fullName + ' NOT_MET';
-                    const metKeySlash = month + ' MET/NOT_MET';
-                    const metKeyFullSlash = fullName + ' MET/NOT_MET';
                     
-                    // Check if the column EXISTS AND has at least one non-zero value across ALL rows
-                    // (column-only check fails when template rows have 0 for future months)
-                    const possibleKeys = [metKey, notMetKey, metKeyExcel, notMetKeyExcel,
-                                          metKeyFull, notMetKeyFull, metKeySlash, metKeyFullSlash];
+                    // Check if the column EXISTS in the data (not if it has values > 0)
+                    const hasColumn = rawData.fy25_26.length > 0 && 
+                                     (metKey in rawData.fy25_26[0] || notMetKey in rawData.fy25_26[0]);
                     
-                    const hasNonZeroData = rawData.fy25_26.some(row =>
-                        possibleKeys.some(k => k in row && parseInt(row[k]) > 0)
-                    );
+                    console.log(`   Checking ${month}: ${metKey}/${notMetKey} → ${hasColumn ? '✓ Found' : '✗ Not found'}`);
                     
-                    console.log(`   Checking ${month}: → ${hasNonZeroData ? '✓ Has data' : '✗ No data'}`);
-                    
-                    if (hasNonZeroData) {
+                    if (hasColumn) {
                         latestMonth = month;
                         latestYear = yearMapping[month];
                         console.log(`   ✅ Latest month detected: ${month} ${latestYear}`);
@@ -4891,10 +4858,48 @@ let rawData = null;
         }
         
         Chart.defaults.font.family = "'Inter', 'Segoe UI', sans-serif";
-        Chart.defaults.color = '#666666';  // Standard axis text color
         Chart.defaults.plugins.legend.labels.usePointStyle = true;
-        Chart.defaults.plugins.legend.labels.color = '#333333';
         Chart.defaults.devicePixelRatio = 3;  // Force high DPI rendering (3x resolution for crisp export)
+
+        // Remove grid lines from all charts globally
+        Chart.defaults.scales.x = Chart.defaults.scales.x || {};
+        Chart.defaults.scales.x.grid = {
+            display: false,
+            drawBorder: true
+        };
+        Chart.defaults.scales.y = Chart.defaults.scales.y || {};
+        Chart.defaults.scales.y.grid = {
+            display: false,
+            drawBorder: true
+        };
+        
+        // Set white background for all charts
+        Chart.defaults.plugins.beforeDraw = {
+            id: 'chartBackground',
+            beforeDraw: (chart) => {
+                const ctx = chart.canvas.getContext('2d');
+                ctx.save();
+                ctx.globalCompositeOperation = 'destination-over';
+                ctx.fillStyle = '#FFFFFF';  // White background
+                ctx.fillRect(0, 0, chart.width, chart.height);
+                ctx.restore();
+            }
+        };
+        
+        // Register the background plugin globally
+        if (typeof Chart !== 'undefined' && Chart.register) {
+            Chart.register({
+                id: 'chartBackground',
+                beforeDraw: (chart) => {
+                    const ctx = chart.canvas.getContext('2d');
+                    ctx.save();
+                    ctx.globalCompositeOperation = 'destination-over';
+                    ctx.fillStyle = '#FFFFFF';  // White background
+                    ctx.fillRect(0, 0, chart.width, chart.height);
+                    ctx.restore();
+                }
+            });
+        }
         
         Chart.defaults.plugins.datalabels = {
             display: true,
@@ -5388,9 +5393,7 @@ let rawData = null;
                     console.log('Updating latest data info...');
                     updateLatestDataInfo();
                     
-                    showToast('✓ Default data loaded (Mar 2026 included). Upload your Excel to override.');
-                    const badgeDef = document.getElementById('dataSourceBadge');
-                    if (badgeDef) { badgeDef.textContent = '📂 Default Data'; badgeDef.style.color = '#ff6b35'; badgeDef.style.border = '1px solid #ff6b35'; badgeDef.style.background = 'rgba(255,107,53,0.15)'; }
+                    showToast('✓ Default data loaded successfully! You can upload your own Excel file to override.');
                     speak('Default data loaded. Dashboard is ready. You can upload your own data anytime.');
                 })
                 .catch(error => {
@@ -5545,11 +5548,9 @@ let rawData = null;
                     };
                     
                     parsedData = rawData;
-                    
-                    // Also sync metricsDetailsData to window so all functions can access it
                     window.metricsDetailsData = metricsDetailsData;
 
-                    // ── Reset all active filters so stale selections don't hide uploaded data ──
+                    // Reset activeFilters so stale selections don't persist
                     activeFilters = {
                         fy: 'all',
                         regionalHead: [],
@@ -5565,8 +5566,7 @@ let rawData = null;
                     $('#practiceFilter').val(null).trigger('change.select2');
                     $('#accountFilter').val(null).trigger('change.select2');
                     $('#monthFilter').val(null).trigger('change.select2');
-                    document.getElementById('fyFilter').value = 'all';
-
+                    
                     console.log('Data loaded successfully, populating filters...');
                     populateFilters();
                     
@@ -5585,10 +5585,11 @@ let rawData = null;
                     console.log('Updating latest data info...');
                     updateLatestDataInfo();
                     
-                    showToast('✓ Data loaded: ' + file.name + ' — default data overridden.');
-                    const badgeUp = document.getElementById('dataSourceBadge');
-                    if (badgeUp) { badgeUp.textContent = '✅ ' + file.name; badgeUp.style.color = '#10b981'; badgeUp.style.border = '1px solid #10b981'; badgeUp.style.background = 'rgba(16,185,129,0.15)'; }
+                    showToast('✓ ' + file.name + ' loaded successfully!');
                     speak('Data loaded successfully. Dashboard is now ready.');
+                    
+                    // Reset file input so same file can be re-uploaded
+                    fileInput.value = '';
                     
                     // SAFE: Track file upload
                     try {
@@ -5599,22 +5600,18 @@ let rawData = null;
                         // Silent fail
                     }
                     
-                    // Reset file input so the same file can be re-uploaded later if needed
-                    fileInput.value = '';
-                    
-                    console.log('✅ File upload complete – dashboard now shows uploaded data');
+                    console.log('✅ File upload complete');
                 } catch(error) {
                     console.error('Error loading file:', error);
-                    alert('❌ Error loading file: ' + error.message + '\n\nPlease check the console for details.');
-                    // Reset file input on error too
                     fileInput.value = '';
+                    alert('❌ Error loading file: ' + error.message + '\n\nPlease check the console for details.');
                 }
             };
             
             reader.onerror = function(error) {
                 console.error('FileReader error:', error);
-                alert('❌ Error reading file. Please try again.');
                 fileInput.value = '';
+                alert('❌ Error reading file. Please try again.');
             };
             
             reader.readAsArrayBuffer(file);
@@ -5656,39 +5653,31 @@ let rawData = null;
 
             // Populate Regional Head filter
             const regionalHeadFilter = $('#regionalHeadFilter');
-            regionalHeadFilter.val(null).trigger('change.select2');
             regionalHeadFilter.empty();
             Array.from(regionalHeads).sort().forEach(rh => {
                 regionalHeadFilter.append(new Option(rh, rh));
             });
-            regionalHeadFilter.trigger('change.select2');
             
             // Populate Region filter
             const regionFilter = $('#regionFilter');
-            regionFilter.val(null).trigger('change.select2');
             regionFilter.empty();
             Array.from(regions).sort().forEach(region => {
                 regionFilter.append(new Option(region, region));
             });
-            regionFilter.trigger('change.select2');
             
             // Populate Practice Head filter
             const practiceFilter = $('#practiceFilter');
-            practiceFilter.val(null).trigger('change.select2');
             practiceFilter.empty();
             Array.from(practices).sort().forEach(practice => {
                 practiceFilter.append(new Option(practice, practice));
             });
-            practiceFilter.trigger('change.select2');
             
             // Populate Project filter (formerly Account)
             const accountFilter = $('#accountFilter');
-            accountFilter.val(null).trigger('change.select2');
             accountFilter.empty();
             Array.from(projects).sort().forEach(project => {
                 accountFilter.append(new Option(project, project));
             });
-            accountFilter.trigger('change.select2');
             
             console.log('✅ Filters populated successfully');
         }
@@ -6471,8 +6460,6 @@ function showView(view) {
             } catch (e) {
                 // Silent fail - won't break dashboard
             }
-
-
         }
 
         // Calculate overall metrics
@@ -7699,22 +7686,23 @@ function showView(view) {
                 filteredMetricsData = filteredMetricsData.filter(r => activeFilters.account.includes(r.Project));
             }
             
-            // Get month filter (multi-select array)
-            const selectedMonths = activeFilters.months || [];
+            // Get month filter (single value)
+            const monthFilter = activeFilters.month;
             
             // Determine which months to include based on month filter
             let months = [];
             let periodLabel = '';
             
-            if (selectedMonths.length > 0) {
-                // Specific months selected - use only those months
+            if (monthFilter && monthFilter !== 'all') {
+                // Single month selected - use only that month
                 const monthMap = {
                     'Apr': 'April', 'May': 'May', 'Jun': 'June', 'Jul': 'July',
                     'Aug': 'Aug', 'Sep': 'Sep', 'Oct': 'Oct', 'Nov': 'Nov',
                     'Dec': 'Dec', 'Jan': 'Jan', 'Feb': 'Feb', 'Mar': 'Mar'
                 };
-                months = selectedMonths.map(m => monthMap[m] || m);
-                periodLabel = `(${months.join(', ')})`;
+                const fullMonth = monthMap[monthFilter];
+                months = [fullMonth];
+                periodLabel = `(${fullMonth} ${fullMonth === 'Jan' || fullMonth === 'Feb' || fullMonth === 'Mar' ? '2026' : '2025'} Only)`;
             } else {
                 // All months - use Apr-Feb (current FY so far, include Feb'26)
                 months = ['April', 'May', 'June', 'July', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec', 'Jan', 'Feb'];
@@ -7916,8 +7904,8 @@ function showView(view) {
                 filteredMetricsData = filteredMetricsData.filter(r => activeFilters.account.includes(r.Project));
             }
             
-            // Get month filter (multi-select array)
-            const selectedMonths = activeFilters.months || [];
+            // Get month filter (single value)
+            const monthFilter = activeFilters.month;
             
             // Calculate bifurcation Met% using Category Sub Type (FY 25-26)
             const contractual = filteredMetricsData.filter(r => r['Category Sub Type'] === 'Contractual SLA');
@@ -7929,15 +7917,16 @@ function showView(view) {
             let months = [];
             let periodLabel = '';
             
-            if (selectedMonths.length > 0) {
-                // Specific months selected - use only those months
+            if (monthFilter && monthFilter !== 'all') {
+                // Single month selected - use only that month
                 const monthMap = {
                     'Apr': 'April', 'May': 'May', 'Jun': 'June', 'Jul': 'July',
                     'Aug': 'Aug', 'Sep': 'Sep', 'Oct': 'Oct', 'Nov': 'Nov',
                     'Dec': 'Dec', 'Jan': 'Jan', 'Feb': 'Feb', 'Mar': 'Mar'
                 };
-                months = selectedMonths.map(m => monthMap[m] || m);
-                periodLabel = `(${months.join(', ')})`;
+                const fullMonth = monthMap[monthFilter];
+                months = [fullMonth];
+                periodLabel = `(${fullMonth} ${fullMonth === 'Jan' || fullMonth === 'Feb' || fullMonth === 'Mar' ? '2026' : '2025'} Only)`;
             } else {
                 // All months - use Apr-Feb (current FY so far, include Feb'26)
                 months = ['April', 'May', 'June', 'July', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec', 'Jan', 'Feb'];
@@ -8090,16 +8079,16 @@ function showView(view) {
             const kpiBifurcationTilesHTML = generateKPIBifurcationTiles();
             
             // Check if month filter is active
-            const selectedMonths = activeFilters.months || [];
-            const isMonthFiltered = selectedMonths.length > 0;
+            const monthFilter = activeFilters.month;
+            const isMonthFiltered = monthFilter && monthFilter !== 'all';
             
             // Dynamically extract months for both fiscal years
             const fy24months = extractMonthsFromData(filteredData.fy24_25, null);
             const fy25months = extractMonthsFromData(null, filteredData.fy25_26);
             const allMonths = ['Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec', 'Jan', 'Feb', 'Mar'];
             
-            // If month filter is active, only show selected months
-            const monthsToShow = isMonthFiltered ? selectedMonths : allMonths;
+            // If month filter is active, only show that specific month
+            const monthsToShow = isMonthFiltered ? [monthFilter] : allMonths;
             
             // Calculate FY 24-25 data using Summary sheet (filteredData.fy24_25)
             const fy24Data = allMonths.map(month => {
@@ -8180,63 +8169,56 @@ function showView(view) {
             let avgFY24, avgFY25, improvement, compareMonthCount;
             
             if (isMonthFiltered) {
-                // When month filter is active, calculate across selected months
-                let fy24Sum = 0, fy25Sum = 0, fy24Count = 0, fy25Count = 0;
-                selectedMonths.forEach(month => {
-                    const monthIdx = allMonths.indexOf(month);
-                    if (monthIdx >= 0) {
-                        fy24Sum += fy24Data[monthIdx];
-                        fy24Count++;
-                        fy25Sum += fy25Data[monthIdx];
-                        fy25Count++;
-                    }
-                });
-                avgFY24 = fy24Count > 0 ? parseFloat((fy24Sum / fy24Count).toFixed(1)) : 0;
-                avgFY25 = fy25Count > 0 ? parseFloat((fy25Sum / fy25Count).toFixed(1)) : 0;
-                improvement = parseFloat((avgFY25 - avgFY24).toFixed(1));
-                compareMonthCount = selectedMonths.length;
+                // When month filter is active, show only that month's data
+                const monthIdx = allMonths.indexOf(monthFilter);
+                avgFY24 = fy24Data[monthIdx].toFixed(1);
+                avgFY25 = fy25Data[monthIdx].toFixed(1);
+                improvement = (fy25Data[monthIdx] - fy24Data[monthIdx]).toFixed(1);
+                compareMonthCount = 1;
             } else {
                 // When no month filter, calculate averages across all available months
                 const fy25NonZeroData = fy25Data.filter(v => v > 0);
                 compareMonthCount = Math.min(fy24Data.length, fy25NonZeroData.length);
-                avgFY24 = compareMonthCount > 0 ? parseFloat((fy24Data.slice(0, compareMonthCount).reduce((a, b) => a + b, 0) / compareMonthCount).toFixed(1)) : 0;
-                avgFY25 = fy25NonZeroData.length > 0 ? parseFloat((fy25NonZeroData.reduce((a, b) => a + b, 0) / fy25NonZeroData.length).toFixed(1)) : 0;
-                improvement = parseFloat((avgFY25 - avgFY24).toFixed(1));
+                avgFY24 = compareMonthCount > 0 ? (fy24Data.slice(0, compareMonthCount).reduce((a, b) => a + b, 0) / compareMonthCount).toFixed(1) : 0;
+                avgFY25 = fy25NonZeroData.length > 0 ? (fy25NonZeroData.reduce((a, b) => a + b, 0) / fy25NonZeroData.length).toFixed(1) : 0;
+                improvement = (avgFY25 - avgFY24).toFixed(1);
             }
 
             // Build insights and comparison widgets based on filter
             let insightsHTML, comparisonWidget;
             
             if (isMonthFiltered) {
-                // Multi-month insights
+                // Month-specific insights
                 const monthNames = {
                     'Apr': 'April', 'May': 'May', 'Jun': 'June', 'Jul': 'July',
                     'Aug': 'August', 'Sep': 'September', 'Oct': 'October', 'Nov': 'November',
                     'Dec': 'December', 'Jan': 'January', 'Feb': 'February', 'Mar': 'March'
                 };
-                const fullMonthNames = selectedMonths.map(m => monthNames[m] || m).join(', ');
+                const fullMonthName = monthNames[monthFilter] || monthFilter;
+                const year24 = ['Jan', 'Feb', 'Mar'].includes(monthFilter) ? '2025' : '2024';
+                const year25 = ['Jan', 'Feb', 'Mar'].includes(monthFilter) ? '2026' : '2025';
                 
                 insightsHTML = `
                     <div class="insights-section">
-                        <h3><i class="bi bi-lightbulb-fill"></i> Selected Months Performance (${fullMonthNames})</h3>
+                        <h3><i class="bi bi-lightbulb-fill"></i> ${fullMonthName} Performance Comparison</h3>
                         <div class="insight-item">
-                            <h4>📊 FY 24-25 vs FY 25-26 - Average across ${compareMonthCount} month(s)</h4>
-                            <p>FY 24-25: ${avgFY24}% | FY 25-26: ${avgFY25}% | Change: ${improvement > 0 ? '+' : ''}${improvement}%</p>
+                            <h4>📊 FY 24-25 vs FY 25-26 - ${fullMonthName} ${year25}</h4>
+                            <p>FY 24-25 (${fullMonthName} ${year24}): ${avgFY24}% | FY 25-26 (${fullMonthName} ${year25}): ${avgFY25}% | Change: ${improvement > 0 ? '+' : ''}${improvement}%</p>
                         </div>
                         <div class="insight-item">
                             <h4>${improvement > 0 ? '📈 Performance Improvement' : '📉 Performance Decline'}</h4>
-                            <p>${improvement > 0 ? `${fullMonthNames} shows ${improvement}% improvement in FY 25-26 compared to FY 24-25.` : `${fullMonthNames} shows ${Math.abs(improvement)}% decline in FY 25-26 compared to FY 24-25. Focus on recovery strategies.`}</p>
+                            <p>${improvement > 0 ? `${fullMonthName} ${year25} shows ${improvement}% improvement compared to ${fullMonthName} ${year24}.` : `${fullMonthName} ${year25} shows ${Math.abs(improvement)}% decline compared to ${fullMonthName} ${year24}. Focus on recovery strategies.`}</p>
                         </div>
                     </div>`;
                 
                 comparisonWidget = `
                     <div class="comparison-widget">
                         <div class="metric-box fy24">
-                            <div class="metric-label">FY 24-25 Avg (${compareMonthCount} months)</div>
+                            <div class="metric-label">FY 24-25 ${fullMonthName} ${year24}</div>
                             <div class="metric-value" style="color: #ff6b35;">${avgFY24}%</div>
                         </div>
                         <div class="metric-box fy25">
-                            <div class="metric-label">FY 25-26 Avg (${compareMonthCount} months)</div>
+                            <div class="metric-label">FY 25-26 ${fullMonthName} ${year25}</div>
                             <div class="metric-value" style="color: var(--primary-color);">${avgFY25}%</div>
                         </div>
                     </div>`;
@@ -8282,25 +8264,22 @@ function showView(view) {
                     <tbody>`;
             
             if (isMonthFiltered) {
-                // Show selected months rows
+                // Show only the selected month
+                const monthIdx = allMonths.indexOf(monthFilter);
+                const diff = fy25Data[monthIdx] - fy24Data[monthIdx];
+                const diffColor = diff >= 0 ? 'var(--success-color)' : 'var(--danger-color)';
                 const monthNames = {
                     'Apr': 'April', 'May': 'May', 'Jun': 'June', 'Jul': 'July',
                     'Aug': 'August', 'Sep': 'September', 'Oct': 'October', 'Nov': 'November',
                     'Dec': 'December', 'Jan': 'January', 'Feb': 'February', 'Mar': 'March'
                 };
-                selectedMonths.forEach(month => {
-                    const monthIdx = allMonths.indexOf(month);
-                    if (monthIdx < 0) return;
-                    const diff = fy25Data[monthIdx] - fy24Data[monthIdx];
-                    const diffColor = diff >= 0 ? 'var(--success-color)' : 'var(--danger-color)';
-                    tableHTML += `
-                        <tr>
-                            <td><strong>${monthNames[month] || month}</strong></td>
-                            <td style="color: #ff6b35;">${fy24Data[monthIdx].toFixed(1)}%</td>
-                            <td style="color: var(--primary-color);">${fy25Data[monthIdx].toFixed(1)}%</td>
-                            <td style="color: ${diffColor}; font-weight: bold;">${diff >= 0 ? '+' : ''}${diff.toFixed(1)}%</td>
-                        </tr>`;
-                });
+                tableHTML += `
+                    <tr>
+                        <td><strong>${monthNames[monthFilter]}</strong></td>
+                        <td style="color: #ff6b35;">${fy24Data[monthIdx].toFixed(1)}%</td>
+                        <td style="color: var(--primary-color);">${fy25Data[monthIdx].toFixed(1)}%</td>
+                        <td style="color: ${diffColor}; font-weight: bold;">${diff >= 0 ? '+' : ''}${diff.toFixed(1)}%</td>
+                    </tr>`;
             } else {
                 // Show all available months
                 fy25months.forEach((month, idx) => {
@@ -8337,34 +8316,22 @@ function showView(view) {
                 speak(`Monthly performance comparison loaded. FY 24-25 average is ${avgFY24} percent. FY 25-26 average is ${avgFY25} percent.`);
             }
             
-            const ctx = document.getElementById('monthlyChart');
-            if (!ctx) {
-                console.error('Canvas element not found!');
-                return;
-            }
-            
-            const canvasContext = ctx.getContext('2d');
+            const ctx = document.getElementById('monthlyChart').getContext('2d');
             
             // Determine what to show in chart based on month filter
             let labelsToShow, fy24DataToShow, fy25DataToShow;
             
             if (isMonthFiltered) {
-                // Show only the selected months
+                // Show only the selected month as a bar/point
                 const monthNames = {
                     'Apr': 'April', 'May': 'May', 'Jun': 'June', 'Jul': 'July',
                     'Aug': 'August', 'Sep': 'September', 'Oct': 'October', 'Nov': 'November',
                     'Dec': 'December', 'Jan': 'January', 'Feb': 'February', 'Mar': 'March'
                 };
-                labelsToShow = selectedMonths.map(m => monthNames[m] || m);
-                fy24DataToShow = selectedMonths.map(m => {
-                    const idx = allMonths.indexOf(m);
-                    return idx >= 0 ? fy24Data[idx] : 0;
-                });
-                fy25DataToShow = selectedMonths.map(m => {
-                    const idx = allMonths.indexOf(m);
-                    return idx >= 0 ? fy25Data[idx] : 0;
-                });
-                console.log('📊 Filtered chart data:', { labelsToShow, fy24DataToShow, fy25DataToShow });
+                const monthIdx = allMonths.indexOf(monthFilter);
+                labelsToShow = [monthNames[monthFilter]];
+                fy24DataToShow = [fy24Data[monthIdx]];
+                fy25DataToShow = [fy25Data[monthIdx]];
             } else {
                 // Show all available months
                 const maxMonthsToShow = Math.max(fy24months.length, fy25months.length);
@@ -8376,21 +8343,8 @@ function showView(view) {
                 );
             }
             
-            console.log('📊 Creating chart with labels:', labelsToShow);
-            console.log('📊 Chart data - FY24:', fy24DataToShow);
-            console.log('📊 Chart data - FY25:', fy25DataToShow);
-            
-            // Safety check: ensure we have valid labels and data
-            if (!labelsToShow || labelsToShow.length === 0) {
-                console.error('❌ No labels to show for chart');
-                return;
-            }
-            
-            // Use bar chart only for single month, line chart for multiple
-            const chartType = (isMonthFiltered && selectedMonths.length === 1) ? 'bar' : 'line';
-            
-            charts.monthly = new Chart(canvasContext, {
-                type: chartType,
+            charts.monthly = new Chart(ctx, {
+                type: isMonthFiltered ? 'bar' : 'line',  // Use bar chart for single month, line for multiple
                 data: {
                     labels: labelsToShow,
                     datasets: [
@@ -8398,9 +8352,9 @@ function showView(view) {
                             label: 'FY 24-25',
                             data: fy24DataToShow,
                             borderColor: '#3a1c71',  // Purple from gradient
-                            backgroundColor: (chartType === 'bar') ? 'rgba(58, 28, 113, 0.7)' : 'rgba(58, 28, 113, 0.1)',
+                            backgroundColor: isMonthFiltered ? 'rgba(58, 28, 113, 0.7)' : 'rgba(58, 28, 113, 0.1)',
                             borderWidth: 3,
-                            fill: (chartType === 'line'),
+                            fill: !isMonthFiltered,
                             tension: 0.4,
                             pointRadius: 5,
                             pointHoverRadius: 7
@@ -8409,13 +8363,13 @@ function showView(view) {
                             label: `FY 25-26${isMonthFiltered ? '' : ' (' + fy25months.join('-') + ')'}`,
                             data: fy25DataToShow,
                             borderColor: '#d76d77',  // Pink from gradient
-                            backgroundColor: (chartType === 'bar') ? 'rgba(215, 109, 119, 0.7)' : 'rgba(215, 109, 119, 0.1)',
+                            backgroundColor: isMonthFiltered ? 'rgba(215, 109, 119, 0.7)' : 'rgba(215, 109, 119, 0.1)',
                             borderWidth: 3,
-                            fill: (chartType === 'line'),
+                            fill: !isMonthFiltered,
                             tension: 0.4,
                             pointRadius: 5,
                             pointHoverRadius: 7,
-                            borderDash: (chartType === 'bar') ? [] : [5, 5],  // Dashed line for FY 25-26 in line chart
+                            borderDash: isMonthFiltered ? [] : [5, 5],  // Dashed line for FY 25-26 in line chart
                             spanGaps: false  // Don't connect null values
                         }
                     ]
@@ -11378,7 +11332,7 @@ function showView(view) {
                 // === FILTERS INFO ===
                 // Check ALL filter types including FY, month, region, practice, regional head, and accounts
                 const hasFilters = activeFilters.fy !== 'all' || 
-                                   (activeFilters.months && activeFilters.months.length > 0) ||
+                                   (activeFilters.month && activeFilters.month !== 'all') ||
                                    activeFilters.region.length > 0 || 
                                    activeFilters.practice.length > 0 || 
                                    activeFilters.regionalHead.length > 0 ||
@@ -11394,8 +11348,9 @@ function showView(view) {
                     }
                     
                     // Month Filter
-                    if (activeFilters.months && activeFilters.months.length > 0) {
-                        filterLines.push('Months: ' + activeFilters.months.join(', '));
+                    if (activeFilters.month && activeFilters.month !== 'all') {
+                        const monthFullName = getFullMonthName(activeFilters.month);
+                        filterLines.push('Month: ' + monthFullName);
                     }
                     
                     // Region Filter
@@ -12511,16 +12466,16 @@ function showView(view) {
                 categoryData = filteredMetricsData.filter(r => r.Penalty === 'No');
             }
             
-            // Get month filter (multi-select array)
-            const _selMonths = activeFilters.months || [];
+            // Get month filter
+            const monthFilter = activeFilters.month;
             let months = [];
-            if (_selMonths.length > 0) {
+            if (monthFilter && monthFilter !== 'all') {
                 const monthMap = {
                     'Apr': 'April', 'May': 'May', 'Jun': 'June', 'Jul': 'July',
                     'Aug': 'Aug', 'Sep': 'Sep', 'Oct': 'Oct', 'Nov': 'Nov',
                     'Dec': 'Dec', 'Jan': 'Jan', 'Feb': 'Feb', 'Mar': 'Mar'
                 };
-                months = _selMonths.map(m => monthMap[m] || m);
+                months = [monthMap[monthFilter]];
             } else {
                 months = ['April', 'May', 'June', 'July', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec', 'Jan'];
             }
@@ -14350,51 +14305,72 @@ function showView(view) {
             }
             
             // Month filter - filter by specific month columns
-            const _notRepMonths = activeFilters.months || [];
-            if (_notRepMonths.length > 0) {
-                console.log('📆 Applying month filter:', _notRepMonths);
+            if (activeFilters.month && activeFilters.month !== 'all') {
+                console.log('📆 Applying month filter:', activeFilters.month);
                 
+                // The month filter value IS the short name (Apr, May, Jun, etc.)
                 // Column names are like: "Apr MET/NOT_MET_NotReported", "Oct MET/NOT_MET_NotReported"
-                const selectedMonths = _notRepMonths;
-                console.log('   Selected months:', selectedMonths);
+                const selectedMonth = activeFilters.month; // Already in short form
+                console.log('   Selected month name:', selectedMonth);
                 
                 // Apply to FY24-25 if data exists
-                if (selectedMonths.length > 0 && filtered2425.length > 0) {
+                if (selectedMonth && filtered2425.length > 0) {
                     // Log sample column names to see the pattern
                     const sampleCols = Object.keys(filtered2425[0]).filter(k => k.includes('NotReported'));
                     console.log('   FY24-25 Sample NotReported columns:', sampleCols.slice(0, 3));
                     
-                    // For Not Reported data, keep only selected months' NotReported columns
+                    // For Not Reported data, keep only selected month's NotReported columns
                     filtered2425 = filtered2425.map(row => {
                         const newRow = { ...row };
+                        let keptCount = 0;
+                        
                         Object.keys(newRow).forEach(key => {
                             if (key.includes('NotReported')) {
                                 // Column format: "Apr MET/NOT_MET_NotReported"
-                                const matchesAny = selectedMonths.some(m => key.startsWith(m + ' '));
-                                if (!matchesAny) newRow[key] = 0;
+                                // Check if column starts with the selected month
+                                if (key.startsWith(selectedMonth + ' ')) {
+                                    keptCount++;
+                                } else {
+                                    newRow[key] = 0;
+                                }
                             }
                         });
+                        
                         return newRow;
                     });
+                    
                     console.log('   ✅ FY24-25 month filter applied');
                 }
                 
                 // Apply to FY25-26 if data exists
-                if (selectedMonths.length > 0 && filtered2526.length > 0) {
+                if (selectedMonth && filtered2526.length > 0) {
+                    // Log sample column names
+                    const sampleCols2526 = Object.keys(filtered2526[0]).filter(k => k.includes('NotReported'));
+                    console.log('   FY25-26 Sample NotReported columns:', sampleCols2526.slice(0, 3));
+                    
                     filtered2526 = filtered2526.map(row => {
                         const newRow = { ...row };
+                        let keptCount2526 = 0;
+                        let zeroedCount2526 = 0;
+                        
                         Object.keys(newRow).forEach(key => {
                             if (key.includes('NotReported')) {
-                                const matchesAny = selectedMonths.some(m => key.startsWith(m + ' '));
-                                if (!matchesAny) newRow[key] = 0;
+                                if (key.startsWith(selectedMonth + ' ')) {
+                                    keptCount2526++;
+                                } else {
+                                    newRow[key] = 0;
+                                    zeroedCount2526++;
+                                }
                             }
                         });
+                        
                         return newRow;
                     });
+                    
                     console.log('   ✅ FY25-26 month filter applied');
                 }
                 
-                console.log('   ✅ Month filter completed for:', selectedMonths.join(', '));
+                console.log('   ✅ Month filter completed for:', selectedMonth);
             }
             
             console.log('📊 After filtering: FY24-25 =', filtered2425.length, 'rows, FY25-26 =', filtered2526.length, 'rows');
@@ -14427,8 +14403,8 @@ function showView(view) {
             const showYoYCards = activeFilters.fy === 'all' || !activeFilters.fy; // Only show YoY when both FYs visible
             
             // Build month label if month filter is active
-            const monthLabel = (activeFilters.months && activeFilters.months.length > 0)
-                ? ` (${activeFilters.months.join(', ')} only)` 
+            const monthLabel = activeFilters.month && activeFilters.month !== 'all' 
+                ? ` (${activeFilters.month} only)` 
                 : '';
             
             // Build HTML
