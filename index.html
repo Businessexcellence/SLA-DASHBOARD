@@ -7670,6 +7670,14 @@ function showView(view) {
             
             // Apply current filters to metricsDetailsData using activeFilters object
             let filteredMetricsData = metricsDetailsData;
+
+            // Apply Regional Head filter
+            if (activeFilters.regionalHead && activeFilters.regionalHead.length > 0) {
+                filteredMetricsData = filteredMetricsData.filter(r => {
+                    const rh = r['Regional Head '] || r['Regional Head'];
+                    return activeFilters.regionalHead.includes(rh);
+                });
+            }
             
             // Apply Region filter (array from multiselect)
             if (activeFilters.region && activeFilters.region.length > 0) {
@@ -7686,23 +7694,30 @@ function showView(view) {
                 filteredMetricsData = filteredMetricsData.filter(r => activeFilters.account.includes(r.Project));
             }
             
-            // Get month filter (single value)
-            const monthFilter = activeFilters.month;
+            // Get months from multi-select filter (activeFilters.months array)
+            const selectedMonths = activeFilters.months || [];
             
+            // Month short→full name map
+            const monthMap = {
+                'Apr': 'April', 'May': 'May', 'Jun': 'June', 'Jul': 'July',
+                'Aug': 'Aug', 'Sep': 'Sep', 'Oct': 'Oct', 'Nov': 'Nov',
+                'Dec': 'Dec', 'Jan': 'Jan', 'Feb': 'Feb', 'Mar': 'Mar'
+            };
+
             // Determine which months to include based on month filter
             let months = [];
             let periodLabel = '';
             
-            if (monthFilter && monthFilter !== 'all') {
-                // Single month selected - use only that month
-                const monthMap = {
-                    'Apr': 'April', 'May': 'May', 'Jun': 'June', 'Jul': 'July',
-                    'Aug': 'Aug', 'Sep': 'Sep', 'Oct': 'Oct', 'Nov': 'Nov',
-                    'Dec': 'Dec', 'Jan': 'Jan', 'Feb': 'Feb', 'Mar': 'Mar'
-                };
-                const fullMonth = monthMap[monthFilter];
-                months = [fullMonth];
-                periodLabel = `(${fullMonth} ${fullMonth === 'Jan' || fullMonth === 'Feb' || fullMonth === 'Mar' ? '2026' : '2025'} Only)`;
+            if (selectedMonths.length > 0) {
+                // One or more months selected
+                months = selectedMonths.map(m => monthMap[m] || m);
+                if (months.length === 1) {
+                    const m = months[0];
+                    const yr = (m === 'Jan' || m === 'Feb' || m === 'Mar') ? '2026' : '2025';
+                    periodLabel = `(${m} ${yr} Only)`;
+                } else {
+                    periodLabel = `(${months.join(', ')})`;
+                }
             } else {
                 // All months - use Apr-Feb (current FY so far, include Feb'26)
                 months = ['April', 'May', 'June', 'July', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec', 'Jan', 'Feb'];
@@ -7888,6 +7903,14 @@ function showView(view) {
             
             // Apply current filters to metricsDetailsData using activeFilters object
             let filteredMetricsData = metricsDetailsData;
+
+            // Apply Regional Head filter
+            if (activeFilters.regionalHead && activeFilters.regionalHead.length > 0) {
+                filteredMetricsData = filteredMetricsData.filter(r => {
+                    const rh = r['Regional Head '] || r['Regional Head'];
+                    return activeFilters.regionalHead.includes(rh);
+                });
+            }
             
             // Apply Region filter (array from multiselect)
             if (activeFilters.region && activeFilters.region.length > 0) {
@@ -7904,9 +7927,16 @@ function showView(view) {
                 filteredMetricsData = filteredMetricsData.filter(r => activeFilters.account.includes(r.Project));
             }
             
-            // Get month filter (single value)
-            const monthFilter = activeFilters.month;
-            
+            // Get months from multi-select filter (activeFilters.months array)
+            const selectedMonths = activeFilters.months || [];
+
+            // Month short→full name map
+            const monthMap = {
+                'Apr': 'April', 'May': 'May', 'Jun': 'June', 'Jul': 'July',
+                'Aug': 'Aug', 'Sep': 'Sep', 'Oct': 'Oct', 'Nov': 'Nov',
+                'Dec': 'Dec', 'Jan': 'Jan', 'Feb': 'Feb', 'Mar': 'Mar'
+            };
+
             // Calculate bifurcation Met% using Category Sub Type (FY 25-26)
             const contractual = filteredMetricsData.filter(r => r['Category Sub Type'] === 'Contractual SLA');
             const internal = filteredMetricsData.filter(r => r['Category Sub Type'] === 'Internal KPI');
@@ -7917,16 +7947,16 @@ function showView(view) {
             let months = [];
             let periodLabel = '';
             
-            if (monthFilter && monthFilter !== 'all') {
-                // Single month selected - use only that month
-                const monthMap = {
-                    'Apr': 'April', 'May': 'May', 'Jun': 'June', 'Jul': 'July',
-                    'Aug': 'Aug', 'Sep': 'Sep', 'Oct': 'Oct', 'Nov': 'Nov',
-                    'Dec': 'Dec', 'Jan': 'Jan', 'Feb': 'Feb', 'Mar': 'Mar'
-                };
-                const fullMonth = monthMap[monthFilter];
-                months = [fullMonth];
-                periodLabel = `(${fullMonth} ${fullMonth === 'Jan' || fullMonth === 'Feb' || fullMonth === 'Mar' ? '2026' : '2025'} Only)`;
+            if (selectedMonths.length > 0) {
+                // One or more months selected
+                months = selectedMonths.map(m => monthMap[m] || m);
+                if (months.length === 1) {
+                    const m = months[0];
+                    const yr = (m === 'Jan' || m === 'Feb' || m === 'Mar') ? '2026' : '2025';
+                    periodLabel = `(${m} ${yr} Only)`;
+                } else {
+                    periodLabel = `(${months.join(', ')})`;
+                }
             } else {
                 // All months - use Apr-Feb (current FY so far, include Feb'26)
                 months = ['April', 'May', 'June', 'July', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec', 'Jan', 'Feb'];
@@ -8078,17 +8108,17 @@ function showView(view) {
             const accountHealthTilesHTML = generateAccountHealthTiles();
             const kpiBifurcationTilesHTML = generateKPIBifurcationTiles();
             
-            // Check if month filter is active
-            const monthFilter = activeFilters.month;
-            const isMonthFiltered = monthFilter && monthFilter !== 'all';
+            // Check if month filter is active (multi-select array)
+            const selectedMonthsFilter = activeFilters.months || [];
+            const isMonthFiltered = selectedMonthsFilter.length > 0;
             
             // Dynamically extract months for both fiscal years
             const fy24months = extractMonthsFromData(filteredData.fy24_25, null);
             const fy25months = extractMonthsFromData(null, filteredData.fy25_26);
             const allMonths = ['Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec', 'Jan', 'Feb', 'Mar'];
             
-            // If month filter is active, only show that specific month
-            const monthsToShow = isMonthFiltered ? [monthFilter] : allMonths;
+            // If month filter is active, only show selected months
+            const monthsToShow = isMonthFiltered ? selectedMonthsFilter : allMonths;
             
             // Calculate FY 24-25 data using Summary sheet (filteredData.fy24_25)
             const fy24Data = allMonths.map(month => {
@@ -11332,7 +11362,7 @@ function showView(view) {
                 // === FILTERS INFO ===
                 // Check ALL filter types including FY, month, region, practice, regional head, and accounts
                 const hasFilters = activeFilters.fy !== 'all' || 
-                                   (activeFilters.month && activeFilters.month !== 'all') ||
+                                   (activeFilters.months && activeFilters.months.length > 0) ||
                                    activeFilters.region.length > 0 || 
                                    activeFilters.practice.length > 0 || 
                                    activeFilters.regionalHead.length > 0 ||
@@ -11347,10 +11377,9 @@ function showView(view) {
                         filterLines.push('Fiscal Year: ' + activeFilters.fy);
                     }
                     
-                    // Month Filter
-                    if (activeFilters.month && activeFilters.month !== 'all') {
-                        const monthFullName = getFullMonthName(activeFilters.month);
-                        filterLines.push('Month: ' + monthFullName);
+                    // Month Filter (multi-select)
+                    if (activeFilters.months && activeFilters.months.length > 0) {
+                        filterLines.push('Months: ' + activeFilters.months.join(', '));
                     }
                     
                     // Region Filter
@@ -12442,6 +12471,14 @@ function showView(view) {
             
             // Get filtered data based on category
             let filteredMetricsData = metricsDetailsData;
+
+            // Apply Regional Head filter
+            if (activeFilters.regionalHead && activeFilters.regionalHead.length > 0) {
+                filteredMetricsData = filteredMetricsData.filter(r => {
+                    const rh = r['Regional Head '] || r['Regional Head'];
+                    return activeFilters.regionalHead.includes(rh);
+                });
+            }
             
             // Apply current filters
             if (activeFilters.region && activeFilters.region.length > 0) {
@@ -12466,18 +12503,18 @@ function showView(view) {
                 categoryData = filteredMetricsData.filter(r => r.Penalty === 'No');
             }
             
-            // Get month filter
-            const monthFilter = activeFilters.month;
+            // Get month filter (multi-select array)
+            const _drillMonths = activeFilters.months || [];
+            const monthMap = {
+                'Apr': 'April', 'May': 'May', 'Jun': 'June', 'Jul': 'July',
+                'Aug': 'Aug', 'Sep': 'Sep', 'Oct': 'Oct', 'Nov': 'Nov',
+                'Dec': 'Dec', 'Jan': 'Jan', 'Feb': 'Feb', 'Mar': 'Mar'
+            };
             let months = [];
-            if (monthFilter && monthFilter !== 'all') {
-                const monthMap = {
-                    'Apr': 'April', 'May': 'May', 'Jun': 'June', 'Jul': 'July',
-                    'Aug': 'Aug', 'Sep': 'Sep', 'Oct': 'Oct', 'Nov': 'Nov',
-                    'Dec': 'Dec', 'Jan': 'Jan', 'Feb': 'Feb', 'Mar': 'Mar'
-                };
-                months = [monthMap[monthFilter]];
+            if (_drillMonths.length > 0) {
+                months = _drillMonths.map(m => monthMap[m] || m);
             } else {
-                months = ['April', 'May', 'June', 'July', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec', 'Jan'];
+                months = ['April', 'May', 'June', 'July', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec', 'Jan', 'Feb'];
             }
             
             // Group by project
@@ -14304,73 +14341,27 @@ function showView(view) {
                 }
             }
             
-            // Month filter - filter by specific month columns
-            if (activeFilters.month && activeFilters.month !== 'all') {
-                console.log('📆 Applying month filter:', activeFilters.month);
+            // Month filter - filter by specific month columns (multi-select array)
+            const _notRepMonths = activeFilters.months || [];
+            if (_notRepMonths.length > 0) {
+                console.log('📆 Applying month filter (multi):', _notRepMonths);
                 
-                // The month filter value IS the short name (Apr, May, Jun, etc.)
-                // Column names are like: "Apr MET/NOT_MET_NotReported", "Oct MET/NOT_MET_NotReported"
-                const selectedMonth = activeFilters.month; // Already in short form
-                console.log('   Selected month name:', selectedMonth);
-                
-                // Apply to FY24-25 if data exists
-                if (selectedMonth && filtered2425.length > 0) {
-                    // Log sample column names to see the pattern
-                    const sampleCols = Object.keys(filtered2425[0]).filter(k => k.includes('NotReported'));
-                    console.log('   FY24-25 Sample NotReported columns:', sampleCols.slice(0, 3));
-                    
-                    // For Not Reported data, keep only selected month's NotReported columns
-                    filtered2425 = filtered2425.map(row => {
-                        const newRow = { ...row };
-                        let keptCount = 0;
-                        
-                        Object.keys(newRow).forEach(key => {
-                            if (key.includes('NotReported')) {
-                                // Column format: "Apr MET/NOT_MET_NotReported"
-                                // Check if column starts with the selected month
-                                if (key.startsWith(selectedMonth + ' ')) {
-                                    keptCount++;
-                                } else {
-                                    newRow[key] = 0;
-                                }
-                            }
-                        });
-                        
-                        return newRow;
+                const applyMonthFilter = (rows) => rows.map(row => {
+                    const newRow = { ...row };
+                    Object.keys(newRow).forEach(key => {
+                        if (key.includes('NotReported')) {
+                            // Keep column only if it starts with one of the selected months
+                            const keep = _notRepMonths.some(m => key.startsWith(m + ' '));
+                            if (!keep) newRow[key] = 0;
+                        }
                     });
-                    
-                    console.log('   ✅ FY24-25 month filter applied');
-                }
+                    return newRow;
+                });
+
+                if (filtered2425.length > 0) filtered2425 = applyMonthFilter(filtered2425);
+                if (filtered2526.length > 0) filtered2526 = applyMonthFilter(filtered2526);
                 
-                // Apply to FY25-26 if data exists
-                if (selectedMonth && filtered2526.length > 0) {
-                    // Log sample column names
-                    const sampleCols2526 = Object.keys(filtered2526[0]).filter(k => k.includes('NotReported'));
-                    console.log('   FY25-26 Sample NotReported columns:', sampleCols2526.slice(0, 3));
-                    
-                    filtered2526 = filtered2526.map(row => {
-                        const newRow = { ...row };
-                        let keptCount2526 = 0;
-                        let zeroedCount2526 = 0;
-                        
-                        Object.keys(newRow).forEach(key => {
-                            if (key.includes('NotReported')) {
-                                if (key.startsWith(selectedMonth + ' ')) {
-                                    keptCount2526++;
-                                } else {
-                                    newRow[key] = 0;
-                                    zeroedCount2526++;
-                                }
-                            }
-                        });
-                        
-                        return newRow;
-                    });
-                    
-                    console.log('   ✅ FY25-26 month filter applied');
-                }
-                
-                console.log('   ✅ Month filter completed for:', selectedMonth);
+                console.log('   ✅ Month filter applied for:', _notRepMonths.join(', '));
             }
             
             console.log('📊 After filtering: FY24-25 =', filtered2425.length, 'rows, FY25-26 =', filtered2526.length, 'rows');
@@ -14402,9 +14393,10 @@ function showView(view) {
             const showFY2526Card = activeFilters.fy !== 'fy24_25'; // Show unless FY24-25 is selected
             const showYoYCards = activeFilters.fy === 'all' || !activeFilters.fy; // Only show YoY when both FYs visible
             
-            // Build month label if month filter is active
-            const monthLabel = activeFilters.month && activeFilters.month !== 'all' 
-                ? ` (${activeFilters.month} only)` 
+            // Build month label if month filter is active (multi-select)
+            const _nrMonths = activeFilters.months || [];
+            const monthLabel = _nrMonths.length > 0
+                ? ` (${_nrMonths.join(', ')} only)`
                 : '';
             
             // Build HTML
