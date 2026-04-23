@@ -6667,10 +6667,6 @@ function showView(view) {
             const fy25Metrics = calculateOverallMetrics(filteredData.fy25_26, 'fy25_26');
             const insights = generateInsights(fy24Metrics, fy25Metrics);
 
-            // Generate Account Health and KPI Bifurcation tiles (filter-aware)
-            const accountHealthTilesHTML = generateAccountHealthTiles();
-            const kpiBifurcationTilesHTML = generateKPIBifurcationTiles();
-            
             // Generate insights HTML
             let insightsHTML = '<div class="insights-section"><h3><i class="bi bi-lightbulb-fill"></i> Key Insights & Highlights</h3>';
             insights.forEach(insight => {
@@ -6684,8 +6680,6 @@ function showView(view) {
             
             const html = `
                 ${insightsHTML}
-                ${accountHealthTilesHTML}
-                ${kpiBifurcationTilesHTML}
 
                 <div class="dashboard-grid">
                         <div class="stat-widget blue drilldown-enabled" style="animation-delay: 0.1s;" onclick="drilldownFY2425()" title="Click to see monthly breakdown">
