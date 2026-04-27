@@ -8204,12 +8204,14 @@ function showView(view) {
             let avgFY24, avgFY25, improvement, compareMonthCount;
             
             if (isMonthFiltered) {
-                // When month filter is active, show only that month's data
-                const monthIdx = allMonths.indexOf(monthFilter);
-                avgFY24 = fy24Data[monthIdx].toFixed(1);
-                avgFY25 = fy25Data[monthIdx].toFixed(1);
-                improvement = (fy25Data[monthIdx] - fy24Data[monthIdx]).toFixed(1);
-                compareMonthCount = 1;
+                // When month filter is active, average across selected months
+                const selectedIndices = selectedMonthsFilter.map(m => allMonths.indexOf(m)).filter(i => i >= 0);
+                const validFY24 = selectedIndices.map(i => fy24Data[i]).filter(v => v > 0);
+                const validFY25 = selectedIndices.map(i => fy25Data[i]).filter(v => v > 0);
+                avgFY24 = validFY24.length > 0 ? (validFY24.reduce((a,b) => a+b,0) / validFY24.length).toFixed(1) : '0.0';
+                avgFY25 = validFY25.length > 0 ? (validFY25.reduce((a,b) => a+b,0) / validFY25.length).toFixed(1) : '0.0';
+                improvement = (parseFloat(avgFY25) - parseFloat(avgFY24)).toFixed(1);
+                compareMonthCount = selectedIndices.length;
             } else {
                 // When no month filter, calculate averages across all available months
                 const fy25NonZeroData = fy25Data.filter(v => v > 0);
@@ -8223,37 +8225,43 @@ function showView(view) {
             let insightsHTML, comparisonWidget;
             
             if (isMonthFiltered) {
-                // Month-specific insights
+                // Month-specific insights (supports multi-select)
                 const monthNames = {
                     'Apr': 'April', 'May': 'May', 'Jun': 'June', 'Jul': 'July',
                     'Aug': 'August', 'Sep': 'September', 'Oct': 'October', 'Nov': 'November',
                     'Dec': 'December', 'Jan': 'January', 'Feb': 'February', 'Mar': 'March'
                 };
-                const fullMonthName = monthNames[monthFilter] || monthFilter;
-                const year24 = ['Jan', 'Feb', 'Mar'].includes(monthFilter) ? '2025' : '2024';
-                const year25 = ['Jan', 'Feb', 'Mar'].includes(monthFilter) ? '2026' : '2025';
+                const monthLabelFull = selectedMonthsFilter.map(m => monthNames[m] || m).join(', ');
+                const periodLabel25 = selectedMonthsFilter.map(m => {
+                    const yr = ['Jan','Feb','Mar'].includes(m) ? '2026' : '2025';
+                    return (monthNames[m] || m) + ' ' + yr;
+                }).join(', ');
+                const periodLabel24 = selectedMonthsFilter.map(m => {
+                    const yr = ['Jan','Feb','Mar'].includes(m) ? '2025' : '2024';
+                    return (monthNames[m] || m) + ' ' + yr;
+                }).join(', ');
                 
                 insightsHTML = `
                     <div class="insights-section">
-                        <h3><i class="bi bi-lightbulb-fill"></i> ${fullMonthName} Performance Comparison</h3>
+                        <h3><i class="bi bi-lightbulb-fill"></i> ${monthLabelFull} Performance Comparison</h3>
                         <div class="insight-item">
-                            <h4>📊 FY 24-25 vs FY 25-26 - ${fullMonthName} ${year25}</h4>
-                            <p>FY 24-25 (${fullMonthName} ${year24}): ${avgFY24}% | FY 25-26 (${fullMonthName} ${year25}): ${avgFY25}% | Change: ${improvement > 0 ? '+' : ''}${improvement}%</p>
+                            <h4>📊 FY 24-25 vs FY 25-26 - ${monthLabelFull}</h4>
+                            <p>FY 24-25 (${periodLabel24}): ${avgFY24}% | FY 25-26 (${periodLabel25}): ${avgFY25}% | Change: ${improvement > 0 ? '+' : ''}${improvement}%</p>
                         </div>
                         <div class="insight-item">
                             <h4>${improvement > 0 ? '📈 Performance Improvement' : '📉 Performance Decline'}</h4>
-                            <p>${improvement > 0 ? `${fullMonthName} ${year25} shows ${improvement}% improvement compared to ${fullMonthName} ${year24}.` : `${fullMonthName} ${year25} shows ${Math.abs(improvement)}% decline compared to ${fullMonthName} ${year24}. Focus on recovery strategies.`}</p>
+                            <p>${improvement > 0 ? `${monthLabelFull} shows ${improvement}% improvement in FY 25-26 vs FY 24-25.` : `${monthLabelFull} shows ${Math.abs(improvement)}% decline in FY 25-26 vs FY 24-25. Focus on recovery strategies.`}</p>
                         </div>
                     </div>`;
                 
                 comparisonWidget = `
                     <div class="comparison-widget">
                         <div class="metric-box fy24">
-                            <div class="metric-label">FY 24-25 ${fullMonthName} ${year24}</div>
+                            <div class="metric-label">FY 24-25 Avg (${monthLabelFull})</div>
                             <div class="metric-value" style="color: #ff6b35;">${avgFY24}%</div>
                         </div>
                         <div class="metric-box fy25">
-                            <div class="metric-label">FY 25-26 ${fullMonthName} ${year25}</div>
+                            <div class="metric-label">FY 25-26 Avg (${monthLabelFull})</div>
                             <div class="metric-value" style="color: var(--primary-color);">${avgFY25}%</div>
                         </div>
                     </div>`;
@@ -8299,22 +8307,25 @@ function showView(view) {
                     <tbody>`;
             
             if (isMonthFiltered) {
-                // Show only the selected month
-                const monthIdx = allMonths.indexOf(monthFilter);
-                const diff = fy25Data[monthIdx] - fy24Data[monthIdx];
-                const diffColor = diff >= 0 ? 'var(--success-color)' : 'var(--danger-color)';
+                // Show each selected month as a row
                 const monthNames = {
                     'Apr': 'April', 'May': 'May', 'Jun': 'June', 'Jul': 'July',
                     'Aug': 'August', 'Sep': 'September', 'Oct': 'October', 'Nov': 'November',
                     'Dec': 'December', 'Jan': 'January', 'Feb': 'February', 'Mar': 'March'
                 };
-                tableHTML += `
-                    <tr>
-                        <td><strong>${monthNames[monthFilter]}</strong></td>
-                        <td style="color: #ff6b35;">${fy24Data[monthIdx].toFixed(1)}%</td>
-                        <td style="color: var(--primary-color);">${fy25Data[monthIdx].toFixed(1)}%</td>
-                        <td style="color: ${diffColor}; font-weight: bold;">${diff >= 0 ? '+' : ''}${diff.toFixed(1)}%</td>
-                    </tr>`;
+                selectedMonthsFilter.forEach(m => {
+                    const monthIdx = allMonths.indexOf(m);
+                    if (monthIdx < 0) return;
+                    const diff = fy25Data[monthIdx] - fy24Data[monthIdx];
+                    const diffColor = diff >= 0 ? 'var(--success-color)' : 'var(--danger-color)';
+                    tableHTML += `
+                        <tr>
+                            <td><strong>${monthNames[m] || m}</strong></td>
+                            <td style="color: #ff6b35;">${fy24Data[monthIdx].toFixed(1)}%</td>
+                            <td style="color: var(--primary-color);">${fy25Data[monthIdx].toFixed(1)}%</td>
+                            <td style="color: ${diffColor}; font-weight: bold;">${diff >= 0 ? '+' : ''}${diff.toFixed(1)}%</td>
+                        </tr>`;
+                });
             } else {
                 // Show all available months
                 fy25months.forEach((month, idx) => {
@@ -8357,16 +8368,15 @@ function showView(view) {
             let labelsToShow, fy24DataToShow, fy25DataToShow;
             
             if (isMonthFiltered) {
-                // Show only the selected month as a bar/point
+                // Show only the selected months as bars
                 const monthNames = {
                     'Apr': 'April', 'May': 'May', 'Jun': 'June', 'Jul': 'July',
                     'Aug': 'August', 'Sep': 'September', 'Oct': 'October', 'Nov': 'November',
                     'Dec': 'December', 'Jan': 'January', 'Feb': 'February', 'Mar': 'March'
                 };
-                const monthIdx = allMonths.indexOf(monthFilter);
-                labelsToShow = [monthNames[monthFilter]];
-                fy24DataToShow = [fy24Data[monthIdx]];
-                fy25DataToShow = [fy25Data[monthIdx]];
+                labelsToShow = selectedMonthsFilter.map(m => monthNames[m] || m);
+                fy24DataToShow = selectedMonthsFilter.map(m => { const i = allMonths.indexOf(m); return i >= 0 ? fy24Data[i] : 0; });
+                fy25DataToShow = selectedMonthsFilter.map(m => { const i = allMonths.indexOf(m); return i >= 0 ? fy25Data[i] : 0; });
             } else {
                 // Show all available months
                 const maxMonthsToShow = Math.max(fy24months.length, fy25months.length);
