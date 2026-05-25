@@ -6822,18 +6822,18 @@ function showView(view) {
             charts.overview = new Chart(ctx, {
                 type: 'bar',
                 data: {
-                    labels: ['FY 24-25', 'FY 25-26'],
+                    labels: ['FY 24-25', 'FY 25-26', 'FY 26-27'],
                     datasets: [
                         {
                             label: 'SLA Met',
-                            data: [fy24Metrics.totalMet, fy25Metrics.totalMet],
+                            data: [fy24Metrics.totalMet, fy25Metrics.totalMet, fy26Metrics.totalMet],
                             backgroundColor: 'rgba(255, 140, 90, 0.8)',
                             borderColor: 'rgb(16, 185, 129)',
                             borderWidth: 2
                         },
                         {
                             label: 'SLA Not Met',
-                            data: [fy24Metrics.totalNotMet, fy25Metrics.totalNotMet],
+                            data: [fy24Metrics.totalNotMet, fy25Metrics.totalNotMet, fy26Metrics.totalNotMet],
                             backgroundColor: 'rgba(211, 211, 211, 0.8)',
                             borderColor: 'rgb(239, 68, 68)',
                             borderWidth: 2
@@ -6872,13 +6872,19 @@ function showView(view) {
             });
 
             // Render India Map with Regional Performance
-            renderIndiaMap(filteredData.fy25_26);
+            // Use most recent FY with data (drillFY pattern)
+            const mapDrillFY = (filteredData.fy26_27||[]).length > 0 ? 'fy26_27' : (filteredData.fy25_26||[]).length > 0 ? 'fy25_26' : 'fy24_25';
+            renderIndiaMap(filteredData[mapDrillFY], mapDrillFY);
         }
 
         // Function to render India Map with regional highlighting
-        function renderIndiaMap(data) {
+        function renderIndiaMap(data, fyKey) {
+            // Default to fy25_26 for backward compatibility
+            if (!fyKey) fyKey = 'fy25_26';
             // Calculate regional performance
-            const fy25months = extractMonthsFromData(null, data);
+            const mapMonths = fyKey === 'fy24_25' ? extractMonthsFromData(data, null, null) :
+                              fyKey === 'fy26_27' ? extractMonthsFromData(null, null, data) :
+                              extractMonthsFromData(null, data, null);
             const regionData = {};
             
             data.forEach(row => {
@@ -6891,9 +6897,9 @@ function showView(view) {
                 if (!regionData[region]) {
                     regionData[region] = { met: 0, notMet: 0, projects: new Set() };
                 }
-                fy25months.forEach(month => {
-                    regionData[region].met += getMonthData(row, month, 'fy25_26', 'Met');
-                    regionData[region].notMet += getMonthData(row, month, 'fy25_26', 'Not_Met');
+                mapMonths.forEach(month => {
+                    regionData[region].met += getMonthData(row, month, fyKey, 'Met');
+                    regionData[region].notMet += getMonthData(row, month, fyKey, 'Not_Met');
                 });
                 regionData[region].projects.add(row.Project);
             });
@@ -7102,6 +7108,7 @@ function showView(view) {
             console.log('=== FILTERED DATA DEBUG ===');
             console.log('FY24-25 rows:', filteredData.fy24_25.length);
             console.log('FY25-26 rows:', filteredData.fy25_26.length);
+            console.log('FY26-27 rows:', (filteredData.fy26_27||[]).length);
             const accountRegionMap = {};
             filteredData.fy25_26.forEach(row => {
                 if (!accountRegionMap[row.Project]) {
@@ -7147,25 +7154,42 @@ function showView(view) {
                 const fy25Total = fy25Met + fy25NotMet;
                 const fy25Compliance = fy25Total > 0 ? parseFloat(((fy25Met / fy25Total) * 100).toFixed(1)) : 0;
 
-                const sampleRow = fy24Rows.length > 0 ? fy24Rows[0] : (fy25Rows.length > 0 ? fy25Rows[0] : null);
+                    // FY 26-27 data
+                const fy26Rows = (filteredData.fy26_27 || []).filter(row => row.Project === accountName);
+                let fy26Met = 0, fy26NotMet = 0;
+                fy26months.forEach(month => {
+                    fy26Rows.forEach(row => {
+                        fy26Met += getMonthData(row, month, 'fy26_27', 'Met');
+                        fy26NotMet += getMonthData(row, month, 'fy26_27', 'Not_Met');
+                    });
+                });
+                const fy26Total = fy26Met + fy26NotMet;
+                const fy26Compliance = fy26Total > 0 ? parseFloat(((fy26Met / fy26Total) * 100).toFixed(1)) : 0;
+
+                const sampleRow = fy26Rows.length > 0 ? fy26Rows[0] : (fy25Rows.length > 0 ? fy25Rows[0] : (fy24Rows.length > 0 ? fy24Rows[0] : null));
+                // mostRecentCompliance: use fy26 if available, else fy25, else fy24
+                const mostRecentCompliance = fy26Total > 0 ? fy26Compliance : (fy25Total > 0 ? fy25Compliance : fy24Compliance);
+                const mostRecentTotal = fy26Total > 0 ? fy26Total : (fy25Total > 0 ? fy25Total : fy24Total);
                 
-                if (sampleRow && fy25Total > 0) {
+                if (sampleRow && mostRecentTotal > 0) {
                     accountPerformance.push({
                         account: accountName,
                         region: sampleRow.Region,
                         practice: sampleRow['Practice Head'],
                         fy24Compliance,
                         fy25Compliance,
+                        fy26Compliance,
+                        mostRecentCompliance,
                         improvement: fy25Compliance - fy24Compliance
                     });
                 }
             });
             
-            // Top 5 best performers (FY 25-26)
-            const top5Best = [...accountPerformance].sort((a, b) => b.fy25Compliance - a.fy25Compliance).slice(0, 5);
+            // Top 5 best performers (most recent FY with data)
+            const top5Best = [...accountPerformance].sort((a, b) => b.mostRecentCompliance - a.mostRecentCompliance).slice(0, 5);
             
-            // Top 5 worst performers (FY 25-26)
-            const top5Worst = [...accountPerformance].sort((a, b) => a.fy25Compliance - b.fy25Compliance).slice(0, 5);
+            // Top 5 worst performers (most recent FY with data)
+            const top5Worst = [...accountPerformance].sort((a, b) => a.mostRecentCompliance - b.mostRecentCompliance).slice(0, 5);
             
             // Debug: Log account performance data
             console.log('=== ACCOUNT PERFORMANCE DEBUG ===');
@@ -7197,9 +7221,12 @@ function showView(view) {
                 console.error('🚨 ACCOUNTS IN BOTH LISTS:', inBoth);
             }
             
-            // Regional rankings
+            // Regional rankings - use most recent FY with data
+            const execDrillFY = (filteredData.fy26_27||[]).length > 0 ? 'fy26_27' : (filteredData.fy25_26||[]).length > 0 ? 'fy25_26' : 'fy24_25';
+            const execDrillMonths = execDrillFY === 'fy24_25' ? fy24months : execDrillFY === 'fy26_27' ? fy26months : fy25months;
+            const execDrillLabel = execDrillFY === 'fy24_25' ? 'FY 24-25' : execDrillFY === 'fy26_27' ? 'FY 26-27' : 'FY 25-26';
             const regionData = {};
-            filteredData.fy25_26.forEach(row => {
+            (filteredData[execDrillFY] || []).forEach(row => {
                 const region = row.Region;
                 // Skip projects with null/undefined/empty region
                 if (!region || region === 'null' || String(region).trim() === '') {
@@ -7208,9 +7235,9 @@ function showView(view) {
                 if (!regionData[region]) {
                     regionData[region] = { met: 0, notMet: 0 };
                 }
-                fy25months.forEach(month => {
-                    regionData[region].met += getMonthData(row, month, 'fy25_26', 'Met');
-                    regionData[region].notMet += getMonthData(row, month, 'fy25_26', 'Not_Met');
+                execDrillMonths.forEach(month => {
+                    regionData[region].met += getMonthData(row, month, execDrillFY, 'Met');
+                    regionData[region].notMet += getMonthData(row, month, execDrillFY, 'Not_Met');
                 });
             });
             
@@ -7223,16 +7250,16 @@ function showView(view) {
             const top3Regions = regionRankings.slice(0, 3);
             const bottom3Regions = regionRankings.slice(-3).reverse();
             
-            // Practice Head rankings
+            // Practice Head rankings - use most recent FY with data
             const practiceData = {};
-            filteredData.fy25_26.forEach(row => {
+            (filteredData[execDrillFY] || []).forEach(row => {
                 const practice = row['Practice Head'];
                 if (!practiceData[practice]) {
                     practiceData[practice] = { met: 0, notMet: 0 };
                 }
-                fy25months.forEach(month => {
-                    practiceData[practice].met += getMonthData(row, month, 'fy25_26', 'Met');
-                    practiceData[practice].notMet += getMonthData(row, month, 'fy25_26', 'Not_Met');
+                execDrillMonths.forEach(month => {
+                    practiceData[practice].met += getMonthData(row, month, execDrillFY, 'Met');
+                    practiceData[practice].notMet += getMonthData(row, month, execDrillFY, 'Not_Met');
                 });
             });
             
@@ -7248,32 +7275,38 @@ function showView(view) {
             const bottom3Practices = practiceRankingsWithData.slice(-3).reverse();
             
             const yoyChange = fy25Metrics.compliance - fy24Metrics.compliance;
+            const yoy2526vs2627 = fy26Metrics.compliance - fy25Metrics.compliance;
             
             const html = `
                 <div class="insights-section animate__animated animate__fadeIn">
                     <h3><i class="bi bi-star-fill"></i> Executive View - Strategic Performance Overview</h3>
                     <div class="insight-item">
                         <h4>📊 Year-over-Year SLA Performance Comparison</h4>
-                        <p><strong>FY 2024-25:</strong> ${fy24Metrics.compliance}% | <strong>FY 2025-26:</strong> ${fy25Metrics.compliance}% | 
-                        <span class="${yoyChange >= 0 ? 'improvement-badge' : 'decline-badge'}">${yoyChange >= 0 ? '↑' : '↓'} ${Math.abs(yoyChange).toFixed(1)}% ${yoyChange >= 0 ? 'Improvement' : 'Decline'}</span></p>
+                        <p><strong>FY 2024-25:</strong> ${fy24Metrics.compliance}% | <strong>FY 2025-26:</strong> ${fy25Metrics.compliance}% | <strong>FY 2026-27:</strong> ${fy26Metrics.compliance > 0 ? fy26Metrics.compliance + '%' : 'N/A'} | 
+                        <span class="${yoyChange >= 0 ? 'improvement-badge' : 'decline-badge'}">${yoyChange >= 0 ? '↑' : '↓'} ${Math.abs(yoyChange).toFixed(1)}% YoY (FY24→FY25)</span>
+                        ${fy26Metrics.compliance > 0 ? `| <span class="${yoy2526vs2627 >= 0 ? 'improvement-badge' : 'decline-badge'}">${yoy2526vs2627 >= 0 ? '↑' : '↓'} ${Math.abs(yoy2526vs2627).toFixed(1)}% YoY (FY25→FY26)</span>` : ''}</p>
                     </div>
                 </div>
 
                 <div class="comparison-widget">
                     <div class="metric-box fy24 animated-widget">
                         <div class="metric-label">FY 2024-25 SLA%</div>
-                        <div class="metric-value" style="color: #ff6b35;">${fy24Metrics.compliance}%</div>
+                        <div class="metric-value" style="color: #9CA3AF;">${fy24Metrics.compliance}%</div>
                     </div>
                     <div class="metric-box fy25 animated-widget">
                         <div class="metric-label">FY 2025-26 SLA%</div>
-                        <div class="metric-value" style="color: var(--primary-color);">${fy25Metrics.compliance}%</div>
+                        <div class="metric-value" style="color: #ff6b35;">${fy25Metrics.compliance}%</div>
                     </div>
+                    ${fy26Metrics.compliance > 0 ? `<div class="metric-box animated-widget" style="background: linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%);">
+                        <div class="metric-label">FY 2026-27 SLA%</div>
+                        <div class="metric-value" style="color: #fff;">${fy26Metrics.compliance}%</div>
+                    </div>` : ''}
                 </div>
 
                 <div class="dashboard-grid">
                     <!-- Top 5 Best Performing Accounts -->
                     <div class="card animated-card">
-                        <h3><i class="bi bi-trophy-fill" style="color: gold;"></i> Top 5 Best Performing Accounts (FY 25-26)</h3>
+                        <h3><i class="bi bi-trophy-fill" style="color: gold;"></i> Top 5 Best Performing Accounts (${execDrillLabel})</h3>
                         <div class="chart-container">
                             <canvas id="top5BestChart"></canvas>
                         </div>
@@ -7292,7 +7325,7 @@ function showView(view) {
                                         <td><strong>${idx + 1}</strong></td>
                                         <td>${acc.account}</td>
                                         <td>${acc.region}</td>
-                                        <td>${formatPercentageWithRAG(acc.fy25Compliance)}</td>
+                                        <td>${formatPercentageWithRAG(acc.mostRecentCompliance)}</td>
                                     </tr>
                                 `).join('')}
                             </tbody>
@@ -7301,7 +7334,7 @@ function showView(view) {
 
                     <!-- Top 5 Worst Performing Accounts -->
                     <div class="card animated-card" style="animation-delay: 0.1s;">
-                        <h3><i class="bi bi-exclamation-circle-fill" style="color: #ef4444;"></i> Top 5 Accounts Needing Attention (FY 25-26)</h3>
+                        <h3><i class="bi bi-exclamation-circle-fill" style="color: #ef4444;"></i> Top 5 Accounts Needing Attention (${execDrillLabel})</h3>
                         <div class="chart-container">
                             <canvas id="top5WorstChart"></canvas>
                         </div>
@@ -7320,7 +7353,7 @@ function showView(view) {
                                         <td><strong>${idx + 1}</strong></td>
                                         <td>${acc.account}</td>
                                         <td>${acc.region}</td>
-                                        <td>${formatPercentageWithRAG(acc.fy25Compliance)}</td>
+                                        <td>${formatPercentageWithRAG(acc.mostRecentCompliance)}</td>
                                     </tr>
                                 `).join('')}
                             </tbody>
@@ -7393,7 +7426,7 @@ function showView(view) {
                 <div class="dashboard-grid">
                     <!-- Top 3 & Bottom 3 Regions -->
                     <div class="card animated-card" style="animation-delay: 0.4s;">
-                        <h3><i class="bi bi-geo-alt-fill"></i> Regional Rankings (FY 25-26)</h3>
+                        <h3><i class="bi bi-geo-alt-fill"></i> Regional Rankings (${execDrillLabel})</h3>
                         <div style="margin-top: 20px;">
                             <h4 style="color: #10b981; margin-bottom: 10px;">🏆 Top 3 Regions</h4>
                             <table style="margin-bottom: 30px;">
@@ -7439,7 +7472,7 @@ function showView(view) {
 
                     <!-- Top 3 & Bottom 3 Practice Heads -->
                     <div class="card animated-card" style="animation-delay: 0.5s;">
-                        <h3><i class="bi bi-people-fill"></i> Practice Head Rankings (FY 25-26)</h3>
+                        <h3><i class="bi bi-people-fill"></i> Practice Head Rankings (${execDrillLabel})</h3>
                         <div style="margin-top: 20px;">
                             <h4 style="color: #10b981; margin-bottom: 10px;">🏆 Top 3 Practice Heads</h4>
                             <table style="margin-bottom: 30px;">
@@ -7487,8 +7520,9 @@ function showView(view) {
             
             document.getElementById('dashboardContent').innerHTML = html;
             
+            const execCurrentCompliance = fy26Metrics.compliance > 0 ? fy26Metrics.compliance : fy25Metrics.compliance;
             if (audioEnabled) {
-                speak(`Executive view loaded. Overall compliance ${fy25Metrics.compliance} percent. ${yoyChange >= 0 ? 'Improvement' : 'Decline'} of ${Math.abs(yoyChange).toFixed(1)} percent year over year.`);
+                speak(`Executive view loaded. Overall compliance ${execCurrentCompliance} percent in ${execDrillLabel}. ${yoyChange >= 0 ? 'Improvement' : 'Decline'} of ${Math.abs(yoyChange).toFixed(1)} percent year over year.`);
             }
             
             // Render charts
@@ -7501,8 +7535,8 @@ function showView(view) {
                         labels: top5Best.map(a => a.account),
                         datasets: [{
                             label: 'SLA %',
-                            data: top5Best.map(a => a.fy25Compliance),
-                            backgroundColor: top5Best.map(a => getRAGColor(a.fy25Compliance)),
+                            data: top5Best.map(a => a.mostRecentCompliance),
+                            backgroundColor: top5Best.map(a => getRAGColor(a.mostRecentCompliance)),
                             borderWidth: 0,
                             borderRadius: 6
                         }]
@@ -7532,7 +7566,7 @@ function showView(view) {
                                 borderColor: 'rgba(255, 255, 255, 0.8)',
                                 padding: { top: 6, bottom: 6, left: 10, right: 10 },
                                 font: { weight: 'bold', size: 14 },
-                                formatter: (value) => value.toFixed(1) + '%',
+                                formatter: (value) => value !== null && value !== undefined ? value.toFixed(1) + '%' : '—',
                                 display: true,
                                 clip: false
                             }
@@ -7561,8 +7595,8 @@ function showView(view) {
                         labels: top5Worst.map(a => a.account),
                         datasets: [{
                             label: 'SLA %',
-                            data: top5Worst.map(a => a.fy25Compliance),
-                            backgroundColor: top5Worst.map(a => getRAGColor(a.fy25Compliance)),
+                            data: top5Worst.map(a => a.mostRecentCompliance),
+                            backgroundColor: top5Worst.map(a => getRAGColor(a.mostRecentCompliance)),
                             borderWidth: 0,
                             borderRadius: 6
                         }]
@@ -9470,15 +9504,19 @@ function showView(view) {
                 badges[practice.practice] = [];
                 const data = practiceData[practice.practice];
                 
-                // Get monthly performance for FY 25-26
+                // Get monthly performance for most recent FY with data
+                const badgeDrillFY = (filteredData.fy26_27||[]).length > 0 ? 'fy26_27' : (filteredData.fy25_26||[]).length > 0 ? 'fy25_26' : 'fy24_25';
+                const badgeMonths = badgeDrillFY === 'fy24_25' ? extractMonthsFromData(filteredData.fy24_25||null, null, null) :
+                                    badgeDrillFY === 'fy26_27' ? extractMonthsFromData(null, null, filteredData.fy26_27||null) :
+                                    extractMonthsFromData(null, filteredData.fy25_26||null, null);
                 const monthlyPerformance = [];
-                fy25months.forEach(month => {
-                    const monthMet = filteredData.fy25_26
+                badgeMonths.forEach(month => {
+                    const monthMet = (filteredData[badgeDrillFY] || [])
                         .filter(row => row['Practice Head'] === practice.practice)
-                        .reduce((sum, row) => sum + getMonthData(row, month, 'fy25_26', 'Met'), 0);
-                    const monthNotMet = filteredData.fy25_26
+                        .reduce((sum, row) => sum + getMonthData(row, month, badgeDrillFY, 'Met'), 0);
+                    const monthNotMet = (filteredData[badgeDrillFY] || [])
                         .filter(row => row['Practice Head'] === practice.practice)
-                        .reduce((sum, row) => sum + getMonthData(row, month, 'fy25_26', 'Not_Met'), 0);
+                        .reduce((sum, row) => sum + getMonthData(row, month, badgeDrillFY, 'Not_Met'), 0);
                     const monthTotal = monthMet + monthNotMet;
                     if (monthTotal > 0) {
                         monthlyPerformance.push((monthMet / monthTotal) * 100);
@@ -10915,7 +10953,10 @@ function showView(view) {
 
         // Render Benchmarking View (Investment column removed)
         function renderBenchmarkingView() {
-            const fy25Metrics = calculateOverallMetrics(filteredData.fy25_26, 'fy25_26');
+            // Use most recent FY with data for TAGGD's current performance
+            const benchDrillFY = (filteredData.fy26_27||[]).length > 0 ? 'fy26_27' : (filteredData.fy25_26||[]).length > 0 ? 'fy25_26' : 'fy24_25';
+            const benchDrillLabel = benchDrillFY === 'fy24_25' ? 'FY 24-25' : benchDrillFY === 'fy26_27' ? 'FY 26-27' : 'FY 25-26';
+            const fy25Metrics = calculateOverallMetrics(filteredData[benchDrillFY], benchDrillFY);
             
             const competitorArray = Object.entries(industryBenchmarks.competitors).map(([name, data]) => ({
                 name,
@@ -10954,7 +10995,7 @@ function showView(view) {
                         <canvas id="benchmarkChart"></canvas>
                     </div>
                     <p style="margin-top: 15px; font-size: 0.85em; color: #7f8c8d; font-style: italic; padding: 10px; background: #f8f9fa; border-radius: 6px; border-left: 4px solid #3498db;">
-                        <i class="bi bi-info-circle"></i> <strong>Data Sources:</strong> TAGGD data from internal FY 25-26 compliance metrics. Competitor benchmarks sourced from publicly available annual reports and industry publications: Korn Ferry Annual Report 2024, Randstad Annual Report 2024, Robert Half Annual Report 2024, ManpowerGroup Annual Report 2024, Adecco Group Annual Report 2024, Hays Annual Report & Accounts 2024, Allegis Group Industry Report 2024, and Kelly Services Annual Report 2024. All competitor data represents industry-standard SLA compliance estimates as of 2024.
+                        <i class="bi bi-info-circle"></i> <strong>Data Sources:</strong> TAGGD data from internal ${benchDrillLabel} compliance metrics. Competitor benchmarks sourced from publicly available annual reports and industry publications: Korn Ferry Annual Report 2024, Randstad Annual Report 2024, Robert Half Annual Report 2024, ManpowerGroup Annual Report 2024, Adecco Group Annual Report 2024, Hays Annual Report & Accounts 2024, Allegis Group Industry Report 2024, and Kelly Services Annual Report 2024. All competitor data represents industry-standard SLA compliance estimates as of 2024.
                     </p>
                 </div>
 
@@ -11528,34 +11569,38 @@ function showView(view) {
                     ['TAGGD SLA Performance Dashboard'],
                     ['Generated on', new Date().toLocaleString()],
                     [''],
-                    ['Metric', 'FY 24-25', 'FY 25-26', 'Change'],
+                    ['Metric', 'FY 24-25', 'FY 25-26', 'FY 26-27', 'FY25→FY26 Change'],
                 ];
                 
                 const fy24Metrics = calculateOverallMetrics(filteredData.fy24_25, 'fy24_25');
                 const fy25Metrics = calculateOverallMetrics(filteredData.fy25_26, 'fy25_26');
+                const fy26Metrics = calculateOverallMetrics(filteredData.fy26_27 || [], 'fy26_27');
                 const yoyChange = (fy25Metrics.compliance - fy24Metrics.compliance).toFixed(1);
+                const yoy2627 = (fy26Metrics.compliance - fy25Metrics.compliance).toFixed(1);
                 
                 summaryData.push(
-                    ['Compliance %', fy24Metrics.compliance + '%', fy25Metrics.compliance + '%', yoyChange + '%'],
-                    ['Total SLAs', fy24Metrics.total, fy25Metrics.total, (fy25Metrics.total - fy24Metrics.total)],
-                    ['SLAs Met', fy24Metrics.totalMet, fy25Metrics.totalMet, (fy25Metrics.totalMet - fy24Metrics.totalMet)],
-                    ['SLAs Not Met', fy24Metrics.totalNotMet, fy25Metrics.totalNotMet, (fy25Metrics.totalNotMet - fy24Metrics.totalNotMet)]
+                    ['Compliance %', fy24Metrics.compliance + '%', fy25Metrics.compliance + '%', fy26Metrics.total > 0 ? fy26Metrics.compliance + '%' : 'N/A', yoyChange + '%'],
+                    ['Total SLAs', fy24Metrics.total, fy25Metrics.total, fy26Metrics.total || 0, (fy25Metrics.total - fy24Metrics.total)],
+                    ['SLAs Met', fy24Metrics.totalMet, fy25Metrics.totalMet, fy26Metrics.totalMet || 0, (fy25Metrics.totalMet - fy24Metrics.totalMet)],
+                    ['SLAs Not Met', fy24Metrics.totalNotMet, fy25Metrics.totalNotMet, fy26Metrics.totalNotMet || 0, (fy25Metrics.totalNotMet - fy24Metrics.totalNotMet)]
                 );
                 
                 const ws1 = XLSX.utils.aoa_to_sheet(summaryData);
                 XLSX.utils.book_append_sheet(wb, ws1, 'Summary');
                 
-                // Sheet 2: Monthly Data
-                const monthlyData = calculateMonthlyMetrics(filteredData.fy25_26, 'fy25_26');
-                const monthlyArray = [['Month', 'Met', 'Not Met', 'Total', 'Compliance %']];
+                // Sheet 2: Monthly Data - use most recent FY with data
+                const excelDrillFY = (filteredData.fy26_27||[]).length > 0 ? 'fy26_27' : (filteredData.fy25_26||[]).length > 0 ? 'fy25_26' : 'fy24_25';
+                const excelDrillLabel = excelDrillFY === 'fy24_25' ? 'FY 24-25' : excelDrillFY === 'fy26_27' ? 'FY 26-27' : 'FY 25-26';
+                const monthlyData = calculateMonthlyMetrics(filteredData[excelDrillFY], excelDrillFY);
+                const monthlyArray = [['Month (' + excelDrillLabel + ')', 'Met', 'Not Met', 'Total', 'Compliance %']];
                 monthlyData.forEach(m => {
                     monthlyArray.push([m.month, m.met, m.notMet, m.total, m.compliance + '%']);
                 });
                 const ws2 = XLSX.utils.aoa_to_sheet(monthlyArray);
                 XLSX.utils.book_append_sheet(wb, ws2, 'Monthly');
                 
-                // Sheet 3: Account Data
-                const accountData = calculateAccountMetrics(filteredData.fy25_26, 'fy25_26');
+                // Sheet 3: Account Data - use most recent FY with data
+                const accountData = calculateAccountMetrics(filteredData[excelDrillFY], excelDrillFY);
                 accountData.sort((a, b) => b.compliance - a.compliance);
                 const accountArray = [['Project', 'Region', 'Practice Head', 'Met', 'Not Met', 'Compliance %']];
                 accountData.forEach(a => {
@@ -11806,10 +11851,11 @@ function showView(view) {
                 
                 const fy24Metrics = calculateOverallMetrics(filteredData.fy24_25, 'fy24_25');
                 const fy25Metrics = calculateOverallMetrics(filteredData.fy25_26, 'fy25_26');
+                const fy26Metrics = calculateOverallMetrics(filteredData.fy26_27 || [], 'fy26_27');
                 const yoyChange = (fy25Metrics.compliance - fy24Metrics.compliance).toFixed(1);
                 
                 // FY 24-25 Box
-                const boxWidth = (contentWidth - 8) / 2;
+                const boxWidth = fy26Metrics.total > 0 ? (contentWidth - 16) / 3 : (contentWidth - 8) / 2;
                 pdf.setFillColor(240, 248, 255);
                 pdf.roundedRect(margin, yPos, boxWidth, 30, 3, 3, 'F');
                 pdf.setDrawColor(58, 28, 113);
@@ -11843,6 +11889,26 @@ function showView(view) {
                 pdf.setFont('helvetica', 'normal');
                 pdf.setTextColor(120, 120, 120);
                 pdf.text('Total: ' + fy25Metrics.total, box2X + 4, yPos + 24);
+                
+                // FY 26-27 Box (if data exists)
+                if (fy26Metrics.total > 0) {
+                    const box3X = margin + 2 * (boxWidth + 8);
+                    pdf.setFillColor(224, 242, 254);
+                    pdf.roundedRect(box3X, yPos, boxWidth, 30, 3, 3, 'F');
+                    pdf.setDrawColor(14, 165, 233);
+                    pdf.roundedRect(box3X, yPos, boxWidth, 30, 3, 3, 'S');
+                    pdf.setTextColor(100, 100, 100);
+                    pdf.setFontSize(9);
+                    pdf.text('FY 26-27 COMPLIANCE', box3X + 4, yPos + 7);
+                    pdf.setFontSize(16);
+                    pdf.setFont('helvetica', 'bold');
+                    pdf.setTextColor(14, 165, 233);
+                    pdf.text(fy26Metrics.compliance + '%', box3X + 4, yPos + 17);
+                    pdf.setFontSize(8);
+                    pdf.setFont('helvetica', 'normal');
+                    pdf.setTextColor(120, 120, 120);
+                    pdf.text('Total: ' + fy26Metrics.total, box3X + 4, yPos + 24);
+                }
                 
                 yPos += 35;
                 
@@ -11984,10 +12050,12 @@ function showView(view) {
                 pdf.rect(margin, yPos, contentWidth, 8, 'F');
                 pdf.setTextColor(255, 255, 255);
                 pdf.setFontSize(11);
-                pdf.text('Monthly Performance', margin + 3, yPos + 6);
+                pdf.text('Monthly Performance (' + pdfDrillLabel + ')', margin + 3, yPos + 6);
                 yPos += 10;
                 
-                const monthlyData = calculateMonthlyMetrics(filteredData.fy25_26, 'fy25_26');
+                const pdfDrillFY = (filteredData.fy26_27||[]).length > 0 ? 'fy26_27' : (filteredData.fy25_26||[]).length > 0 ? 'fy25_26' : 'fy24_25';
+                const pdfDrillLabel = pdfDrillFY === 'fy24_25' ? 'FY 24-25' : pdfDrillFY === 'fy26_27' ? 'FY 26-27' : 'FY 25-26';
+                const monthlyData = calculateMonthlyMetrics(filteredData[pdfDrillFY], pdfDrillFY);
                 const colWidth = contentWidth / 5;
                 
                 // Table header
@@ -12168,6 +12236,7 @@ function showView(view) {
                 if (!filteredData || !filteredData.fy24_25 || !filteredData.fy25_26) {
                     throw new Error('No data loaded. Please upload Excel file first.');
                 }
+                if (!filteredData.fy26_27) filteredData.fy26_27 = [];
                 
                 // Validate PptxGenJS is loaded
                 if (typeof PptxGenJS === 'undefined') {
@@ -12318,50 +12387,74 @@ function showView(view) {
                     fontSize: 28, bold: true, color: brandColors.purple
                 });
                 
-                // Calculate metrics based on current view
+                // Calculate metrics based on current view - use most recent FY
                 const fy24Metrics = calculateOverallMetrics(filteredData.fy24_25, 'fy24_25');
                 const fy25Metrics = calculateOverallMetrics(filteredData.fy25_26, 'fy25_26');
+                const fy26MetricsPPT = calculateOverallMetrics(filteredData.fy26_27 || [], 'fy26_27');
                 
                 // Ensure metrics have default values if undefined
                 fy24Metrics.overall = fy24Metrics.compliance || fy24Metrics.overall || 0;
                 fy25Metrics.overall = fy25Metrics.compliance || fy25Metrics.overall || 0;
+                fy26MetricsPPT.overall = fy26MetricsPPT.compliance || fy26MetricsPPT.overall || 0;
                 fy24Metrics.totalTickets = fy24Metrics.total || fy24Metrics.totalTickets || 0;
                 fy25Metrics.totalTickets = fy25Metrics.total || fy25Metrics.totalTickets || 0;
+                fy26MetricsPPT.totalTickets = fy26MetricsPPT.total || fy26MetricsPPT.totalTickets || 0;
                 fy24Metrics.metTickets = fy24Metrics.totalMet || fy24Metrics.metTickets || 0;
                 fy25Metrics.metTickets = fy25Metrics.totalMet || fy25Metrics.metTickets || 0;
+                fy26MetricsPPT.metTickets = fy26MetricsPPT.totalMet || fy26MetricsPPT.metTickets || 0;
                 fy24Metrics.notMetTickets = fy24Metrics.totalNotMet || fy24Metrics.notMetTickets || 0;
                 fy25Metrics.notMetTickets = fy25Metrics.totalNotMet || fy25Metrics.notMetTickets || 0;
+                fy26MetricsPPT.notMetTickets = fy26MetricsPPT.totalNotMet || fy26MetricsPPT.notMetTickets || 0;
                 
                 // Create metrics table
+                // Ensure metrics have default values if undefined
+                fy24Metrics.overall = fy24Metrics.compliance || fy24Metrics.overall || 0;
+                fy25Metrics.overall = fy25Metrics.compliance || fy25Metrics.overall || 0;
+                fy26MetricsPPT.overall = fy26MetricsPPT.compliance || fy26MetricsPPT.overall || 0;
+                fy24Metrics.totalTickets = fy24Metrics.total || fy24Metrics.totalTickets || 0;
+                fy25Metrics.totalTickets = fy25Metrics.total || fy25Metrics.totalTickets || 0;
+                fy26MetricsPPT.totalTickets = fy26MetricsPPT.total || fy26MetricsPPT.totalTickets || 0;
+                fy24Metrics.metTickets = fy24Metrics.totalMet || fy24Metrics.metTickets || 0;
+                fy25Metrics.metTickets = fy25Metrics.totalMet || fy25Metrics.metTickets || 0;
+                fy26MetricsPPT.metTickets = fy26MetricsPPT.totalMet || fy26MetricsPPT.metTickets || 0;
+                fy24Metrics.notMetTickets = fy24Metrics.totalNotMet || fy24Metrics.notMetTickets || 0;
+                fy25Metrics.notMetTickets = fy25Metrics.totalNotMet || fy25Metrics.notMetTickets || 0;
+                fy26MetricsPPT.notMetTickets = fy26MetricsPPT.totalNotMet || fy26MetricsPPT.notMetTickets || 0;
+                
                 const metricsTableData = [
                     [
                         { text: 'Metric', options: { bold: true, fill: brandColors.purple, color: brandColors.white } },
                         { text: 'FY 24-25', options: { bold: true, fill: brandColors.purple, color: brandColors.white } },
                         { text: 'FY 25-26', options: { bold: true, fill: brandColors.purple, color: brandColors.white } },
-                        { text: 'Change', options: { bold: true, fill: brandColors.purple, color: brandColors.white } }
+                        { text: 'FY 26-27', options: { bold: true, fill: brandColors.purple, color: brandColors.white } },
+                        { text: 'Change (FY25→26)', options: { bold: true, fill: brandColors.purple, color: brandColors.white } }
                     ],
                     [
                         'Overall Compliance',
                         `${fy24Metrics.overall}%`,
                         `${fy25Metrics.overall}%`,
+                        fy26MetricsPPT.totalTickets > 0 ? `${fy26MetricsPPT.overall}%` : 'N/A',
                         `${(fy25Metrics.overall - fy24Metrics.overall).toFixed(1)}%`
                     ],
                     [
                         'Total Tickets',
                         `${fy24Metrics.totalTickets.toLocaleString()}`,
                         `${fy25Metrics.totalTickets.toLocaleString()}`,
+                        `${fy26MetricsPPT.totalTickets.toLocaleString()}`,
                         fy24Metrics.totalTickets > 0 ? `${((fy25Metrics.totalTickets - fy24Metrics.totalTickets) / fy24Metrics.totalTickets * 100).toFixed(1)}%` : 'N/A'
                     ],
                     [
                         'Tickets Met SLA',
                         `${fy24Metrics.metTickets.toLocaleString()}`,
                         `${fy25Metrics.metTickets.toLocaleString()}`,
+                        `${fy26MetricsPPT.metTickets.toLocaleString()}`,
                         `${fy25Metrics.metTickets - fy24Metrics.metTickets > 0 ? '+' : ''}${(fy25Metrics.metTickets - fy24Metrics.metTickets).toLocaleString()}`
                     ],
                     [
                         'Tickets Not Met SLA',
                         `${fy24Metrics.notMetTickets.toLocaleString()}`,
                         `${fy25Metrics.notMetTickets.toLocaleString()}`,
+                        `${fy26MetricsPPT.notMetTickets.toLocaleString()}`,
                         `${fy25Metrics.notMetTickets - fy24Metrics.notMetTickets > 0 ? '+' : ''}${(fy25Metrics.notMetTickets - fy24Metrics.notMetTickets).toLocaleString()}`
                     ]
                 ];
@@ -13265,36 +13358,41 @@ function showView(view) {
             console.log(`🔍 Filtering accounts by health: ${healthStatus}`);
             
             // Get all accounts from FY 25-26 data
-            const fy25months = extractMonthsFromData(null, filteredData.fy25_26 || null, null);
+            // Use most recent FY with data for RAG tile drilldown
+            const ragDrillFY = (filteredData.fy26_27||[]).length > 0 ? 'fy26_27' : (filteredData.fy25_26||[]).length > 0 ? 'fy25_26' : 'fy24_25';
+            const ragDrillLabel = ragDrillFY === 'fy24_25' ? 'FY 24-25' : ragDrillFY === 'fy26_27' ? 'FY 26-27' : 'FY 25-26';
+            const ragDrillMonths = ragDrillFY === 'fy24_25' ? extractMonthsFromData(filteredData.fy24_25||null, null, null) :
+                                   ragDrillFY === 'fy26_27' ? extractMonthsFromData(null, null, filteredData.fy26_27||null) :
+                                   extractMonthsFromData(null, filteredData.fy25_26||null, null);
             let accountsData = [];
 
-            const uniqueAccounts = new Set(filteredData.fy25_26.map(row => row.Project));
+            const uniqueAccounts = new Set((filteredData[ragDrillFY]||[]).map(row => row.Project));
 
             uniqueAccounts.forEach(accountName => {
-                const fy25Rows = filteredData.fy25_26.filter(row => row.Project === accountName);
-                let fy25Met = 0, fy25NotMet = 0;
+                const ragRows = (filteredData[ragDrillFY]||[]).filter(row => row.Project === accountName);
+                let ragMet = 0, ragNotMet = 0;
                 
-                fy25months.forEach(month => {
-                    fy25Rows.forEach(row => {
-                        fy25Met += getMonthData(row, month, 'fy25_26', 'Met');
-                        fy25NotMet += getMonthData(row, month, 'fy25_26', 'Not_Met');
+                ragDrillMonths.forEach(month => {
+                    ragRows.forEach(row => {
+                        ragMet += getMonthData(row, month, ragDrillFY, 'Met');
+                        ragNotMet += getMonthData(row, month, ragDrillFY, 'Not_Met');
                     });
                 });
                 
-                const fy25Total = fy25Met + fy25NotMet;
-                const fy25Compliance = fy25Total > 0 ? parseFloat(((fy25Met / fy25Total) * 100).toFixed(1)) : 0;
+                const ragTotal = ragMet + ragNotMet;
+                const ragCompliance = ragTotal > 0 ? parseFloat(((ragMet / ragTotal) * 100).toFixed(1)) : 0;
 
-                const sampleRow = fy25Rows.length > 0 ? fy25Rows[0] : null;
+                const sampleRow = ragRows.length > 0 ? ragRows[0] : null;
                 
-                if (sampleRow && fy25Total > 0) {
+                if (sampleRow && ragTotal > 0) {
                     accountsData.push({
                         account: accountName,
                         region: sampleRow.Region,
                         practice: sampleRow['Practice Head'],
-                        compliance: fy25Compliance,
-                        met: fy25Met,
-                        notMet: fy25NotMet,
-                        total: fy25Total
+                        compliance: ragCompliance,
+                        met: ragMet,
+                        notMet: ragNotMet,
+                        total: ragTotal
                     });
                 }
             });
@@ -13334,7 +13432,7 @@ function showView(view) {
             let html = `
                 <div style="background: linear-gradient(135deg, ${statusColor}15 0%, ${statusColor}30 100%); padding: 20px; border-radius: 8px; margin-bottom: 20px; border-left: 6px solid ${statusColor};">
                     <h3 style="margin: 0 0 10px 0; color: ${statusColor};"><i class="bi bi-heart-pulse"></i> ${statusIcon} ${statusLabel}</h3>
-                    <p style="margin: 0; color: #64748b; font-size: 0.95em;">${thresholdText}</p>
+                    <p style="margin: 0; color: #64748b; font-size: 0.95em;">${thresholdText} &nbsp;|&nbsp; <strong>Data: ${ragDrillLabel}</strong></p>
                     <div style="margin-top: 15px; padding: 15px; background: white; border-radius: 6px;">
                         <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 15px;">
                             <div>
@@ -14991,13 +15089,15 @@ function showView(view) {
         function renderForecastingView() {
             const contentArea = document.getElementById('dashboardContent');
             
-            // Calculate forecasts
-            const forecast = calculateForecast(filteredData.fy25_26);
+            // Calculate forecasts - use most recent FY with data
+            const forecastDrillFY = (filteredData.fy26_27||[]).length > 0 ? 'fy26_27' : (filteredData.fy25_26||[]).length > 0 ? 'fy25_26' : 'fy24_25';
+            const forecastDrillLabel = forecastDrillFY === 'fy24_25' ? 'FY 24-25' : forecastDrillFY === 'fy26_27' ? 'FY 26-27' : 'FY 25-26';
+            const forecast = calculateForecast(filteredData[forecastDrillFY]);
             
             contentArea.innerHTML = `
                 <div class="view-header">
                     <h2><i class="bi bi-graph-up-arrow"></i> Performance Forecasting</h2>
-                    <p>Predictive analysis based on historical monthly performance trends using median-based forecasting</p>
+                    <p>Predictive analysis based on historical monthly performance trends using median-based forecasting &mdash; <strong>Source: ${forecastDrillLabel}</strong></p>
                 </div>
 
                 <!-- Forecast Summary Cards -->
