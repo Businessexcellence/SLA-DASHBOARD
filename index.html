@@ -6821,8 +6821,7 @@ function showView(view) {
 
                     <div class="stat-widget purple drilldown-enabled" style="animation-delay: 0.4s;" onclick="drilldownYoY()" title="Click to see quarterly analysis">
                         <div class="stat-widget-label">Year-over-Year Change</div>
-                        <div class="stat-widget-value">${(fy25Metrics.compliance - fy24Metrics.compliance).toFixed(1)}%</div>
-                        <p style="margin-top: 10px; opacity: 0.9;">${fy25Metrics.compliance >= fy24Metrics.compliance ? 'Improvement' : 'Decline'}</p>
+                        ${(() => { const activeYoY = fy26Metrics.compliance > 0 ? (fy26Metrics.compliance - fy25Metrics.compliance) : (fy25Metrics.compliance - fy24Metrics.compliance); const activeYoYLabel = fy26Metrics.compliance > 0 ? 'FY26 vs FY25' : 'FY25 vs FY24'; return `<div class="stat-widget-value">${activeYoY.toFixed(1)}%</div><p style="margin-top: 10px; opacity: 0.9;">${activeYoY >= 0 ? 'Improvement' : 'Decline'} (${activeYoYLabel})</p>`; })()}
                     </div>
                 </div>
 
@@ -8842,7 +8841,7 @@ function showView(view) {
                             spanGaps: false
                         },
                         {
-                            label: `FY 25-26${isMonthFiltered ? '' : ' (' + fy25months.length + ' mths)'}`,
+                            label: 'FY 25-26',
                             data: fy25DataToShow,
                             borderColor: '#ff6b35',
                             backgroundColor: isMonthFiltered ? 'rgba(255, 107, 53, 0.7)' : 'rgba(255, 107, 53, 0.1)',
@@ -8854,7 +8853,7 @@ function showView(view) {
                             spanGaps: false
                         },
                         {
-                            label: `FY 26-27${isMonthFiltered ? '' : ' (' + fy26months.length + ' mths)'}`,
+                            label: 'FY 26-27',
                             data: fy26DataToShow,
                             borderColor: '#0ea5e9',
                             backgroundColor: isMonthFiltered ? 'rgba(14, 165, 233, 0.7)' : 'rgba(14, 165, 233, 0.15)',
@@ -9039,9 +9038,9 @@ function showView(view) {
                     <thead>
                         <tr>
                             <th>Quarter</th>
-                            <th style="color: #9CA3AF;">FY 24-25 (%)</th>
-                            <th style="color: #ff6b35;">FY 25-26 (%)</th>
-                            <th style="color: #0ea5e9;">FY 26-27 (%)</th>
+                            <th>FY 24-25 (%)</th>
+                            <th>FY 25-26 (%)</th>
+                            <th>FY 26-27 (%)</th>
                             <th>${base.label} → ${tgt.label}</th>
                         </tr>
                     </thead>
@@ -9231,7 +9230,7 @@ function showView(view) {
                                 <th style="padding: 10px; text-align: left;">Fiscal Year</th>
                                 <th style="padding: 10px; text-align: center;">SLAs Met</th>
                                 <th style="padding: 10px; text-align: center;">SLAs Not Met</th>
-                                <th style="padding: 10px; text-align: center;">Compliance %</th>
+                                <th style="padding: 10px; text-align: center;">SLA Met%</th>
                                 <th style="padding: 10px; text-align: center;">vs Prev Year</th>
                             </tr>
                         </thead>
@@ -9443,7 +9442,6 @@ function showView(view) {
                                 <th>Practice Head</th>
                                 <th>FY 24-25 (%)</th>
                                 <th>FY 25-26 (%)</th>
-                                <th>FY 26-27 (%)</th>
                                 <th>FY 26-27 (%)</th>
                                 <th>Change</th>
                             </tr>
@@ -13254,8 +13252,19 @@ function showView(view) {
         function showKPIBifurcationDrilldown(category, met, notMet, total, totalMeasures) {
             console.log(`📊 Showing ${category} drilldown:`, { met, notMet, total, totalMeasures });
             
+            // Select correct metrics dataset based on FY filter (mirrors generateKPIBifurcationTiles logic)
+            const fyFilterDrill = activeFilters.fy || 'all';
+            let activeMetricsDataDrill;
+            if (fyFilterDrill === 'fy25_26') {
+                activeMetricsDataDrill = (metricsDetails2526Data && metricsDetails2526Data.length > 0) ? metricsDetails2526Data :
+                                         (window.metricsDetails2526Data || []);
+            } else {
+                activeMetricsDataDrill = (metricsDetailsData && metricsDetailsData.length > 0) ? metricsDetailsData :
+                                         (window.metricsDetailsData || []);
+            }
+            
             // Get filtered data based on category
-            let filteredMetricsData = metricsDetailsData;
+            let filteredMetricsData = activeMetricsDataDrill;
 
             // Apply Regional Head filter
             if (activeFilters.regionalHead && activeFilters.regionalHead.length > 0) {
@@ -13299,7 +13308,12 @@ function showView(view) {
             if (_drillMonths.length > 0) {
                 months = _drillMonths.map(m => monthMap[m] || m);
             } else {
-                months = ['April', 'May', 'June', 'July', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec', 'Jan', 'Feb'];
+                // Default months based on active FY — FY26-27 only has April; FY25-26 has full 12 months
+                if (fyFilterDrill === 'fy26_27' || fyFilterDrill === 'all') {
+                    months = ['April'];
+                } else {
+                    months = ['April', 'May', 'June', 'July', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec', 'Jan', 'Feb', 'Mar'];
+                }
             }
             
             // Group by project
