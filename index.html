@@ -1805,10 +1805,13 @@
             background: rgba(0, 0, 0, 0.8);
             backdrop-filter: blur(5px);
             z-index: 10000;
-            display: flex;
+            display: none;  /* hidden by default; shown by JS after page load */
             align-items: center;
             justify-content: center;
             animation: fadeIn 0.3s ease-in;
+        }
+        .welcome-popup-overlay.is-visible {
+            display: flex;
         }
 
         .welcome-popup-card {
@@ -1885,8 +1888,9 @@
             border-radius: 50px;
             cursor: pointer;
             transition: all 0.3s ease;
-            box-shadow: 0 5px 15px rgba(255, 107, 53, 0.3);
-            animation: pulse 2s ease-in-out infinite;
+            box-shadow: 0 5px 15px rgba(255, 107, 53, 0.4);
+            position: relative;
+            z-index: 10;
         }
 
         .welcome-popup-btn:hover {
@@ -3125,14 +3129,14 @@
     </div>
 
     <!-- New Welcome Popup -->
-    <div id="welcomePopup" class="welcome-popup-overlay">
-        <div class="welcome-popup-card">
+    <div id="welcomePopup" class="welcome-popup-overlay" onclick="closeWelcomePopup()">
+        <div class="welcome-popup-card" onclick="event.stopPropagation()">
             <h1 class="welcome-popup-greeting">Welcome Tagger! You're now accessing the Customer SLA/KPI Performance Dashboard</h1>
             <p class="welcome-popup-date" id="welcomeDate"></p>
             <div class="welcome-popup-quote-box">
-                <p class="welcome-popup-quote" id="welcomeQuote"></p>
+                <p class="welcome-popup-quote" id="welcomeQuote">Loading...</p>
             </div>
-            <button class="welcome-popup-btn" onclick="closeWelcomePopup()">Go to Dashboard</button>
+            <button class="welcome-popup-btn" id="welcomePopupBtn" onclick="closeWelcomePopup(); return false;">Go to Dashboard</button>
         </div>
     </div>
 
@@ -3826,21 +3830,27 @@
                 quoteElement.textContent = getRandomQuote();
             }
             
-            // Show popup
+            // Show popup using class (CSS starts it as display:none)
             const popup = document.getElementById('welcomePopup');
             if (popup) {
-                popup.style.display = 'flex';
+                popup.classList.add('is-visible');
+                popup.style.display = 'flex';  // belt-and-suspenders
             }
         }
 
         function closeWelcomePopup() {
             const popup = document.getElementById('welcomePopup');
-            if (popup) {
-                popup.style.animation = 'fadeOut 0.3s ease-out';
-                setTimeout(() => {
-                    popup.style.display = 'none';
-                }, 300);
-            }
+            if (!popup) return;
+            // Animate out
+            popup.style.transition = 'opacity 0.3s ease-out';
+            popup.style.opacity = '0';
+            // Hide after animation — use both class removal and display:none
+            setTimeout(() => {
+                popup.classList.remove('is-visible');
+                popup.style.display = 'none';
+                popup.style.opacity = '';
+                popup.style.transition = '';
+            }, 320);
         }
 
         // Add fadeOut animation
@@ -3852,6 +3862,16 @@
             }
         `;
         document.head.appendChild(style);
+        
+        // Escape key closes the welcome popup
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                const popup = document.getElementById('welcomePopup');
+                if (popup && (popup.classList.contains('is-visible') || popup.style.display === 'flex')) {
+                    closeWelcomePopup();
+                }
+            }
+        });
 
         // Initialize popup when page loads
         window.addEventListener('load', function() {
