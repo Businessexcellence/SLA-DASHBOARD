@@ -7138,34 +7138,54 @@ function showView(view) {
             const fy26Metrics = calculateOverallMetrics(filteredData.fy26_27 || [], 'fy26_27');
             
             // Calculate account-level performance for rankings
+            // NOTE: For cross-FY comparisons (improved/declined), we use rawData for ALL years
+            // even when the FY filter hides some years - otherwise FY24→FY25 comparison
+            // is empty when activeFilters.fy === 'fy26_27'
             const accountPerformance = [];
+            
+            // Use rawData for cross-FY source to always have all accounts available
+            const rawFY24 = (rawData && rawData.fy24_25) ? rawData.fy24_25 : (filteredData.fy24_25 || []);
+            const rawFY25 = (rawData && rawData.fy25_26) ? rawData.fy25_26 : (filteredData.fy25_26 || []);
+            const rawFY26 = (rawData && rawData.fy26_27) ? rawData.fy26_27 : (filteredData.fy26_27 || []);
+            
+            // Apply non-FY filters (regional head, region, practice, account) to raw data
+            function applyNonFYFilters(rows) {
+                let result = rows;
+                if (activeFilters.regionalHead && activeFilters.regionalHead.length > 0) {
+                    result = result.filter(row => {
+                        const rh = row['Regional Head '] || row['Regional Head'];
+                        return activeFilters.regionalHead.includes(rh);
+                    });
+                }
+                if (activeFilters.region && activeFilters.region.length > 0) {
+                    result = result.filter(row => activeFilters.region.includes(row.Region));
+                }
+                if (activeFilters.practice && activeFilters.practice.length > 0) {
+                    result = result.filter(row => activeFilters.practice.includes(row['Practice Head']));
+                }
+                if (activeFilters.account && activeFilters.account.length > 0) {
+                    result = result.filter(row => activeFilters.account.includes(row.Project));
+                }
+                return result;
+            }
+            
+            const crossFY24 = applyNonFYFilters(rawFY24);
+            const crossFY25 = applyNonFYFilters(rawFY25);
+            const crossFY26 = applyNonFYFilters(rawFY26);
+            
             const uniqueAccounts = new Set([
-                ...(filteredData.fy24_25 || []).map(row => row.Project),
-                ...(filteredData.fy25_26 || []).map(row => row.Project),
-                ...(filteredData.fy26_27 || []).map(row => row.Project)
+                ...crossFY24.map(row => row.Project),
+                ...crossFY25.map(row => row.Project),
+                ...crossFY26.map(row => row.Project)
             ]);
             
-            // Debug: Check for accounts with multiple regions/practices
-            console.log('=== FILTERED DATA DEBUG ===');
-            console.log('FY24-25 rows:', filteredData.fy24_25.length);
-            console.log('FY25-26 rows:', filteredData.fy25_26.length);
-            console.log('FY26-27 rows:', (filteredData.fy26_27||[]).length);
-            const accountRegionMap = {};
-            filteredData.fy25_26.forEach(row => {
-                if (!accountRegionMap[row.Project]) {
-                    accountRegionMap[row.Project] = new Set();
-                }
-                accountRegionMap[row.Project].add(row.Region);
-            });
-            console.log('Accounts with multiple regions:', Object.entries(accountRegionMap).filter(([k,v]) => v.size > 1));
-            
-            const fy24months = extractMonthsFromData(filteredData.fy24_25 || null, null, null);
-            const fy25months = extractMonthsFromData(null, filteredData.fy25_26 || null, null);
-            const fy26months = extractMonthsFromData(null, null, filteredData.fy26_27 || null);
+            const fy24months = extractMonthsFromData(rawFY24.length > 0 ? rawFY24 : null, null, null);
+            const fy25months = extractMonthsFromData(null, rawFY25.length > 0 ? rawFY25 : null, null);
+            const fy26months = extractMonthsFromData(null, null, rawFY26.length > 0 ? rawFY26 : null);
             
             uniqueAccounts.forEach(accountName => {
-                // FY 24-25 data
-                const fy24Rows = filteredData.fy24_25.filter(row => row.Project === accountName);
+                // FY 24-25 data — always from crossFY24 (raw + non-FY filters)
+                const fy24Rows = crossFY24.filter(row => row.Project === accountName);
                 
                 // Debug: Log accounts with multiple rows
                 if (fy24Rows.length > 1) {
@@ -7183,8 +7203,8 @@ function showView(view) {
                 const fy24Total = fy24Met + fy24NotMet;
                 const fy24Compliance = fy24Total > 0 ? parseFloat(((fy24Met / fy24Total) * 100).toFixed(1)) : 0;
 
-                // FY 25-26 data
-                const fy25Rows = filteredData.fy25_26.filter(row => row.Project === accountName);
+                // FY 25-26 data — always from crossFY25 (raw + non-FY filters)
+                const fy25Rows = crossFY25.filter(row => row.Project === accountName);
                 let fy25Met = 0, fy25NotMet = 0;
                 fy25months.forEach(month => {
                     fy25Rows.forEach(row => {
@@ -7195,8 +7215,8 @@ function showView(view) {
                 const fy25Total = fy25Met + fy25NotMet;
                 const fy25Compliance = fy25Total > 0 ? parseFloat(((fy25Met / fy25Total) * 100).toFixed(1)) : 0;
 
-                    // FY 26-27 data
-                const fy26Rows = (filteredData.fy26_27 || []).filter(row => row.Project === accountName);
+                // FY 26-27 data — always from crossFY26 (raw + non-FY filters)
+                const fy26Rows = crossFY26.filter(row => row.Project === accountName);
                 let fy26Met = 0, fy26NotMet = 0;
                 fy26months.forEach(month => {
                     fy26Rows.forEach(row => {
@@ -9338,8 +9358,8 @@ function showView(view) {
                 const fy24Total = fy24Met + fy24NotMet;
                 const fy24Compliance = fy24Total > 0 ? parseFloat(((fy24Met / fy24Total) * 100).toFixed(1)) : 0;
 
-                // FY 25-26 data
-                const fy25Rows = filteredData.fy25_26.filter(row => row.Project === accountName);
+                // FY 25-26 data — always from crossFY25 (raw + non-FY filters)
+                const fy25Rows = crossFY25.filter(row => row.Project === accountName);
                 let fy25Met = 0, fy25NotMet = 0;
                 fy25months.forEach(month => {
                     fy25Rows.forEach(row => {
@@ -9422,10 +9442,14 @@ function showView(view) {
                 const improvementColor = data.improvement >= 0 ? 'var(--success-color)' : 'var(--danger-color)';
                 const improvementIcon = data.improvement >= 0 ? '↑' : '↓';
                 
-                const fy24Display = data.fy24Compliance > 0 ? formatPercentageWithRAG(data.fy24Compliance) : 'N/A';
-                const fy25Display = data.fy25Compliance > 0 ? formatPercentageWithRAG(data.fy25Compliance) : 'N/A';
-                const fy26Display = data.fy26Compliance > 0 ? formatPercentageWithRAG(data.fy26Compliance) : 'N/A';
-                const changeDisplay = data.fy26Compliance > 0 ? formatYoYChange(data.fy25Compliance, data.fy26Compliance) : formatYoYChange(data.fy24Compliance, data.fy25Compliance);
+                const fy24Display = data.fy24Compliance > 0 ? formatPercentageWithRAG(data.fy24Compliance) : '<span style="color:#9ca3af;">N/A</span>';
+                const fy25Display = data.fy25Compliance > 0 ? formatPercentageWithRAG(data.fy25Compliance) : '<span style="color:#9ca3af;">N/A</span>';
+                const fy26Display = data.fy26Compliance > 0 ? formatPercentageWithRAG(data.fy26Compliance) : '<span style="color:#9ca3af;">N/A</span>';
+                const isNewAccount = data.fy24Compliance === 0 && data.fy25Compliance === 0 && data.fy26Compliance > 0;
+                const isExitedAccount = data.fy26Compliance === 0 && (data.fy24Compliance > 0 || data.fy25Compliance > 0);
+                const changeDisplay = isNewAccount ? '<span class="badge status-new">NEW</span>' 
+                    : isExitedAccount ? '<span class="badge status-na">Exited</span>'
+                    : data.fy26Compliance > 0 ? formatYoYChange(data.fy25Compliance, data.fy26Compliance) : formatYoYChange(data.fy24Compliance, data.fy25Compliance);
                 
                 const escapedAccount = data.account.replace(/'/g, "\\'");
                 tableHTML += `<tr onclick="showProjectDrilldown('${escapedAccount}')" style="cursor: pointer; transition: background 0.2s ease;" 
@@ -13055,7 +13079,30 @@ function showView(view) {
             const penaltyText = isPenalty ? 'Penalty' : 'Non-Penalty';
             
             // Display Target value - format percentages as Excel shows them
-            const rawTarget = measure['Target'];
+            // Unicharm hardcoded targets (all measures are Category A Internal KPI)
+            const UNICHARM_TARGETS = {
+                'Time to Hire Rank 6': '30 Days',
+                'Time to Hire Rank 6 ': '30 Days',
+                'Time to Hire Band 5 & 4': '45 Days',
+                'Time to Hire Band P3 B & A': '60 Days',
+                'Time to Fill Rank 6': '30 Days',
+                'Time to Fill Rank 6 ': '30 Days',
+                'Time to Fill Band 5 & 4': '45 Days',
+                'Time to Fill Band P3 B & A': '60 Days',
+                'Ageing': '30%',
+                'Ageing ': '30%',
+                'First Time Right Ratio': '80%',
+                'Hit Ratio': '70%',
+                'Offer Drop': '10%'
+            };
+            const projectName = measure['Project'] || '';
+            const measureName = (measure['Performance Measure'] || measure['Performance Measure '] || '').trim();
+            let rawTarget = measure['Target'];
+            // Apply hardcoded targets for Unicharm when Target is null/undefined
+            if ((rawTarget === null || rawTarget === undefined || rawTarget === '') && projectName === 'Unicharm') {
+                const hardcoded = UNICHARM_TARGETS[measureName] || UNICHARM_TARGETS[measureName + ' '];
+                if (hardcoded) rawTarget = hardcoded;
+            }
             let formattedTarget = '-';
             if (rawTarget !== null && rawTarget !== undefined && rawTarget !== '') {
                 // If it's a number between 0 and 1 (inclusive), likely a percentage
@@ -15935,21 +15982,17 @@ function showView(view) {
         }
         
         function calculateNotReportedByDimension(data2425, data2526, dimension, data2627) {
-    data2627 = data2627 || [];
+            data2627 = data2627 || [];
             const breakdown = {};
             
             // Process FY 24-25
             data2425.forEach(row => {
                 let key = row[dimension];
                 if (!key) return;
-                
-                // Normalize key: trim whitespace and convert to consistent case
                 key = String(key).trim();
-                
                 if (!breakdown[key]) {
-                    breakdown[key] = { name: key, fy2425: 0, fy2526: 0, region: row.Region, practiceHead: row['Practice Head'] };
+                    breakdown[key] = { name: key, fy2425: 0, fy2526: 0, fy2627: 0, region: row.Region, practiceHead: row['Practice Head'] };
                 }
-                
                 Object.keys(row).forEach(col => {
                     if (col.includes('NotReported')) {
                         breakdown[key].fy2425 += parseInt(row[col]) || 0;
@@ -15961,14 +16004,10 @@ function showView(view) {
             data2526.forEach(row => {
                 let key = row[dimension];
                 if (!key) return;
-                
-                // Normalize key: trim whitespace and convert to consistent case
                 key = String(key).trim();
-                
                 if (!breakdown[key]) {
-                    breakdown[key] = { name: key, fy2425: 0, fy2526: 0, region: row.Region, practiceHead: row['Practice Head'] };
+                    breakdown[key] = { name: key, fy2425: 0, fy2526: 0, fy2627: 0, region: row.Region, practiceHead: row['Practice Head'] };
                 }
-                
                 Object.keys(row).forEach(col => {
                     if (col.includes('NotReported')) {
                         breakdown[key].fy2526 += parseInt(row[col]) || 0;
@@ -15976,50 +16015,63 @@ function showView(view) {
                 });
             });
             
-            // Calculate changes
+            // Process FY 26-27
+            data2627.forEach(row => {
+                let key = row[dimension];
+                if (!key) return;
+                key = String(key).trim();
+                if (!breakdown[key]) {
+                    breakdown[key] = { name: key, fy2425: 0, fy2526: 0, fy2627: 0, region: row.Region, practiceHead: row['Practice Head'] };
+                }
+                Object.keys(row).forEach(col => {
+                    if (col.includes('NotReported')) {
+                        breakdown[key].fy2627 += parseInt(row[col]) || 0;
+                    }
+                });
+            });
+            
+            // Calculate changes (compare most recent two available FYs)
             Object.keys(breakdown).forEach(key => {
                 const item = breakdown[key];
-                item.change = item.fy2526 - item.fy2425;
+                // Use fy2627 vs fy2526 if fy2627 data exists, else fy2526 vs fy2425
+                const baseVal = item.fy2627 > 0 ? item.fy2526 : item.fy2425;
+                const currVal = item.fy2627 > 0 ? item.fy2627 : item.fy2526;
+                item.change = currVal - baseVal;
                 
-                // Fixed logic: If FY24-25 was 0 but FY25-26 > 0, this is Worsening, not N/A
-                if (item.fy2425 === 0 && item.fy2526 === 0) {
+                if (baseVal === 0 && currVal === 0) {
                     item.pctChange = 'N/A';
                     item.trend = '🟡 Stable';
-                } else if (item.fy2425 === 0 && item.fy2526 > 0) {
+                } else if (baseVal === 0 && currVal > 0) {
                     item.pctChange = 'N/A';
-                    item.trend = '🔴 Worsening';  // New issue appeared
-                } else if (item.fy2425 > 0 && item.fy2526 === 0) {
+                    item.trend = '🔴 Worsening';
+                } else if (baseVal > 0 && currVal === 0) {
                     item.pctChange = '-100.0';
-                    item.trend = '🟢 Improving';  // Issue completely resolved
+                    item.trend = '🟢 Improving';
                 } else {
-                    item.pctChange = ((item.change / item.fy2425) * 100).toFixed(1);
+                    item.pctChange = ((item.change / baseVal) * 100).toFixed(1);
                     item.trend = parseFloat(item.pctChange) > 10 ? '🔴 Worsening' 
                                 : parseFloat(item.pctChange) < -10 ? '🟢 Improving' 
                                 : '🟡 Stable';
                 }
             });
             
-            // Sort by combined total (FY24-25 + FY25-26) instead of just FY24-25
-            return Object.values(breakdown).sort((a, b) => (b.fy2425 + b.fy2526) - (a.fy2425 + a.fy2526));
+            // Sort by combined total across all FYs
+            return Object.values(breakdown).sort((a, b) => (b.fy2425 + b.fy2526 + b.fy2627) - (a.fy2425 + a.fy2526 + a.fy2627));
         }
         
         // Calculate Not Reported breakdown by Regional Head
         function calculateNotReportedByRegionalHead(data2425, data2526, data2627) {
-    data2627 = data2627 || [];
+            data2627 = data2627 || [];
             const breakdown = {};
             
             // Process FY 24-25
             data2425.forEach(row => {
                 let key = row['Regional Head '] || row['Regional Head'];
                 if (!key) return;
-                
-                // Normalize key: trim whitespace
                 key = String(key).trim();
-                
                 if (!breakdown[key]) {
-                    breakdown[key] = { name: key, fy2425: 0, fy2526: 0 };
+                    breakdown[key] = { name: key, fy2425: 0, fy2526: 0, fy2627: 0 };
                 }
-                
                 Object.keys(row).forEach(col => {
                     if (col.includes('NotReported')) {
                         breakdown[key].fy2425 += parseInt(row[col]) || 0;
@@ -16031,14 +16083,10 @@ function showView(view) {
             data2526.forEach(row => {
                 let key = row['Regional Head '] || row['Regional Head'];
                 if (!key) return;
-                
-                // Normalize key: trim whitespace
                 key = String(key).trim();
-                
                 if (!breakdown[key]) {
-                    breakdown[key] = { name: key, fy2425: 0, fy2526: 0 };
+                    breakdown[key] = { name: key, fy2425: 0, fy2526: 0, fy2627: 0 };
                 }
-                
                 Object.keys(row).forEach(col => {
                     if (col.includes('NotReported')) {
                         breakdown[key].fy2526 += parseInt(row[col]) || 0;
@@ -16046,35 +16094,51 @@ function showView(view) {
                 });
             });
             
-            // Calculate changes
+            // Process FY 26-27
+            data2627.forEach(row => {
+                let key = row['Regional Head '] || row['Regional Head'];
+                if (!key) return;
+                key = String(key).trim();
+                if (!breakdown[key]) {
+                    breakdown[key] = { name: key, fy2425: 0, fy2526: 0, fy2627: 0 };
+                }
+                Object.keys(row).forEach(col => {
+                    if (col.includes('NotReported')) {
+                        breakdown[key].fy2627 += parseInt(row[col]) || 0;
+                    }
+                });
+            });
+            
+            // Calculate changes (compare most recent two available FYs)
             Object.keys(breakdown).forEach(key => {
                 const item = breakdown[key];
-                item.change = item.fy2526 - item.fy2425;
+                const baseVal = item.fy2627 > 0 ? item.fy2526 : item.fy2425;
+                const currVal = item.fy2627 > 0 ? item.fy2627 : item.fy2526;
+                item.change = currVal - baseVal;
                 
-                // Fixed logic: If FY24-25 was 0 but FY25-26 > 0, this is Worsening, not N/A
-                if (item.fy2425 === 0 && item.fy2526 === 0) {
+                if (baseVal === 0 && currVal === 0) {
                     item.pctChange = 'N/A';
                     item.trend = '🟡 Stable';
-                } else if (item.fy2425 === 0 && item.fy2526 > 0) {
+                } else if (baseVal === 0 && currVal > 0) {
                     item.pctChange = 'N/A';
-                    item.trend = '🔴 Worsening';  // New issue appeared
-                } else if (item.fy2425 > 0 && item.fy2526 === 0) {
+                    item.trend = '🔴 Worsening';
+                } else if (baseVal > 0 && currVal === 0) {
                     item.pctChange = '-100.0';
-                    item.trend = '🟢 Improving';  // Issue completely resolved
+                    item.trend = '🟢 Improving';
                 } else {
-                    item.pctChange = ((item.change / item.fy2425) * 100).toFixed(1);
+                    item.pctChange = ((item.change / baseVal) * 100).toFixed(1);
                     item.trend = parseFloat(item.pctChange) > 10 ? '🔴 Worsening' 
                                 : parseFloat(item.pctChange) < -10 ? '🟢 Improving' 
                                 : '🟡 Stable';
                 }
             });
             
-            // Sort by combined total (FY24-25 + FY25-26) instead of just FY24-25
-            return Object.values(breakdown).sort((a, b) => (b.fy2425 + b.fy2526) - (a.fy2425 + a.fy2526));
+            // Sort by combined total across all FYs
+            return Object.values(breakdown).sort((a, b) => (b.fy2425 + b.fy2526 + b.fy2627) - (a.fy2425 + a.fy2526 + a.fy2627));
         }
         
         function calculateMonthlyTrend(data2425, data2526, data2627) {
-    data2627 = data2627 || [];
+            data2627 = data2627 || [];
             // COMPLETELY REWRITTEN: Handle actual Excel column names correctly
             const monthColumns = new Map();  // Map normalized → Set of actual column names
             const trend = {};
@@ -16130,12 +16194,30 @@ function showView(view) {
                 });
             }
             
+            // Track which months have FY26-27 data columns + add to monthColumns map
+            const fy2627Months = new Set();
+            if (data2627 && data2627.length > 0) {
+                Object.keys(data2627[0]).forEach(key => {
+                    const match = key.match(/^([A-Za-z]+)\s+MET\/NOT_MET_NotReported$/);
+                    if (match) {
+                        const actualName = match[1];
+                        const normalized = normalizeMonthName(actualName);
+                        fy2627Months.add(normalized);
+                        if (!monthColumns.has(normalized)) {
+                            monthColumns.set(normalized, new Set());
+                        }
+                        monthColumns.get(normalized).add(actualName);
+                    }
+                });
+            }
+            
             // Initialize trend structure
             months.forEach(month => {
                 trend[month] = { 
                     month, 
                     fy2425: 0, 
                     fy2526: 0,
+                    fy2627: 0,
                     hasFY2526Data: fy2526Months.has(month)  // Track if this month has FY25-26 column
                 };
             });
@@ -16172,19 +16254,40 @@ function showView(view) {
                 });
             }
             
-            // Return trend data, setting fy2526 to null for months without data columns
+            // Sum FY 26-27 data using actual column names
+            if (data2627 && data2627.length > 0) {
+                data2627.forEach(row => {
+                    months.forEach(normalizedMonth => {
+                        if (!fy2627Months.has(normalizedMonth)) return;
+                        const actualNames = monthColumns.get(normalizedMonth);
+                        if (!actualNames) return;
+                        for (const actualName of actualNames) {
+                            const colName = actualName + ' MET/NOT_MET_NotReported';
+                            if (row[colName] !== undefined) {
+                                trend[normalizedMonth].fy2627 += parseInt(row[colName]) || 0;
+                                break;
+                            }
+                        }
+                    });
+                });
+            }
+            
+            // Return trend data, setting fy2526/fy2627 to null for months without data columns
             return months.map(m => {
                 const monthData = trend[m];
                 return {
                     month: monthData.month,
                     fy2425: monthData.fy2425,
-                    fy2526: monthData.hasFY2526Data ? monthData.fy2526 : null,  // null if column doesn't exist
-                    hasFY2526Data: monthData.hasFY2526Data
+                    fy2526: monthData.hasFY2526Data ? monthData.fy2526 : null,
+                    fy2627: fy2627Months.has(m) ? monthData.fy2627 : null,
+                    hasFY2526Data: monthData.hasFY2526Data,
+                    hasFY2627Data: fy2627Months.has(m)
                 };
             });
         }
         function generateNotReportedTable(data, dimension) {
             const top15 = data.slice(0, 15);
+            const hasFY2627 = data.some(d => (d.fy2627 || 0) > 0);
             
             let html = `
                 <table style="width: 100%; border-collapse: collapse;">
@@ -16195,6 +16298,7 @@ function showView(view) {
                             <th style="padding: 12px; text-align: left;">Practice Head</th>
                             <th style="padding: 12px; text-align: center;">FY 24-25 Total</th>
                             <th style="padding: 12px; text-align: center;">FY 25-26 Total</th>
+                            ${hasFY2627 ? '<th style="padding: 12px; text-align: center; background: rgba(14,165,233,0.3);">FY 26-27 Total</th>' : ''}
                             <th style="padding: 12px; text-align: center;">Change</th>
                             <th style="padding: 12px; text-align: center;">% Change</th>
                             <th style="padding: 12px; text-align: center;">Trend</th>
@@ -16205,6 +16309,7 @@ function showView(view) {
             top15.forEach((item, idx) => {
                 const bgColor = idx % 2 === 0 ? '#f8f9fa' : 'white';
                 const changeColor = item.change < 0 ? '#51cf66' : item.change > 0 ? '#ff6b6b' : '#868e96';
+                const fy2627val = item.fy2627 || 0;
                 
                 html += `
                     <tr style="background: ${bgColor};">
@@ -16213,6 +16318,7 @@ function showView(view) {
                         <td style="padding: 10px;">${item.practiceHead || '-'}</td>
                         <td style="padding: 10px; text-align: center; font-weight: bold;">${item.fy2425}</td>
                         <td style="padding: 10px; text-align: center; font-weight: bold;">${item.fy2526}</td>
+                        ${hasFY2627 ? '<td style="padding: 10px; text-align: center; font-weight: 700; color:#0ea5e9;">' + fy2627val + '</td>' : ''}
                         <td style="padding: 10px; text-align: center; color: ${changeColor}; font-weight: bold;">
                             ${item.change > 0 ? '+' : ''}${item.change}
                         </td>
@@ -16228,6 +16334,7 @@ function showView(view) {
         }
         
         function generateNotReportedSummaryTable(data, dimension) {
+            const hasFY2627 = data.some(d => (d.fy2627 || 0) > 0);
             let html = `
                 <table style="width: 100%; border-collapse: collapse; font-size: 0.9rem;">
                     <thead>
@@ -16235,6 +16342,7 @@ function showView(view) {
                             <th style="padding: 10px; text-align: left;">${dimension}</th>
                             <th style="padding: 10px; text-align: center;">FY 24-25</th>
                             <th style="padding: 10px; text-align: center;">FY 25-26</th>
+                            ${hasFY2627 ? '<th style="padding: 10px; text-align: center; background: rgba(14,165,233,0.3);">FY 26-27</th>' : ''}
                             <th style="padding: 10px; text-align: center;">Change</th>
                             <th style="padding: 10px; text-align: center;">% Change</th>
                         </tr>
@@ -16244,12 +16352,14 @@ function showView(view) {
             data.forEach((item, idx) => {
                 const bgColor = idx % 2 === 0 ? '#f8f9fa' : 'white';
                 const changeColor = item.change < 0 ? '#51cf66' : item.change > 0 ? '#ff6b6b' : '#868e96';
+                const fy2627val = item.fy2627 || 0;
                 
                 html += `
                     <tr style="background: ${bgColor};">
                         <td style="padding: 8px;">${item.name}</td>
                         <td style="padding: 8px; text-align: center; font-weight: bold;">${item.fy2425}</td>
                         <td style="padding: 8px; text-align: center; font-weight: bold;">${item.fy2526}</td>
+                        ${hasFY2627 ? '<td style="padding: 8px; text-align: center; font-weight: 700; color:#0ea5e9;">' + fy2627val + '</td>' : ''}
                         <td style="padding: 8px; text-align: center; color: ${changeColor}; font-weight: bold;">
                             ${item.change > 0 ? '+' : ''}${item.change}
                         </td>
@@ -16264,6 +16374,7 @@ function showView(view) {
         }
         
         function generateMonthlyTrendTable(trend) {
+            const hasFY2627 = trend.some(d => (d.fy2627 || 0) > 0);
             let html = `
                 <table style="width: 100%; border-collapse: collapse;">
                     <thead>
@@ -16271,6 +16382,7 @@ function showView(view) {
                             <th style="padding: 12px; text-align: left;">Month</th>
                             <th style="padding: 12px; text-align: center;">FY 24-25</th>
                             <th style="padding: 12px; text-align: center;">FY 25-26</th>
+                            ${hasFY2627 ? '<th style="padding: 12px; text-align: center; background: rgba(14,165,233,0.3);">FY 26-27</th>' : ''}
                             <th style="padding: 12px; text-align: center;">Change</th>
                             <th style="padding: 12px; text-align: center;">% Change</th>
                         </tr>
@@ -16303,6 +16415,7 @@ function showView(view) {
                     <tr style="background: ${bgColor};">
                         <td style="padding: 10px; font-weight: bold;">${item.month}</td>
                         <td style="padding: 10px; text-align: center;">${item.fy2425}</td>
+                        ${hasFY2627 ? '<td style="padding: 10px; text-align: center; color:#0ea5e9; font-weight:600;">' + (item.fy2627 || 0) + '</td>' : ''}
                         <td style="padding: 10px; text-align: center;">${item.fy2526}</td>
                         <td style="padding: 10px; text-align: center; color: ${changeColor}; font-weight: bold;">
                             ${change > 0 ? '+' : ''}${change}
@@ -16322,7 +16435,7 @@ function showView(view) {
             if (!ctx) return null;
             
             const top15 = data.slice(0, 15);
-            const totalCount = data.reduce((sum, d) => sum + d.fy2425 + d.fy2526, 0);
+            const totalCount = data.reduce((sum, d) => sum + d.fy2425 + d.fy2526 + (d.fy2627 || 0), 0);
             
             // User-friendly color palette with better contrast
             const colors = [
@@ -16338,7 +16451,7 @@ function showView(view) {
                     labels: top15.map(d => d.name),
                     datasets: [{
                         label: 'Not Reported Count',
-                        data: top15.map(d => d.fy2425 + d.fy2526),
+                        data: top15.map(d => d.fy2425 + d.fy2526 + (d.fy2627 || 0)),
                         backgroundColor: top15.map((d, i) => colors[i]),
                         borderWidth: 0,
                         borderRadius: 8
@@ -16437,7 +16550,7 @@ function showView(view) {
             const ctx = document.getElementById('notReportedRegionChart');
             if (!ctx) return null;
             
-            const totalCount = data.reduce((sum, d) => sum + d.fy2425 + d.fy2526, 0);
+            const totalCount = data.reduce((sum, d) => sum + d.fy2425 + d.fy2526 + (d.fy2627 || 0), 0);
             const userFriendlyColors = ['#10b981', '#3b82f6', '#f59e0b', '#ef4444', '#8b5cf6', '#3c3530'];
             
             return new Chart(ctx, {
@@ -16446,7 +16559,7 @@ function showView(view) {
                     labels: data.map(d => d.name),
                     datasets: [{
                         label: 'Not Reported Count',
-                        data: data.map(d => d.fy2425 + d.fy2526),
+                        data: data.map(d => d.fy2425 + d.fy2526 + (d.fy2627 || 0)),
                         backgroundColor: data.map((d, i) => userFriendlyColors[i % userFriendlyColors.length]),
                         borderWidth: 0,
                         borderRadius: 8
@@ -16515,7 +16628,7 @@ function showView(view) {
             const ctx = document.getElementById('notReportedPracticeChart');
             if (!ctx) return null;
             
-            const totalCount = data.reduce((sum, d) => sum + d.fy2425 + d.fy2526, 0);
+            const totalCount = data.reduce((sum, d) => sum + d.fy2425 + d.fy2526 + (d.fy2627 || 0), 0);
             const userFriendlyColors = ['#06b6d4', '#8b5cf6', '#3c3530', '#f59e0b', '#10b981', '#3b82f6', '#ef4444', '#14b8a6'];
             
             return new Chart(ctx, {
@@ -16524,7 +16637,7 @@ function showView(view) {
                     labels: data.map(d => d.name),
                     datasets: [{
                         label: 'Not Reported Count',
-                        data: data.map(d => d.fy2425 + d.fy2526),
+                        data: data.map(d => d.fy2425 + d.fy2526 + (d.fy2627 || 0)),
                         backgroundColor: data.map((d, i) => userFriendlyColors[i % userFriendlyColors.length]),
                         borderWidth: 0,
                         borderRadius: 8
