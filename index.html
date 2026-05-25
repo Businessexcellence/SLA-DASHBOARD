@@ -8596,142 +8596,173 @@ function showView(view) {
         }
 
         // Render Quarterly View WITH FY COMPARISON
-        function renderQuarterlyView() {
+        // State: which two FYs to compare in quarterly view
+        let qtrBaseFY = 'fy25_26';
+        let qtrTargetFY = 'fy26_27';
+
+        function renderQuarterlyView(baseFY, targetFY) {
+            if (baseFY) qtrBaseFY = baseFY;
+            if (targetFY) qtrTargetFY = targetFY;
+
             const quarters = [
-                { name: 'Q1 (Apr-Jun)', months: ['Apr', 'May', 'June'] },
-                { name: 'Q2 (Jul-Sep)', months: ['July', 'Aug', 'Sep'] },
+                { name: 'Q1 (Apr-Jun)', months: ['Apr', 'May', 'Jun'] },
+                { name: 'Q2 (Jul-Sep)', months: ['Jul', 'Aug', 'Sep'] },
                 { name: 'Q3 (Oct-Dec)', months: ['Oct', 'Nov', 'Dec'] },
-                { name: 'Q4 (Jan-Mar)', months: ['Jan', 'Feb', 'March'] }
+                { name: 'Q4 (Jan-Mar)', months: ['Jan', 'Feb', 'Mar'] }
             ];
-            
-            // Calculate FY 24-25 quarterly data
-            const fy24QuarterlyData = quarters.map(q => {
-                let totalMet = 0, totalNotMet = 0;
-                q.months.forEach(month => {
-                    filteredData.fy24_25.forEach(row => {
-                        totalMet += getMonthData(row, month, 'fy24_25', 'Met');
-                        totalNotMet += getMonthData(row, month, 'fy24_25', 'Not_Met');
+
+            // Helper: calculate quarterly data for any FY
+            function calcQuarterlyFY(fyKey) {
+                const fyData = filteredData[fyKey] || [];
+                return quarters.map(q => {
+                    let totalMet = 0, totalNotMet = 0;
+                    q.months.forEach(month => {
+                        fyData.forEach(row => {
+                            totalMet += getMonthData(row, month, fyKey, 'Met');
+                            totalNotMet += getMonthData(row, month, fyKey, 'Not_Met');
+                        });
                     });
+                    const total = totalMet + totalNotMet;
+                    return total > 0 ? parseFloat(((totalMet / total) * 100).toFixed(1)) : null;
                 });
-                const total = totalMet + totalNotMet;
-                return total > 0 ? parseFloat(((totalMet / total) * 100).toFixed(1)) : 0;
+            }
+
+            const fy24QuarterlyData = calcQuarterlyFY('fy24_25');
+            const fy25QuarterlyData = calcQuarterlyFY('fy25_26');
+            const fy26QuarterlyData = calcQuarterlyFY('fy26_27');
+
+            const fyDataMap = {
+                fy24_25: { data: fy24QuarterlyData, label: 'FY 24-25', color: '#9CA3AF' },
+                fy25_26: { data: fy25QuarterlyData, label: 'FY 25-26', color: '#ff6b35' },
+                fy26_27: { data: fy26QuarterlyData, label: 'FY 26-27', color: '#0ea5e9' }
+            };
+
+            const base = fyDataMap[qtrBaseFY];
+            const tgt = fyDataMap[qtrTargetFY];
+
+            // Selector
+            const fyOptions = [
+                { value: 'fy24_25', label: 'FY 24-25' },
+                { value: 'fy25_26', label: 'FY 25-26' },
+                { value: 'fy26_27', label: 'FY 26-27' }
+            ];
+            const baseOpts = fyOptions.filter(o => o.value !== qtrTargetFY)
+                .map(o => `<option value="${o.value}" ${o.value === qtrBaseFY ? 'selected' : ''}>${o.label}</option>`).join('');
+            const tgtOpts = fyOptions.filter(o => o.value !== qtrBaseFY)
+                .map(o => `<option value="${o.value}" ${o.value === qtrTargetFY ? 'selected' : ''}>${o.label}</option>`).join('');
+
+            const selectorHTML = `
+                <div class="card" style="margin-bottom: 16px; padding: 16px 24px; background: linear-gradient(135deg, #1e3a5f 0%, #0ea5e9 100%);">
+                    <div style="display: flex; align-items: center; gap: 20px; flex-wrap: wrap;">
+                        <div style="color: white; font-weight: 700; font-size: 1rem; display: flex; align-items: center; gap: 8px;">
+                            <i class="bi bi-sliders" style="font-size: 1.2rem;"></i> Compare Fiscal Years:
+                        </div>
+                        <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
+                            <div>
+                                <label style="color: rgba(255,255,255,0.8); font-size: 0.8rem; display: block; margin-bottom: 4px;">Base Year</label>
+                                <select id="qtrBaseSelect" onchange="renderQuarterlyView(this.value, document.getElementById('qtrTargetSelect').value)"
+                                    style="padding: 8px 14px; border-radius: 8px; border: none; font-weight: 600; background: white; color: #1e3a5f; cursor: pointer;">
+                                    ${baseOpts}
+                                </select>
+                            </div>
+                            <div style="color: white; font-size: 1.4rem; font-weight: 700; margin-top: 16px;">→</div>
+                            <div>
+                                <label style="color: rgba(255,255,255,0.8); font-size: 0.8rem; display: block; margin-bottom: 4px;">Compare To</label>
+                                <select id="qtrTargetSelect" onchange="renderQuarterlyView(document.getElementById('qtrBaseSelect').value, this.value)"
+                                    style="padding: 8px 14px; border-radius: 8px; border: none; font-weight: 600; background: white; color: #1e3a5f; cursor: pointer;">
+                                    ${tgtOpts}
+                                </select>
+                            </div>
+                        </div>
+                        <div style="margin-left: auto; color: rgba(255,255,255,0.85); font-size: 0.85rem; font-style: italic;">
+                            Showing: ${base.label} vs ${tgt.label}
+                        </div>
+                    </div>
+                </div>`;
+
+            // Build insights for quarters with both FYs having data
+            let insightsHTML = `<div class="insights-section"><h3><i class="bi bi-lightbulb-fill"></i> Quarterly Comparison (${base.label} → ${tgt.label})</h3>`;
+            quarters.forEach((q, i) => {
+                const bVal = base.data[i];
+                const tVal = tgt.data[i];
+                if (bVal !== null || tVal !== null) {
+                    const diff = (bVal !== null && tVal !== null) ? (tVal - bVal).toFixed(1) : null;
+                    insightsHTML += `<div class="insight-item"><h4>📊 ${q.name}</h4>
+                        <p>${base.label}: ${bVal !== null ? bVal + '%' : 'N/A'} | ${tgt.label}: ${tVal !== null ? tVal + '%' : 'N/A'}${diff !== null ? ' | Change: ' + (diff >= 0 ? '+' : '') + diff + '%' : ''}</p></div>`;
+                }
             });
-
-            // Calculate FY 25-26 quarterly data (calculate all quarters, show only those with data)
-            const fy25QuarterlyData = quarters.map((q, idx) => {
-                let totalMet = 0, totalNotMet = 0;
-                q.months.forEach(month => {
-                    filteredData.fy25_26.forEach(row => {
-                        totalMet += getMonthData(row, month, 'fy25_26', 'Met');
-                        totalNotMet += getMonthData(row, month, 'fy25_26', 'Not_Met');
-                    });
-                });
-                const total = totalMet + totalNotMet;
-                return total > 0 ? parseFloat(((totalMet / total) * 100).toFixed(1)) : null;
-            });
-
-            // Calculate improvements and count available quarters
-            const q1Diff = fy25QuarterlyData[0] !== null ? (fy25QuarterlyData[0] - fy24QuarterlyData[0]) : null;
-            const q2Diff = fy25QuarterlyData[1] !== null ? (fy25QuarterlyData[1] - fy24QuarterlyData[1]) : null;
-            const q3Diff = fy25QuarterlyData[2] !== null ? (fy25QuarterlyData[2] - fy24QuarterlyData[2]) : null;
-            
-            const availableQuarters = fy25QuarterlyData.filter(q => q !== null).length;
-
-            let insightsHTML = `
-                <div class="insights-section">
-                    <h3><i class="bi bi-lightbulb-fill"></i> Quarterly Performance Comparison</h3>`;
-            
-            if (q1Diff !== null) {
-                insightsHTML += `
-                    <div class="insight-item">
-                        <h4>📊 Q1 Comparison</h4>
-                        <p>FY 24-25: ${fy24QuarterlyData[0]}% | FY 25-26: ${fy25QuarterlyData[0]}% | Change: ${q1Diff >= 0 ? '+' : ''}${q1Diff.toFixed(1)}%</p>
-                    </div>`;
-            }
-            
-            if (q2Diff !== null) {
-                insightsHTML += `
-                    <div class="insight-item">
-                        <h4>📊 Q2 Comparison</h4>
-                        <p>FY 24-25: ${fy24QuarterlyData[1]}% | FY 25-26: ${fy25QuarterlyData[1]}% | Change: ${q2Diff >= 0 ? '+' : ''}${q2Diff.toFixed(1)}%</p>
-                    </div>`;
-            }
-            
-            if (q3Diff !== null) {
-                insightsHTML += `
-                    <div class="insight-item">
-                        <h4>📊 Q3 Comparison (Includes October 2025)</h4>
-                        <p>FY 24-25: ${fy24QuarterlyData[2]}% | FY 25-26: ${fy25QuarterlyData[2]}% | Change: ${q3Diff >= 0 ? '+' : ''}${q3Diff.toFixed(1)}%</p>
-                    </div>`;
-            }
-            
             insightsHTML += `</div>`;
 
-            // Comparison widgets - dynamically show available quarters
+            // Comparison widget — show quarter pairs
             let comparisonWidget = `<div class="comparison-widget">`;
-            
-            for (let i = 0; i < availableQuarters && i < 4; i++) {
-                if (fy25QuarterlyData[i] !== null) {
+            quarters.forEach((q, i) => {
+                const bVal = base.data[i];
+                const tVal = tgt.data[i];
+                if (bVal !== null || tVal !== null) {
                     comparisonWidget += `
-                        <div class="metric-box fy24">
-                            <div class="metric-label">FY 24-25 Q${i+1}</div>
-                            <div class="metric-value" style="color: #ff6b35;">${fy24QuarterlyData[i]}%</div>
+                        <div class="metric-box" style="border-left: 4px solid ${base.color};">
+                            <div class="metric-label">${base.label} Q${i+1}</div>
+                            <div class="metric-value" style="color: ${base.color};">${bVal !== null ? bVal + '%' : '—'}</div>
                         </div>
-                        <div class="metric-box fy25">
-                            <div class="metric-label">FY 25-26 Q${i+1}</div>
-                            <div class="metric-value" style="color: var(--primary-color);">${fy25QuarterlyData[i]}%</div>
+                        <div class="metric-box" style="border-left: 4px solid ${tgt.color};">
+                            <div class="metric-label">${tgt.label} Q${i+1}</div>
+                            <div class="metric-value" style="color: ${tgt.color};">${tVal !== null ? tVal + '%' : '—'}</div>
                         </div>`;
                 }
-            }
-            
+            });
             comparisonWidget += `</div>`;
 
-            // Build comparison table
+            // Table — all 3 FYs side-by-side
             let tableHTML = `
                 <table style="margin-top: 20px;">
                     <thead>
                         <tr>
                             <th>Quarter</th>
-                            <th>FY 24-25 (%)</th>
-                            <th>FY 25-26 (%)</th>
-                            <th>FY 26-27 (%)</th>
-                            <th>vs FY 25-26</th>
+                            <th style="color: #9CA3AF;">FY 24-25 (%)</th>
+                            <th style="color: #ff6b35;">FY 25-26 (%)</th>
+                            <th style="color: #0ea5e9;">FY 26-27 (%)</th>
+                            <th>${base.label} → ${tgt.label}</th>
                         </tr>
                     </thead>
                     <tbody>`;
-            
+
             quarters.forEach((q, idx) => {
-                const fy25Val = fy25QuarterlyData[idx];
-                const diff = fy25Val !== null ? fy25Val - fy24QuarterlyData[idx] : null;
+                const v24 = fy24QuarterlyData[idx];
+                const v25 = fy25QuarterlyData[idx];
+                const v26 = fy26QuarterlyData[idx];
+                const bVal = base.data[idx];
+                const tVal = tgt.data[idx];
+                const diff = (bVal !== null && tVal !== null) ? tVal - bVal : null;
                 const diffColor = diff !== null && diff >= 0 ? 'var(--success-color)' : 'var(--danger-color)';
                 tableHTML += `
                     <tr>
                         <td><strong>${q.name}</strong></td>
-                        <td style="color: #ff6b35;">${fy24QuarterlyData[idx].toFixed(1)}%</td>
-                        <td style="color: var(--primary-color);">${fy25Val !== null ? fy25Val.toFixed(1) + '%' : 'N/A'}</td>
-                        <td style="color: ${diff !== null ? diffColor : 'var(--text-secondary)'}; font-weight: bold;">${diff !== null ? (diff >= 0 ? '+' : '') + diff.toFixed(1) + '%' : 'N/A'}</td>
+                        <td style="color: #9CA3AF; font-weight: bold;">${v24 !== null ? v24.toFixed(1) + '%' : '—'}</td>
+                        <td style="color: #ff6b35; font-weight: bold;">${v25 !== null ? v25.toFixed(1) + '%' : '—'}</td>
+                        <td style="color: #0ea5e9; font-weight: bold;">${v26 !== null ? v26.toFixed(1) + '%' : '—'}</td>
+                        <td style="font-weight: bold; color: ${diff !== null ? diffColor : 'var(--text-secondary)'};">${diff !== null ? (diff >= 0 ? '+' : '') + diff.toFixed(1) + '%' : '—'}</td>
                     </tr>`;
             });
             tableHTML += '</tbody></table>';
-            
+
             const html = `
+                ${selectorHTML}
                 ${insightsHTML}
                 ${comparisonWidget}
                 <div class="card">
-                    <h3><i class="bi bi-calendar3"></i> Quarterly Performance Comparison Chart</h3>
+                    <h3><i class="bi bi-calendar3"></i> Quarterly Performance Chart (All 3 FYs)</h3>
                     <div class="chart-container">
                         <canvas id="quarterlyChart"></canvas>
                     </div>
                     ${tableHTML}
-                </div>
-            `;
-            
+                </div>`;
+
             document.getElementById('dashboardContent').innerHTML = html;
-            
+
             if (audioEnabled) {
-                speak(`Quarterly performance comparison loaded. Q1 FY 24-25 is ${fy24QuarterlyData[0]} percent. Q1 FY 25-26 is ${fy25QuarterlyData[0]} percent.`);
+                speak(`Quarterly comparison loaded: ${base.label} vs ${tgt.label}.`);
             }
-            
+
             const ctx = document.getElementById('quarterlyChart').getContext('2d');
             charts.quarterly = new Chart(ctx, {
                 type: 'bar',
@@ -8741,16 +8772,26 @@ function showView(view) {
                         {
                             label: 'FY 24-25',
                             data: fy24QuarterlyData,
-                            backgroundColor: '#D3D3D3',
+                            backgroundColor: '#9CA3AF',
                             borderWidth: 2,
-                            borderColor: '#fff'
+                            borderColor: '#fff',
+                            borderRadius: 4
                         },
                         {
-                            label: `FY 25-26 (${availableQuarters === 1 ? 'Q1' : availableQuarters === 2 ? 'Q1-Q2' : availableQuarters === 3 ? 'Q1-Q3' : 'Q1-Q4'})`,
+                            label: 'FY 25-26',
                             data: fy25QuarterlyData,
                             backgroundColor: '#ff6b35',
                             borderWidth: 2,
-                            borderColor: '#fff'
+                            borderColor: '#fff',
+                            borderRadius: 4
+                        },
+                        {
+                            label: 'FY 26-27',
+                            data: fy26QuarterlyData,
+                            backgroundColor: '#0ea5e9',
+                            borderWidth: 2,
+                            borderColor: '#fff',
+                            borderRadius: 4
                         }
                     ]
                 },
@@ -8761,62 +8802,154 @@ function showView(view) {
                         datalabels: {
                             display: true,
                             color: '#1a1a1a',
-                            backgroundColor: 'rgba(255, 255, 255, 0.95)',
+                            backgroundColor: 'rgba(255,255,255,0.95)',
                             borderRadius: 4,
                             padding: { top: 3, bottom: 3, left: 5, right: 5 },
-                            font: { weight: 'bold', size: 13 },
-                            formatter: (value) => value ? value.toFixed(1) + '%' : ''
+                            font: { weight: 'bold', size: 11 },
+                            formatter: (value) => value !== null ? value.toFixed(1) + '%' : ''
                         },
-                        legend: {
-                            position: 'top'
-                        }
+                        legend: { position: 'top' }
                     },
                     scales: {
                         y: {
-                            beginAtZero: true,
-                            max: 100,
-                            ticks: {
-                                stepSize: 20,  // Show 0, 20, 40, 60, 80, 100
-                                callback: function(value) {
-                                    return value + '%';
-                                }
-                            },
-                            grid: {
-                                display: false
-                            }
+                            beginAtZero: true, max: 100,
+                            ticks: { callback: v => v + '%', stepSize: 20 },
+                            grid: { display: false }
                         }
                     }
                 }
             });
         }
 
-        // Render Yearly View
-        function renderYearlyView() {
+        // Render Yearly View — with FY comparison selector
+        // State: which two FYs to compare
+        let yoyBaseFY = 'fy25_26';
+        let yoyTargetFY = 'fy26_27';
+
+        function renderYearlyView(baseFY, targetFY) {
+            // Use passed params or state
+            if (baseFY) yoyBaseFY = baseFY;
+            if (targetFY) yoyTargetFY = targetFY;
+
             const fy24Metrics = calculateOverallMetrics(filteredData.fy24_25 || [], 'fy24_25');
             const fy25Metrics = calculateOverallMetrics(filteredData.fy25_26 || [], 'fy25_26');
             const fy26Metrics = calculateOverallMetrics(filteredData.fy26_27 || [], 'fy26_27');
-            
-            const yoyChange = fy25Metrics.compliance - fy24Metrics.compliance;
-            const yoyPercent = fy24Metrics.compliance > 0 ? ((yoyChange / fy24Metrics.compliance) * 100).toFixed(1) : 0;
+
+            const fyMetricsMap = {
+                fy24_25: { metrics: fy24Metrics, label: 'FY 24-25', color: '#9CA3AF', data: filteredData.fy24_25 || [] },
+                fy25_26: { metrics: fy25Metrics, label: 'FY 25-26', color: '#ff6b35', data: filteredData.fy25_26 || [] },
+                fy26_27: { metrics: fy26Metrics, label: 'FY 26-27', color: '#0ea5e9', data: filteredData.fy26_27 || [] }
+            };
+
+            const base = fyMetricsMap[yoyBaseFY];
+            const target = fyMetricsMap[yoyTargetFY];
+            const yoyChange = target.metrics.compliance - base.metrics.compliance;
+            const yoyPercent = base.metrics.compliance > 0 ? ((yoyChange / base.metrics.compliance) * 100).toFixed(1) : 0;
+
+            // Selector options
+            const fyOptions = [
+                { value: 'fy24_25', label: 'FY 24-25' },
+                { value: 'fy25_26', label: 'FY 25-26' },
+                { value: 'fy26_27', label: 'FY 26-27' }
+            ];
+            const baseOptions = fyOptions.filter(o => o.value !== yoyTargetFY)
+                .map(o => `<option value="${o.value}" ${o.value === yoyBaseFY ? 'selected' : ''}>${o.label}</option>`).join('');
+            const targetOptions = fyOptions.filter(o => o.value !== yoyBaseFY)
+                .map(o => `<option value="${o.value}" ${o.value === yoyTargetFY ? 'selected' : ''}>${o.label}</option>`).join('');
+
+            const selectorHTML = `
+                <div class="card" style="margin-bottom: 16px; padding: 16px 24px; background: linear-gradient(135deg, #1e3a5f 0%, #0ea5e9 100%);">
+                    <div style="display: flex; align-items: center; gap: 20px; flex-wrap: wrap;">
+                        <div style="color: white; font-weight: 700; font-size: 1rem; display: flex; align-items: center; gap: 8px;">
+                            <i class="bi bi-sliders" style="font-size: 1.2rem;"></i> Compare Fiscal Years:
+                        </div>
+                        <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
+                            <div>
+                                <label style="color: rgba(255,255,255,0.8); font-size: 0.8rem; display: block; margin-bottom: 4px;">Base Year</label>
+                                <select id="yoyBaseSelect" onchange="renderYearlyView(this.value, document.getElementById('yoyTargetSelect').value)"
+                                    style="padding: 8px 14px; border-radius: 8px; border: none; font-weight: 600; background: white; color: #1e3a5f; cursor: pointer;">
+                                    ${baseOptions}
+                                </select>
+                            </div>
+                            <div style="color: white; font-size: 1.4rem; font-weight: 700; margin-top: 16px;">→</div>
+                            <div>
+                                <label style="color: rgba(255,255,255,0.8); font-size: 0.8rem; display: block; margin-bottom: 4px;">Compare To</label>
+                                <select id="yoyTargetSelect" onchange="renderYearlyView(document.getElementById('yoyBaseSelect').value, this.value)"
+                                    style="padding: 8px 14px; border-radius: 8px; border: none; font-weight: 600; background: white; color: #1e3a5f; cursor: pointer;">
+                                    ${targetOptions}
+                                </select>
+                            </div>
+                        </div>
+                        <div style="margin-left: auto; color: rgba(255,255,255,0.85); font-size: 0.85rem; font-style: italic;">
+                            Showing: ${base.label} vs ${target.label}
+                        </div>
+                    </div>
+                </div>`;
 
             const insightsHTML = `
                 <div class="insights-section">
-                    <h3><i class="bi bi-lightbulb-fill"></i> Year-over-Year Insights</h3>
+                    <h3><i class="bi bi-lightbulb-fill"></i> Year-over-Year Insights (${base.label} → ${target.label})</h3>
                     <div class="insight-item">
                         <h4>${yoyChange >= 0 ? '📈 Year-over-Year Improvement' : '📉 Year-over-Year Decline'}</h4>
-                        <p>FY 25-26 shows a ${Math.abs(yoyChange).toFixed(1)}% ${yoyChange >= 0 ? 'improvement' : 'decline'} compared to FY 24-25. This represents a ${Math.abs(yoyPercent)}% ${yoyChange >= 0 ? 'increase' : 'decrease'} in compliance rate.</p>
+                        <p>${target.label} shows a ${Math.abs(yoyChange).toFixed(1)}% ${yoyChange >= 0 ? 'improvement' : 'decline'} compared to ${base.label}. This represents a ${Math.abs(yoyPercent)}% ${yoyChange >= 0 ? 'increase' : 'decrease'} in compliance rate.</p>
                     </div>
                     <div class="insight-item">
                         <h4>🎯 Performance Trajectory</h4>
                         <p>${yoyChange >= 0 ? 'Positive momentum indicates effective strategies. Continue current initiatives and consider scaling successful practices.' : 'Declining trend requires immediate attention. Conduct root cause analysis and implement corrective measures.'}</p>
                     </div>
+                    ${target.metrics.totalMeasures === 0 ? '<div class="insight-item"><h4>⚠️ No Data Available</h4><p>No data found for the selected year. Please check that data is loaded and filters are set correctly.</p></div>' : ''}
                 </div>`;
-            
+
+            // All 3 FY metrics table
+            const allFyTable = `
+                <div style="margin-top: 20px;">
+                    <h4 style="margin-bottom: 12px; color: var(--text-primary);">All Fiscal Years at a Glance</h4>
+                    <table style="width: 100%; border-collapse: collapse;">
+                        <thead>
+                            <tr style="background: var(--light-color);">
+                                <th style="padding: 10px; text-align: left;">Fiscal Year</th>
+                                <th style="padding: 10px; text-align: center;">SLAs Met</th>
+                                <th style="padding: 10px; text-align: center;">SLAs Not Met</th>
+                                <th style="padding: 10px; text-align: center;">Compliance %</th>
+                                <th style="padding: 10px; text-align: center;">vs Prev Year</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td style="padding: 10px; font-weight: 700; color: #9CA3AF;">FY 24-25</td>
+                                <td style="padding: 10px; text-align: center;">${fy24Metrics.totalMet}</td>
+                                <td style="padding: 10px; text-align: center;">${fy24Metrics.totalNotMet}</td>
+                                <td style="padding: 10px; text-align: center; font-weight: 700; color: #9CA3AF;">${fy24Metrics.compliance}%</td>
+                                <td style="padding: 10px; text-align: center; color: var(--text-secondary);">Base Year</td>
+                            </tr>
+                            <tr style="background: rgba(255,107,53,0.04);">
+                                <td style="padding: 10px; font-weight: 700; color: #ff6b35;">FY 25-26</td>
+                                <td style="padding: 10px; text-align: center;">${fy25Metrics.totalMet}</td>
+                                <td style="padding: 10px; text-align: center;">${fy25Metrics.totalNotMet}</td>
+                                <td style="padding: 10px; text-align: center; font-weight: 700; color: #ff6b35;">${fy25Metrics.compliance}%</td>
+                                <td style="padding: 10px; text-align: center; font-weight: 700; color: ${(fy25Metrics.compliance - fy24Metrics.compliance) >= 0 ? 'var(--success-color)' : 'var(--danger-color)'};">
+                                    ${(fy25Metrics.compliance - fy24Metrics.compliance) >= 0 ? '+' : ''}${(fy25Metrics.compliance - fy24Metrics.compliance).toFixed(1)}%
+                                </td>
+                            </tr>
+                            <tr style="background: rgba(14,165,233,0.04);">
+                                <td style="padding: 10px; font-weight: 700; color: #0ea5e9;">FY 26-27</td>
+                                <td style="padding: 10px; text-align: center;">${fy26Metrics.totalMet}</td>
+                                <td style="padding: 10px; text-align: center;">${fy26Metrics.totalNotMet}</td>
+                                <td style="padding: 10px; text-align: center; font-weight: 700; color: #0ea5e9;">${fy26Metrics.compliance > 0 ? fy26Metrics.compliance + '%' : '—'}</td>
+                                <td style="padding: 10px; text-align: center; font-weight: 700; color: ${fy26Metrics.compliance > 0 ? ((fy26Metrics.compliance - fy25Metrics.compliance) >= 0 ? 'var(--success-color)' : 'var(--danger-color)') : 'var(--text-secondary)'};">
+                                    ${fy26Metrics.compliance > 0 ? ((fy26Metrics.compliance - fy25Metrics.compliance) >= 0 ? '+' : '') + (fy26Metrics.compliance - fy25Metrics.compliance).toFixed(1) + '%' : '—'}
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>`;
+
             const html = `
+                ${selectorHTML}
                 ${insightsHTML}
                 <div class="dashboard-grid">
                     <div class="card">
-                        <h3><i class="bi bi-calendar-year"></i> Year-over-Year Comparison</h3>
+                        <h3><i class="bi bi-calendar-year"></i> Year-over-Year Comparison (${base.label} vs ${target.label})</h3>
                         <div class="chart-container">
                             <canvas id="yearlyChart"></canvas>
                         </div>
@@ -8824,39 +8957,42 @@ function showView(view) {
                     <div class="card">
                         <h3><i class="bi bi-bar-chart"></i> Comparison Metrics</h3>
                         <div style="margin-top: 20px;">
-                            <div style="display: flex; justify-content: space-between; padding: 15px; background: var(--light-color); border-radius: 8px; margin-bottom: 10px;">
-                                <span>FY 24-25 Compliance:</span>
-                                <strong style="color: #ff6b35;">${fy24Metrics.compliance}%</strong>
+                            <div style="display: flex; justify-content: space-between; padding: 15px; background: var(--light-color); border-radius: 8px; margin-bottom: 10px; border-left: 4px solid ${base.color};">
+                                <span>${base.label} Compliance:</span>
+                                <strong style="color: ${base.color};">${base.metrics.compliance}%</strong>
                             </div>
-                            <div style="display: flex; justify-content: space-between; padding: 15px; background: var(--light-color); border-radius: 8px; margin-bottom: 10px;">
-                                <span>FY 25-26 Compliance:</span>
-                                <strong style="color: var(--primary-color);">${fy25Metrics.compliance}%</strong>
+                            <div style="display: flex; justify-content: space-between; padding: 15px; background: var(--light-color); border-radius: 8px; margin-bottom: 10px; border-left: 4px solid ${target.color};">
+                                <span>${target.label} Compliance:</span>
+                                <strong style="color: ${target.color};">${target.metrics.compliance > 0 ? target.metrics.compliance + '%' : 'N/A (no data)'}</strong>
                             </div>
-                            <div style="display: flex; justify-content: space-between; padding: 15px; background: ${yoyChange >= 0 ? 'rgba(16, 185, 129, 0.1)' : 'rgba(239, 68, 68, 0.1)'}; border-radius: 8px;">
+                            <div style="display: flex; justify-content: space-between; padding: 15px; background: ${yoyChange >= 0 ? 'rgba(16, 185, 129, 0.1)' : 'rgba(239, 68, 68, 0.1)'}; border-radius: 8px; margin-bottom: 10px;">
                                 <span>Year-over-Year Change:</span>
                                 <strong class="${yoyChange >= 0 ? 'improvement-badge' : 'decline-badge'}">${yoyChange >= 0 ? '+' : ''}${yoyChange.toFixed(1)}%</strong>
                             </div>
+                            ${allFyTable}
                         </div>
                     </div>
                 </div>
             `;
-            
+
             document.getElementById('dashboardContent').innerHTML = html;
-            
+
             if (audioEnabled) {
-                speak(`Year over year analysis loaded. ${yoyChange >= 0 ? 'Improvement' : 'Decline'} of ${Math.abs(yoyChange).toFixed(1)} percent observed.`);
+                speak(`Year over year analysis loaded comparing ${base.label} to ${target.label}. ${yoyChange >= 0 ? 'Improvement' : 'Decline'} of ${Math.abs(yoyChange).toFixed(1)} percent observed.`);
             }
-            
+
             const ctx = document.getElementById('yearlyChart').getContext('2d');
             charts.yearly = new Chart(ctx, {
-                type: 'doughnut',
+                type: 'bar',
                 data: {
-                    labels: ['FY 24-25', 'FY 25-26'],
+                    labels: [base.label, target.label],
                     datasets: [{
-                        data: [fy24Metrics.compliance, fy25Metrics.compliance],
-                        backgroundColor: ['#9CA3AF', '#ff6b35'],
+                        label: 'Compliance %',
+                        data: [base.metrics.compliance, target.metrics.compliance],
+                        backgroundColor: [base.color, target.color],
                         borderWidth: 3,
-                        borderColor: '#fff'
+                        borderColor: '#fff',
+                        borderRadius: 8
                     }]
                 },
                 options: {
@@ -8866,11 +9002,19 @@ function showView(view) {
                         datalabels: {
                             display: true,
                             color: '#ffffff',
-                            backgroundColor: 'rgba(0, 0, 0, 0.7)',
+                            backgroundColor: 'rgba(0,0,0,0.65)',
                             borderRadius: 6,
-                            padding: { top: 6, bottom: 6, left: 8, right: 8 },
-                            font: { weight: 'bold', size: 18 },
-                            formatter: (value) => value + '%'
+                            padding: { top: 6, bottom: 6, left: 10, right: 10 },
+                            font: { weight: 'bold', size: 20 },
+                            formatter: (value) => value > 0 ? value + '%' : 'N/A'
+                        },
+                        legend: { display: false }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true, max: 100,
+                            ticks: { callback: v => v + '%', stepSize: 20 },
+                            grid: { display: false }
                         }
                     }
                 }
@@ -13344,16 +13488,18 @@ function showView(view) {
         }
 
         function drilldownFY2526() {
-            const accountData = calculateAccountMetrics(filteredData.fy25_26, 'fy25_26');
+            const drillFY = (filteredData.fy26_27 || []).length > 0 ? 'fy26_27' : (filteredData.fy25_26 || []).length > 0 ? 'fy25_26' : 'fy24_25';
+            const drillFYLabel = drillFY === 'fy26_27' ? 'FY 26-27' : drillFY === 'fy25_26' ? 'FY 25-26' : 'FY 24-25';
+            const accountData = calculateAccountMetrics(filteredData[drillFY] || [], drillFY);
             
             let tableHTML = `
                 <div class="drilldown-header">
-                    <h2>🏢 FY 25-26 Account-Level Compliance</h2>
+                    <h2>🏢 ${drillFYLabel} Account-Level Compliance</h2>
                     <p>Individual project performance breakdown</p>
                 </div>
                 <div class="breadcrumb">
                     <a href="#" onclick="closeDrilldown(); return false;">Overview</a> → 
-                    <span>FY 25-26 Project Details</span>
+                    <span>${drillFYLabel} Project Details</span>
                 </div>
                 <table class="drilldown-table">
                     <thead>
@@ -13400,47 +13546,78 @@ function showView(view) {
                         <li><strong>Accounts Above 75%:</strong> ${accountData.filter(a => a.compliance >= 75).length} of ${accountData.length}</li>
                         <li><strong>Accounts Below 50%:</strong> ${accountData.filter(a => a.compliance < 50).length} accounts require immediate action</li>
                     </ul>
-                    <p style="margin-top: 15px; font-style: italic; color: #666;">💡 Tip: Click on any account row to see month-by-month details</p>
+                    <p style="margin-top: 15px; font-style: italic; color: #666;">💡 Tip: Click on any account row to see month-by-month details for the most recent fiscal year</p>
                 </div>
             `;
             
             openDrilldown(tableHTML);
         }
 
-        // Drill-Down: Individual Project Details
+        // Drill-Down: Individual Project Details (respects active FY filter)
         function drilldownAccount(accountName) {
-            const accountDataFY25 = filteredData.fy25_26.filter(row => row.Project === accountName)[0];
-            
-            if (!accountDataFY25) {
-                alert('Account data not found');
-                return;
+            // Show all FYs with data for this account
+            const allFYs = [
+                { key: 'fy24_25', label: 'FY 24-25', color: '#9CA3AF', data: filteredData.fy24_25 || [] },
+                { key: 'fy25_26', label: 'FY 25-26', color: '#ff6b35', data: filteredData.fy25_26 || [] },
+                { key: 'fy26_27', label: 'FY 26-27', color: '#0ea5e9', data: filteredData.fy26_27 || [] }
+            ].filter(fy => fy.data.length > 0);
+
+            // Find account row from most recent FY
+            let accountRow = null;
+            let activeLabel = '';
+            for (let i = allFYs.length - 1; i >= 0; i--) {
+                const row = allFYs[i].data.filter(r => r.Project === accountName)[0];
+                if (row) { accountRow = row; activeLabel = allFYs[i].label; break; }
             }
-            
-            const months = ['Apr', 'May', 'June', 'July', 'Aug', 'Sep'];
-            
+
+            if (!accountRow) {
+                // Try across all raw data
+                const allRows = [...(filteredData.fy24_25||[]), ...(filteredData.fy25_26||[]), ...(filteredData.fy26_27||[])];
+                accountRow = allRows.find(r => r.Project === accountName) || {};
+                activeLabel = 'All FYs';
+            }
+
             let tableHTML = `
                 <div class="drilldown-header">
                     <h2>🏢 ${accountName} - Detailed Analysis</h2>
-                    <p>Complete performance overview and trends</p>
+                    <p>Month-by-month performance across all fiscal years</p>
                 </div>
                 <div class="breadcrumb">
                     <a href="#" onclick="closeDrilldown(); return false;">Overview</a> → 
-                    <a href="#" onclick="drilldownFY2526(); return false;">FY 25-26 Accounts</a> → 
+                    <a href="#" onclick="drilldownFY2526(); return false;">Account Overview</a> → 
                     <span>${accountName}</span>
                 </div>
                 
                 <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 30px;">
                     <div style="background: linear-gradient(135deg, #ff6b35, #ff8c5a); color: white; padding: 20px; border-radius: 10px;">
                         <div style="font-size: 0.9em; opacity: 0.9;">Region</div>
-                        <div style="font-size: 1.5em; font-weight: bold; margin-top: 5px;">${accountDataFY25.Region || 'N/A'}</div>
+                        <div style="font-size: 1.5em; font-weight: bold; margin-top: 5px;">${accountRow.Region || 'N/A'}</div>
                     </div>
                     <div style="background: linear-gradient(135deg, #ff8c5a, #ffb084); color: white; padding: 20px; border-radius: 10px;">
                         <div style="font-size: 0.9em; opacity: 0.9;">Practice Head</div>
-                        <div style="font-size: 1.5em; font-weight: bold; margin-top: 5px;">${accountDataFY25['Practice Head'] || 'N/A'}</div>
+                        <div style="font-size: 1.5em; font-weight: bold; margin-top: 5px;">${accountRow['Practice Head'] || 'N/A'}</div>
                     </div>
-                </div>
-                
-                <h3 style="margin-top: 30px;">📅 Monthly Performance (FY 25-26)</h3>
+                </div>`;
+
+            // For each FY, show monthly breakdown
+            const allMonthsOrdered = ['Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec', 'Jan', 'Feb', 'Mar'];
+
+            allFYs.forEach(fy => {
+                const fyRows = fy.data.filter(r => r.Project === accountName);
+                if (fyRows.length === 0) return;
+                const fyRow = fyRows[0];
+
+                // Get months that have any data for this FY
+                const fyMonths = extractMonthsFromData(
+                    fy.key === 'fy24_25' ? fy.data : null,
+                    fy.key === 'fy25_26' ? fy.data : null,
+                    fy.key === 'fy26_27' ? fy.data : null
+                );
+                const monthsToShow = allMonthsOrdered.filter(m => fyMonths.includes(m));
+                if (monthsToShow.length === 0) return;
+
+                tableHTML += `
+                <h3 style="margin-top: 24px; color: ${fy.color}; border-left: 4px solid ${fy.color}; padding-left: 12px;">📅 Monthly Performance (${fy.label})</h3>
                 <table class="drilldown-table">
                     <thead>
                         <tr>
@@ -13452,44 +13629,43 @@ function showView(view) {
                             <th>Status</th>
                         </tr>
                     </thead>
-                    <tbody>
-            `;
-            
-            months.forEach(month => {
-                const met = getMonthData(accountDataFY25, month, 'fy25_26', 'Met');
-                const notMet = getMonthData(accountDataFY25, month, 'fy25_26', 'Not_Met');
-                const total = met + notMet;
-                const compliance = total > 0 ? ((met / total) * 100).toFixed(1) : 0;
-                const status = compliance >= 75 ? 'high' : compliance >= 50 ? 'medium' : 'low';
-                const icon = compliance >= 75 ? '✅' : compliance >= 50 ? '⚠️' : '❌';
-                
-                tableHTML += `
-                    <tr>
-                        <td><strong>${month}</strong></td>
-                        <td>${met}</td>
-                        <td>${notMet}</td>
-                        <td>${total}</td>
-                        <td><span class="drilldown-metric ${status}">${compliance}%</span></td>
-                        <td>${icon}</td>
-                    </tr>
-                `;
+                    <tbody>`;
+
+                monthsToShow.forEach(month => {
+                    const met = getMonthData(fyRow, month, fy.key, 'Met');
+                    const notMet = getMonthData(fyRow, month, fy.key, 'Not_Met');
+                    const total = met + notMet;
+                    if (total === 0) return;
+                    const compliance = ((met / total) * 100).toFixed(1);
+                    const status = compliance >= 75 ? 'high' : compliance >= 50 ? 'medium' : 'low';
+                    const icon = compliance >= 75 ? '✅' : compliance >= 50 ? '⚠️' : '❌';
+
+                    tableHTML += `
+                        <tr>
+                            <td><strong>${month}</strong></td>
+                            <td>${met}</td>
+                            <td>${notMet}</td>
+                            <td>${total}</td>
+                            <td><span class="drilldown-metric ${status}">${compliance}%</span></td>
+                            <td>${icon}</td>
+                        </tr>`;
+                });
+                tableHTML += `</tbody></table>`;
             });
-            
-            tableHTML += `
-                    </tbody>
-                </table>
-            `;
             
             openDrilldown(tableHTML);
         }
 
         // Drill-Down: SLAs Met → Regional Distribution
         function drilldownSLAsMet() {
-            const regionData = calculateRegionMetrics(filteredData.fy25_26, 'fy25_26');
+            // Use most recent FY that has data
+            const drillFY = (filteredData.fy26_27 || []).length > 0 ? 'fy26_27' : (filteredData.fy25_26 || []).length > 0 ? 'fy25_26' : 'fy24_25';
+            const drillFYLabel = drillFY === 'fy26_27' ? 'FY 26-27' : drillFY === 'fy25_26' ? 'FY 25-26' : 'FY 24-25';
+            const regionData = calculateRegionMetrics(filteredData[drillFY], drillFY);
             
             let tableHTML = `
                 <div class="drilldown-header">
-                    <h2>🌍 Regional SLA Distribution (FY 25-26)</h2>
+                    <h2>🌍 Regional SLA Distribution (${drillFYLabel})</h2>
                     <p>How SLAs are distributed across regions</p>
                 </div>
                 <div class="breadcrumb">
@@ -13516,7 +13692,7 @@ function showView(view) {
             regionData.forEach(region => {
                 const status = region.compliance >= 75 ? 'high' : region.compliance >= 50 ? 'medium' : 'low';
                 const icon = region.compliance >= 75 ? '🌟' : region.compliance >= 50 ? '⚠️' : '🔴';
-                const accountCount = filteredData.fy25_26.filter(row => row.Region === region.region).length;
+                const accountCount = (filteredData[drillFY] || []).filter(row => row.Region === region.region).length;
                 
                 tableHTML += `
                     <tr onclick="drilldownRegion('${region.region}')" style="cursor: pointer;" title="Click for regional details">
@@ -13549,16 +13725,32 @@ function showView(view) {
             openDrilldown(tableHTML);
         }
 
-        // Drill-Down: YoY Change → Quarterly Analysis
+        // Drill-Down: YoY Change → All Quarterly Analysis across 3 FYs
         function drilldownYoY() {
-            const q1FY24 = calculateQuarterlyMetrics(filteredData.fy24_25, 'fy24_25', 'Q1');
-            const q2FY24 = calculateQuarterlyMetrics(filteredData.fy24_25, 'fy24_25', 'Q2');
-            const q1FY25 = calculateQuarterlyMetrics(filteredData.fy25_26, 'fy25_26', 'Q1');
-            
+            const qNames = ['Q1', 'Q2', 'Q3', 'Q4'];
+            const allFYConfig = [
+                { key: 'fy24_25', label: 'FY 24-25', color: '#9CA3AF', data: filteredData.fy24_25 || [] },
+                { key: 'fy25_26', label: 'FY 25-26', color: '#ff6b35', data: filteredData.fy25_26 || [] },
+                { key: 'fy26_27', label: 'FY 26-27', color: '#0ea5e9', data: filteredData.fy26_27 || [] }
+            ].filter(fy => fy.data.length > 0);
+
+            // Build all quarters across all FYs
+            let allRows = [];
+            let prevData = null;
+            allFYConfig.forEach(fy => {
+                qNames.forEach((qName, qi) => {
+                    const qData = calculateQuarterlyMetrics(fy.data, fy.key, qName);
+                    if (qData.total > 0) {
+                        allRows.push({ name: `${qName} ${fy.label}`, color: fy.color, data: qData, prev: prevData });
+                        prevData = qData;
+                    }
+                });
+            });
+
             let tableHTML = `
                 <div class="drilldown-header">
-                    <h2>📈 Quarter-over-Quarter YoY Analysis</h2>
-                    <p>Detailed quarterly performance comparison</p>
+                    <h2>📈 Quarter-over-Quarter YoY Analysis (All FYs)</h2>
+                    <p>Quarterly compliance across FY 24-25, FY 25-26, and FY 26-27</p>
                 </div>
                 <div class="breadcrumb">
                     <a href="#" onclick="closeDrilldown(); return false;">Overview</a> → 
@@ -13572,60 +13764,56 @@ function showView(view) {
                             <th>Not Met</th>
                             <th>Total</th>
                             <th>Compliance %</th>
-                            <th>QoQ Change</th>
+                            <th>vs Prev Quarter</th>
                             <th>Status</th>
                         </tr>
                     </thead>
-                    <tbody>
-            `;
-            
-            const quarters = [
-                { name: 'Q1 FY 24-25', data: q1FY24, prev: null },
-                { name: 'Q2 FY 24-25', data: q2FY24, prev: q1FY24 },
-                { name: 'Q1 FY 25-26', data: q1FY25, prev: q2FY24 }
-            ];
-            
-            quarters.forEach(q => {
+                    <tbody>`;
+
+            allRows.forEach(q => {
                 const status = q.data.compliance >= 75 ? 'high' : q.data.compliance >= 50 ? 'medium' : 'low';
                 const icon = q.data.compliance >= 75 ? '✅' : q.data.compliance >= 50 ? '⚠️' : '❌';
-                const qoqChange = q.prev ? (q.data.compliance - q.prev.compliance).toFixed(1) : 'N/A';
-                const qoqIcon = qoqChange !== 'N/A' ? (qoqChange >= 0 ? '📈' : '📉') : '';
-                
+                const qoqChange = q.prev ? (q.data.compliance - q.prev.compliance).toFixed(1) : 'Base';
+                const qoqIcon = qoqChange !== 'Base' ? (parseFloat(qoqChange) >= 0 ? '📈' : '📉') : '';
                 tableHTML += `
                     <tr>
-                        <td><strong>${q.name}</strong></td>
+                        <td><strong style="color: ${q.color};">${q.name}</strong></td>
                         <td>${q.data.totalMet}</td>
                         <td>${q.data.totalNotMet}</td>
                         <td>${q.data.total}</td>
                         <td><span class="drilldown-metric ${status}">${q.data.compliance}%</span></td>
-                        <td>${qoqChange !== 'N/A' ? qoqChange + '%' : 'N/A'} ${qoqIcon}</td>
+                        <td style="font-weight: bold; color: ${qoqChange !== 'Base' ? (parseFloat(qoqChange) >= 0 ? 'var(--success-color)' : 'var(--danger-color)') : 'var(--text-secondary)'};">
+                            ${qoqChange !== 'Base' ? (parseFloat(qoqChange) >= 0 ? '+' : '') + qoqChange + '% ' + qoqIcon : '— (Base)'}
+                        </td>
                         <td>${icon}</td>
-                    </tr>
-                `;
+                    </tr>`;
             });
-            
+
+            const bestRow = allRows.length > 0 ? allRows.reduce((best, q) => q.data.compliance > best.data.compliance ? q : best) : null;
             tableHTML += `
                     </tbody>
                 </table>
                 <div style="margin-top: 30px; padding: 20px; background: #f8f9fa; border-radius: 10px;">
                     <h4>📊 YoY Quarterly Insights:</h4>
                     <ul style="line-height: 1.8;">
-                        <li><strong>Overall YoY Change:</strong> ${(q1FY25.compliance - q1FY24.compliance).toFixed(1)}% (${q1FY25.compliance >= q1FY24.compliance ? 'Improvement' : 'Decline'})</li>
-                        <li><strong>Best Quarter:</strong> ${quarters.reduce((best, q) => q.data.compliance > best.data.compliance ? q : best).name}</li>
+                        ${bestRow ? '<li><strong>Best Quarter:</strong> ' + bestRow.name + ' (' + bestRow.data.compliance + '%)</li>' : ''}
+                        ${allRows.length >= 2 ? '<li><strong>Overall Trend:</strong> ' + (allRows[allRows.length-1].data.compliance >= allRows[0].data.compliance ? '📈 Improving' : '📉 Declining') + ' (' + (allRows[allRows.length-1].data.compliance - allRows[0].data.compliance).toFixed(1) + '% since first quarter)</li>' : ''}
+                        <li><strong>Total Quarters Analyzed:</strong> ${allRows.length} quarters across ${allFYConfig.length} fiscal year(s)</li>
                     </ul>
-                </div>
-            `;
-            
+                </div>`;
+
             openDrilldown(tableHTML);
         }
 
         // Drill-Down: Region Details
         function drilldownRegion(regionName) {
-            const regionAccounts = filteredData.fy25_26.filter(row => row.Region === regionName);
+            const drillFY = (filteredData.fy26_27 || []).length > 0 ? 'fy26_27' : (filteredData.fy25_26 || []).length > 0 ? 'fy25_26' : 'fy24_25';
+            const drillFYLabel = drillFY === 'fy26_27' ? 'FY 26-27' : drillFY === 'fy25_26' ? 'FY 25-26' : 'FY 24-25';
+            const regionAccounts = (filteredData[drillFY] || []).filter(row => row.Region === regionName);
             
             let tableHTML = `
                 <div class="drilldown-header">
-                    <h2>🌍 ${regionName} - Project Details</h2>
+                    <h2>🌍 ${regionName} - Project Details (${drillFYLabel})</h2>
                     <p>All accounts in this region</p>
                 </div>
                 <div class="breadcrumb">
@@ -13647,7 +13835,7 @@ function showView(view) {
                     <tbody>
             `;
             
-            const accountMetrics = calculateAccountMetrics(regionAccounts, 'fy25_26');
+            const accountMetrics = calculateAccountMetrics(regionAccounts, drillFY);
             accountMetrics.sort((a, b) => b.compliance - a.compliance);
             
             accountMetrics.forEach(account => {
