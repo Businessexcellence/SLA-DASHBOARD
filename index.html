@@ -9346,19 +9346,47 @@ function showView(view) {
             const fy24months = extractMonthsFromData(filteredData.fy24_25 || null, null, null);
             const fy25months = extractMonthsFromData(null, filteredData.fy25_26 || null, null);
             const fy26months = extractMonthsFromData(null, null, filteredData.fy26_27 || null);
-            
+
+            // Build crossFY25: raw FY25-26 data with non-FY filters applied (so accounts not in
+            // the current FY filter still appear in the comparison table)
+            const rawFY24acc = (rawData && rawData.fy24_25) ? rawData.fy24_25 : (filteredData.fy24_25 || []);
+            const rawFY25acc = (rawData && rawData.fy25_26) ? rawData.fy25_26 : (filteredData.fy25_26 || []);
+            const rawFY26acc = (rawData && rawData.fy26_27) ? rawData.fy26_27 : (filteredData.fy26_27 || []);
+            function applyNonFYFiltersAcc(rows) {
+                let result = rows;
+                if (activeFilters.regionalHead && activeFilters.regionalHead.length > 0) {
+                    result = result.filter(row => {
+                        const rh = row['Regional Head '] || row['Regional Head'];
+                        return activeFilters.regionalHead.includes(rh);
+                    });
+                }
+                if (activeFilters.region && activeFilters.region.length > 0) {
+                    result = result.filter(row => activeFilters.region.includes(row.Region));
+                }
+                if (activeFilters.practice && activeFilters.practice.length > 0) {
+                    result = result.filter(row => activeFilters.practice.includes(row['Practice Head']));
+                }
+                if (activeFilters.account && activeFilters.account.length > 0) {
+                    result = result.filter(row => activeFilters.account.includes(row.Project));
+                }
+                return result;
+            }
+            const crossFY25acc = applyNonFYFiltersAcc(rawFY25acc);
+            const crossFY24acc = applyNonFYFiltersAcc(rawFY24acc);
+            const crossFY26acc = applyNonFYFiltersAcc(rawFY26acc);
+
             let accountsData = [];
 
-            // Get unique accounts
+            // Get unique accounts across all FYs (using raw cross-FY data so all projects are visible)
             const uniqueAccounts = new Set([
-                ...(filteredData.fy24_25 || []).map(row => row.Project),
-                ...(filteredData.fy25_26 || []).map(row => row.Project),
-                ...(filteredData.fy26_27 || []).map(row => row.Project)
+                ...crossFY24acc.map(row => row.Project),
+                ...crossFY25acc.map(row => row.Project),
+                ...crossFY26acc.map(row => row.Project)
             ]);
 
             uniqueAccounts.forEach(accountName => {
                 // FY 24-25 data
-                const fy24Rows = filteredData.fy24_25.filter(row => row.Project === accountName);
+                const fy24Rows = crossFY24acc.filter(row => row.Project === accountName);
                 let fy24Met = 0, fy24NotMet = 0;
                 fy24months.forEach(month => {
                     fy24Rows.forEach(row => {
@@ -9369,8 +9397,8 @@ function showView(view) {
                 const fy24Total = fy24Met + fy24NotMet;
                 const fy24Compliance = fy24Total > 0 ? parseFloat(((fy24Met / fy24Total) * 100).toFixed(1)) : 0;
 
-                // FY 25-26 data — always from crossFY25 (raw + non-FY filters)
-                const fy25Rows = crossFY25.filter(row => row.Project === accountName);
+                // FY 25-26 data — from crossFY25acc (raw + non-FY filters)
+                const fy25Rows = crossFY25acc.filter(row => row.Project === accountName);
                 let fy25Met = 0, fy25NotMet = 0;
                 fy25months.forEach(month => {
                     fy25Rows.forEach(row => {
@@ -9381,8 +9409,8 @@ function showView(view) {
                 const fy25Total = fy25Met + fy25NotMet;
                 const fy25Compliance = fy25Total > 0 ? parseFloat(((fy25Met / fy25Total) * 100).toFixed(1)) : 0;
 
-                // FY 26-27 data
-                const fy26Rows = (filteredData.fy26_27 || []).filter(row => row.Project === accountName);
+                // FY 26-27 data — from crossFY26acc (raw + non-FY filters)
+                const fy26Rows = crossFY26acc.filter(row => row.Project === accountName);
                 let fy26Met = 0, fy26NotMet = 0;
                 fy26months.forEach(month => {
                     fy26Rows.forEach(row => {
@@ -9394,7 +9422,7 @@ function showView(view) {
                 const fy26Compliance = fy26Total > 0 ? parseFloat(((fy26Met / fy26Total) * 100).toFixed(1)) : 0;
 
                 // Get region and practice from any available FY
-                const sampleRow = fy24Rows.length > 0 ? fy24Rows[0] : (fy25Rows.length > 0 ? fy25Rows[0] : (fy26Rows.length > 0 ? fy26Rows[0] : null));
+                const sampleRow = fy26Rows.length > 0 ? fy26Rows[0] : (fy25Rows.length > 0 ? fy25Rows[0] : (fy24Rows.length > 0 ? fy24Rows[0] : null));
                 
                 if (sampleRow) {
                     accountsData.push({
@@ -9431,7 +9459,6 @@ function showView(view) {
                 </div>`;
 
             let tableHTML = `
-                ${insightsHTML}
                 <div class="card">
                     <h3><i class="bi bi-building"></i> Account-Wise FY Comparison</h3>
                     <table>
@@ -9487,7 +9514,7 @@ function showView(view) {
                     </div>
                 </div>`;
             
-            document.getElementById('dashboardContent').innerHTML = insightsHTML + chartHTML + tableHTML.replace(insightsHTML, '');
+            document.getElementById('dashboardContent').innerHTML = insightsHTML + chartHTML + tableHTML;
 
             if (audioEnabled) {
                 speak(`Account comparison loaded. ${accountsData.length} accounts analyzed. ${improvingAccounts} accounts improving, ${decliningAccounts} accounts declining.`);
