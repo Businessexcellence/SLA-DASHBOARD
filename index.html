@@ -7368,12 +7368,13 @@ function showView(view) {
                                     const isActive = (window.execViewState.rankFY || 'auto') === fy;
                                     const hasData = fy === 'auto' || (filteredData[fy]||[]).length > 0;
                                     if (!hasData) return '';
-                                    return \`<button onclick="setExecRankFY('\${fy}')"
-                                        style="padding: 5px 14px; border-radius: 20px; border: 2px solid \${color};
-                                               background: \${isActive ? color : 'transparent'};
-                                               color: \${isActive ? '#fff' : color};
-                                               font-weight: 700; font-size: 0.82em; cursor: pointer;
-                                               transition: all 0.2s ease;">\${label}</button>\`;
+                                    const bg = isActive ? color : 'transparent';
+                                    const fg = isActive ? '#fff' : color;
+                                    return '<button onclick="setExecRankFY(\'' + fy + '\')"'
+                                        + ' style="padding:5px 14px;border-radius:20px;border:2px solid ' + color + ';'
+                                        + 'background:' + bg + ';color:' + fg + ';'
+                                        + 'font-weight:700;font-size:0.82em;cursor:pointer;transition:all 0.2s ease;">'
+                                        + label + '</button>';
                                 }).join('')}
                             </div>
                         </div>
@@ -7395,12 +7396,13 @@ function showView(view) {
                                 ].map(opt => {
                                     if (opt.disabled) return '';
                                     const isActive = (window.execViewState.comparePair || 'auto') === opt.key;
-                                    return \`<button onclick="setExecComparePair('\${opt.key}')"
-                                        style="padding: 5px 14px; border-radius: 20px; border: 2px solid \${opt.color};
-                                               background: \${isActive ? opt.color : 'transparent'};
-                                               color: \${isActive ? '#fff' : opt.color};
-                                               font-weight: 700; font-size: 0.82em; cursor: pointer;
-                                               transition: all 0.2s ease;">\${opt.label}</button>\`;
+                                    const bg2 = isActive ? opt.color : 'transparent';
+                                    const fg2 = isActive ? '#fff' : opt.color;
+                                    return '<button onclick="setExecComparePair(\'' + opt.key + '\')"'
+                                        + ' style="padding:5px 14px;border-radius:20px;border:2px solid ' + opt.color + ';'
+                                        + 'background:' + bg2 + ';color:' + fg2 + ';'
+                                        + 'font-weight:700;font-size:0.82em;cursor:pointer;transition:all 0.2s ease;">'
+                                        + opt.label + '</button>';
                                 }).join('')}
                             </div>
                         </div>
@@ -7421,7 +7423,7 @@ function showView(view) {
                             <strong>FY 2025-26:</strong> ${fy25Metrics.compliance}% &nbsp;|&nbsp;
                             <strong>FY 2026-27:</strong> ${fy26Metrics.compliance > 0 ? fy26Metrics.compliance + '%' : 'N/A'} &nbsp;|&nbsp;
                             <span class="${yoyChange >= 0 ? 'improvement-badge' : 'decline-badge'}">${yoyChange >= 0 ? '↑' : '↓'} ${Math.abs(yoyChange).toFixed(1)}% (FY24→FY25)</span>
-                            ${fy26Metrics.compliance > 0 ? \`&nbsp;|&nbsp;<span class="\${yoy2526vs2627 >= 0 ? 'improvement-badge' : 'decline-badge'}">\${yoy2526vs2627 >= 0 ? '↑' : '↓'} \${Math.abs(yoy2526vs2627).toFixed(1)}% (FY25→FY26)</span>\` : ''}
+                            ${fy26Metrics.compliance > 0 ? '&nbsp;|&nbsp;<span class="' + (yoy2526vs2627 >= 0 ? 'improvement-badge' : 'decline-badge') + '">' + (yoy2526vs2627 >= 0 ? '↑' : '↓') + ' ' + Math.abs(yoy2526vs2627).toFixed(1) + '% (FY25→FY26)</span>' : ''}
                         </p>
                     </div>
                 </div>
