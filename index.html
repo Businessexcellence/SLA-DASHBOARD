@@ -4570,7 +4570,8 @@ let rawData = null;
         let fy2425NotReportedData = [];
         let fy2526NotReportedData = [];
         let fy2627NotReportedData = [];
-        let metricsDetailsData = [];  // FY 25-26 Metrics Details for drill-down
+        let metricsDetailsData = [];  // FY 26-27 Metrics Details for drill-down (primary)
+        let metricsDetails2526Data = [];  // FY 25-26 Metrics Details for tiles/monthly chart
         let parsedData = null;
         let filteredData = null;
         let currentView = 'overview';
@@ -4581,6 +4582,7 @@ let rawData = null;
         
         // Make metricsDetailsData globally accessible for debugging
         window.metricsDetailsData = metricsDetailsData;
+        window.metricsDetails2526Data = metricsDetails2526Data;
 
         let audioLanguage = 'en-US'; // Default to English
         let voicesLoaded = false;
@@ -5382,14 +5384,17 @@ let rawData = null;
                     fy2526NotReportedData = data.fy25_26_not_reported || [];
                     fy2627NotReportedData = data.fy26_27_not_reported || [];
                     
-                    // Load Metrics Details for drill-down
+                    // Load Metrics Details for drill-down - both FY 25-26 and FY 26-27
                     metricsDetailsData = data.fy26_27_metrics_details || [];
-                    window.metricsDetailsData = metricsDetailsData;  // Also set on window for persistence
+                    metricsDetails2526Data = data.fy25_26_metrics_details || [];
+                    window.metricsDetailsData = metricsDetailsData;
+                    window.metricsDetails2526Data = metricsDetails2526Data;  // FY25-26 metrics details for tiles/monthly chart
                     
                     console.log('🔍 Not Reported data loaded from sample_data.json:');
                     console.log('  - FY24-25 Not Reported:', fy2425NotReportedData.length, 'rows');
                     console.log('  - FY25-26 Not Reported:', fy2526NotReportedData.length, 'rows');
                     console.log('  - FY26-27 Not Reported:', fy2627NotReportedData.length, 'rows');
+                    console.log('  - FY25-26 Metrics Details:', metricsDetails2526Data.length, 'performance measures');
                     console.log('  - FY26-27 Metrics Details:', metricsDetailsData.length, 'performance measures');
                     
                     // Verify metrics data is correctly loaded
@@ -7782,12 +7787,29 @@ function showView(view) {
 
         // Generate Account Health Status Tiles (for main dashboard views)
         function generateAccountHealthTiles() {
-            if (!metricsDetailsData || metricsDetailsData.length === 0) {
+            // Select correct metrics dataset based on FY filter
+            // fy26_27 or 'all' → use FY26-27 metrics details (metricsDetailsData)
+            // fy25_26 → use FY25-26 metrics details (metricsDetails2526Data)
+            // fy24_25 → no measure-level details, use filteredData.fy24_25 summary
+            const fyFilter = activeFilters.fy || 'all';
+            let activeMetricsData;
+            if (fyFilter === 'fy25_26') {
+                activeMetricsData = (metricsDetails2526Data && metricsDetails2526Data.length > 0) ? metricsDetails2526Data :
+                                    (window.metricsDetails2526Data || []);
+            } else if (fyFilter === 'fy24_25') {
+                // No measure-level data for FY24-25 — compute from summary data
+                return generateAccountHealthTilesFromSummary('fy24_25');
+            } else {
+                // 'all' or 'fy26_27' — use FY26-27 metrics details
+                activeMetricsData = (metricsDetailsData && metricsDetailsData.length > 0) ? metricsDetailsData :
+                                    (window.metricsDetailsData || []);
+            }
+            if (!activeMetricsData || activeMetricsData.length === 0) {
                 return ''; // Return empty if no data
             }
             
-            // Apply current filters to metricsDetailsData using activeFilters object
-            let filteredMetricsData = metricsDetailsData;
+            // Apply current filters to activeMetricsData using activeFilters object
+            let filteredMetricsData = activeMetricsData;
 
             // Apply Regional Head filter
             if (activeFilters.regionalHead && activeFilters.regionalHead.length > 0) {
@@ -7837,12 +7859,19 @@ function showView(view) {
                     periodLabel = `(${months.join(', ')})`;
                 }
             } else {
-                // All months - full FY 25-26 (Apr 2025 to Mar 2026)
-                months = ['April', 'May', 'June', 'July', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec', 'Jan', 'Feb', 'Mar'];
-                periodLabel = '(Current FY 25-26 - Apr 2025 to Mar 2026)';
+                // All months — determine based on active FY
+                if (fyFilter === 'fy26_27' || fyFilter === 'all') {
+                    // FY 26-27: only April available so far
+                    months = ['April'];
+                    periodLabel = '(Current FY 26-27 - Apr 2026)';
+                } else {
+                    // FY 25-26: full year
+                    months = ['April', 'May', 'June', 'July', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec', 'Jan', 'Feb', 'Mar'];
+                    periodLabel = '(Current FY 25-26 - Apr 2025 to Mar 2026)';
+                }
             }
             
-            // Calculate account health across filtered projects (FY 25-26, monthly data)
+            // Calculate account health across filtered projects (monthly data)
             const allProjects = {};
             
             filteredMetricsData.forEach(row => {
@@ -8015,14 +8044,94 @@ function showView(view) {
             `;
         }
 
+        // Fallback: Generate account health tiles from summary data (for FY 24-25)
+        function generateAccountHealthTilesFromSummary(fyKey) {
+            const fyLabel = fyKey === 'fy24_25' ? 'FY 24-25' : fyKey === 'fy26_27' ? 'FY 26-27' : 'FY 25-26';
+            const fyMonths = fyKey === 'fy24_25' ? extractMonthsFromData(filteredData.fy24_25||null, null, null) :
+                             fyKey === 'fy26_27' ? extractMonthsFromData(null, null, filteredData.fy26_27||null) :
+                             extractMonthsFromData(null, filteredData.fy25_26||null, null);
+            const fyData = filteredData[fyKey] || [];
+            if (!fyData.length) return '';
+            
+            const allProjects = {};
+            fyData.forEach(row => {
+                const proj = row.Project;
+                if (!proj) return;
+                if (!allProjects[proj]) {
+                    allProjects[proj] = { name: proj, region: row.Region || 'N/A', practiceHead: row['Practice Head'] || 'N/A', met: 0, notMet: 0 };
+                }
+                fyMonths.forEach(month => {
+                    allProjects[proj].met += getMonthData(row, month, fyKey, 'Met');
+                    allProjects[proj].notMet += getMonthData(row, month, fyKey, 'Not_Met');
+                });
+            });
+            const red = [], amber = [], green = [];
+            Object.values(allProjects).forEach(proj => {
+                proj.total = proj.met + proj.notMet;
+                proj.metPct = proj.total > 0 ? ((proj.met / proj.total) * 100).toFixed(1) : 0;
+                if (proj.total > 0) {
+                    if (proj.metPct < 50) red.push(proj);
+                    else if (proj.metPct < 75) amber.push(proj);
+                    else green.push(proj);
+                }
+            });
+            red.sort((a, b) => b.metPct - a.metPct);
+            amber.sort((a, b) => b.metPct - a.metPct);
+            green.sort((a, b) => b.metPct - a.metPct);
+            window.accountHealthData = { red, amber, green };
+            const periodLabel = `(${fyLabel} Summary Data)`;
+            return `
+                <div class="card" style="margin-bottom: 20px;">
+                    <h3 style="margin: 0 0 15px 0;">
+                        <i class="bi bi-speedometer2"></i> Account Health Status 
+                        <span style="font-size: 0.75em; color: #6b7280; font-weight: 500; margin-left: 10px;">${periodLabel}</span>
+                    </h3>
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px;">
+                        <div onclick="showAccountList('red', window.accountHealthData.red)" style="background: linear-gradient(135deg, #fecaca 0%, #ef4444 100%); padding: 30px; border-radius: 16px; cursor: pointer; box-shadow: 0 4px 15px rgba(239,68,68,0.3);">
+                            <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 20px;">
+                                <div><div style="font-size: 1em; color: #7f1d1d; font-weight: 700; text-transform: uppercase; letter-spacing: 1.5px;"><i class="bi bi-exclamation-circle-fill"></i> RED ACCOUNTS</div><div style="font-size: 0.85em; color: #991b1b; font-weight: 600;">< 50% Compliance<br><span style="background: rgba(127,29,29,0.3); padding: 3px 8px; border-radius: 6px; display: inline-block; margin-top: 5px;">Critical Attention</span></div></div>
+                                <div style="font-size: 4em; font-weight: 900; color: #7f1d1d; text-shadow: 3px 3px 6px rgba(0,0,0,0.3); line-height: 0.9;">${red.length}</div>
+                            </div>
+                            <div style="padding-top: 20px; border-top: 2px solid rgba(127,29,29,0.4); font-size: 0.85em; color: #7f1d1d; font-weight: 700;"><i class="bi bi-hand-index"></i> Click to view all accounts</div>
+                        </div>
+                        <div onclick="showAccountList('amber', window.accountHealthData.amber)" style="background: linear-gradient(135deg, #fef3c7 0%, #f59e0b 100%); padding: 30px; border-radius: 16px; cursor: pointer; box-shadow: 0 4px 15px rgba(245,158,11,0.3);">
+                            <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 20px;">
+                                <div><div style="font-size: 1em; color: #78350f; font-weight: 700; text-transform: uppercase; letter-spacing: 1.5px;"><i class="bi bi-dash-circle-fill"></i> AMBER ACCOUNTS</div><div style="font-size: 0.85em; color: #92400e; font-weight: 600;">50-74% Compliance<br><span style="background: rgba(120,53,15,0.3); padding: 3px 8px; border-radius: 6px; display: inline-block; margin-top: 5px;">Monitor Closely</span></div></div>
+                                <div style="font-size: 4em; font-weight: 900; color: #78350f; text-shadow: 3px 3px 6px rgba(0,0,0,0.3); line-height: 0.9;">${amber.length}</div>
+                            </div>
+                            <div style="padding-top: 20px; border-top: 2px solid rgba(120,53,15,0.4); font-size: 0.85em; color: #78350f; font-weight: 700;"><i class="bi bi-hand-index"></i> Click to view all accounts</div>
+                        </div>
+                        <div onclick="showAccountList('green', window.accountHealthData.green)" style="background: linear-gradient(135deg, #d1fae5 0%, #10b981 100%); padding: 30px; border-radius: 16px; cursor: pointer; box-shadow: 0 4px 15px rgba(16,185,129,0.3);">
+                            <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 20px;">
+                                <div><div style="font-size: 1em; color: #064e3b; font-weight: 700; text-transform: uppercase; letter-spacing: 1.5px;"><i class="bi bi-check-circle-fill"></i> GREEN ACCOUNTS</div><div style="font-size: 0.85em; color: #065f46; font-weight: 600;">≥ 75% Compliance<br><span style="background: rgba(6,78,59,0.3); padding: 3px 8px; border-radius: 6px; display: inline-block; margin-top: 5px;">Excellent Performance</span></div></div>
+                                <div style="font-size: 4em; font-weight: 900; color: #064e3b; text-shadow: 3px 3px 6px rgba(0,0,0,0.3); line-height: 0.9;">${green.length}</div>
+                            </div>
+                            <div style="padding-top: 20px; border-top: 2px solid rgba(6,78,59,0.4); font-size: 0.85em; color: #064e3b; font-weight: 700;"><i class="bi bi-hand-index"></i> Click to view all accounts</div>
+                        </div>
+                    </div>
+                </div>`;
+        }
+
         // Generate KPI Bifurcation Tiles (for main dashboard views)
         function generateKPIBifurcationTiles() {
-            if (!metricsDetailsData || metricsDetailsData.length === 0) {
+            // Select correct metrics dataset based on FY filter
+            const fyFilterKPI = activeFilters.fy || 'all';
+            let activeMetricsData;
+            if (fyFilterKPI === 'fy25_26') {
+                activeMetricsData = (metricsDetails2526Data && metricsDetails2526Data.length > 0) ? metricsDetails2526Data :
+                                    (window.metricsDetails2526Data || []);
+            } else if (fyFilterKPI === 'fy24_25') {
+                return ''; // No measure-level KPI bifurcation for FY24-25
+            } else {
+                activeMetricsData = (metricsDetailsData && metricsDetailsData.length > 0) ? metricsDetailsData :
+                                    (window.metricsDetailsData || []);
+            }
+            if (!activeMetricsData || activeMetricsData.length === 0) {
                 return ''; // Return empty if no data
             }
             
-            // Apply current filters to metricsDetailsData using activeFilters object
-            let filteredMetricsData = metricsDetailsData;
+            // Apply current filters to activeMetricsData using activeFilters object
+            let filteredMetricsData = activeMetricsData;
 
             // Apply Regional Head filter
             if (activeFilters.regionalHead && activeFilters.regionalHead.length > 0) {
@@ -8078,9 +8187,14 @@ function showView(view) {
                     periodLabel = `(${months.join(', ')})`;
                 }
             } else {
-                // All months - full FY 25-26 (Apr 2025 to Mar 2026)
-                months = ['April', 'May', 'June', 'July', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec', 'Jan', 'Feb', 'Mar'];
-                periodLabel = '(Current FY 25-26 - Apr 2025 to Mar 2026)';
+                // All months — determine based on active FY
+                if (fyFilterKPI === 'fy26_27' || fyFilterKPI === 'all') {
+                    months = ['April'];
+                    periodLabel = '(Current FY 26-27 - Apr 2026)';
+                } else {
+                    months = ['April', 'May', 'June', 'July', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec', 'Jan', 'Feb', 'Mar'];
+                    periodLabel = '(Current FY 25-26 - Apr 2025 to Mar 2026)';
+                }
             }
             
             const calcMetPct = (data) => {
@@ -8259,23 +8373,25 @@ function showView(view) {
                 return total > 0 ? parseFloat(((met / total) * 100).toFixed(1)) : 0;
             });
 
-            // Calculate FY 25-26 data using Metrics Details (metricsDetailsData) for measure-level accuracy
+            // Calculate FY 25-26 data using FY25-26 Metrics Details for measure-level accuracy
+            const fy25ActiveMetrics = (metricsDetails2526Data && metricsDetails2526Data.length > 0) ? metricsDetails2526Data :
+                                      (window.metricsDetails2526Data && window.metricsDetails2526Data.length > 0) ? window.metricsDetails2526Data : null;
             const fy25Data = allMonths.map(month => {
-                if (!metricsDetailsData || metricsDetailsData.length === 0) {
-                    // Fallback to summary if metrics details not available
-                    const met = filteredData.fy25_26.reduce((sum, row) => {
+                if (!fy25ActiveMetrics || fy25ActiveMetrics.length === 0) {
+                    // Fallback to summary if FY25-26 metrics details not available
+                    const met = (filteredData.fy25_26||[]).reduce((sum, row) => {
                         return sum + getMonthData(row, month, 'fy25_26', 'Met');
                     }, 0);
-                    const notMet = filteredData.fy25_26.reduce((sum, row) => {
+                    const notMet = (filteredData.fy25_26||[]).reduce((sum, row) => {
                         return sum + getMonthData(row, month, 'fy25_26', 'Not_Met');
                     }, 0);
                     const total = met + notMet;
                     return total > 0 ? parseFloat(((met / total) * 100).toFixed(1)) : 0;
                 }
                 
-                // Use metricsDetailsData (raw measure-level data) for FY 25-26
+                // Use FY25-26 metrics details data (columns: April25 Score, May25 Score, etc.)
                 // Apply the same filters that are active
-                let filteredMetrics = metricsDetailsData;
+                let filteredMetrics = fy25ActiveMetrics;
                 
                 // Apply Region filter
                 if (activeFilters.region && activeFilters.region.length > 0) {
@@ -12594,10 +12710,25 @@ function showView(view) {
         function showProjectDrilldown(projectName) {
             console.log('🔍 Opening drill-down for:', projectName);
             console.log('📊 metricsDetailsData available:', metricsDetailsData ? metricsDetailsData.length : 0, 'measures');
+            // Select correct metrics data based on FY filter
+            const drillFY = activeFilters.fy || 'all';
+            const drillFYLabel = (drillFY === 'fy25_26') ? 'FY 25-26' : 
+                                  (drillFY === 'fy24_25') ? 'FY 24-25' : 'FY 26-27';
+            let activeDetailData;
+            if (drillFY === 'fy25_26') {
+                activeDetailData = (metricsDetails2526Data && metricsDetails2526Data.length > 0) ? metricsDetails2526Data :
+                                   (window.metricsDetails2526Data || []);
+                if (!activeDetailData.length) activeDetailData = metricsDetails2526Data; // last resort
+            } else {
+                activeDetailData = (metricsDetailsData && metricsDetailsData.length > 0) ? metricsDetailsData :
+                                   (window.metricsDetailsData || []);
+            }
             console.log('📊 window.metricsDetailsData available:', window.metricsDetailsData ? window.metricsDetailsData.length : 0, 'measures');
+            console.log('📊 Active drill detail data:', activeDetailData.length, 'measures for', drillFY);
             
-            // Use window.metricsDetailsData as fallback to ensure data persistence
-            const dataSource = metricsDetailsData && metricsDetailsData.length > 0 ? metricsDetailsData : window.metricsDetailsData;
+            // Use FY-appropriate metrics data for drill-down
+            const dataSource = activeDetailData && activeDetailData.length > 0 ? activeDetailData : 
+                               (metricsDetailsData && metricsDetailsData.length > 0 ? metricsDetailsData : window.metricsDetailsData);
             
             if (!dataSource || dataSource.length === 0) {
                 console.error('❌ Drill-down failed: metricsDetailsData is empty or null');
@@ -12634,8 +12765,8 @@ function showView(view) {
             
             if (!projectData || projectData.length === 0) {
                 console.error(`❌ No data found for "${projectName}"`);
-                console.error('Available projects:', [...new Set(metricsDetailsData.map(r => r.Project))].slice(0, 10));
-                alert(`ℹ️ No detailed performance measures found for "${projectName}".\n\nThis could mean:\n• The project is not in the FY 25-26 Metrics Details sheet\n• The project name doesn't match exactly`);
+                console.error('Available projects:', [...new Set(activeDetailData.map(r => r.Project))].slice(0, 10));
+                alert(`ℹ️ No detailed performance measures found for "${projectName}".\n\nThis could mean:\n• The project is not in the ${drillFYLabel} Metrics Details sheet\n• The project name doesn't match exactly`);
                 return;
             }
             
@@ -12672,6 +12803,9 @@ function showView(view) {
                                 <th style="min-width: 250px; text-align: left; padding: 12px 15px;">Performance Measure</th>
                                 <th style="min-width: 100px;">Penalty</th>
                                 <th style="min-width: 80px;">Target</th>
+                                ${drillFY === 'fy26_27' ? `
+                                <th style="min-width: 90px; background: linear-gradient(135deg, #e0f2fe 0%, #bae6fd 100%);">Apr'26</th>
+                                ` : `
                                 <th style="min-width: 90px;">Apr'25</th>
                                 <th style="min-width: 90px;">May'25</th>
                                 <th style="min-width: 90px;">Jun'25</th>
@@ -12684,6 +12818,7 @@ function showView(view) {
                                 <th style="min-width: 90px; background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);">Jan'26</th>
                                 <th style="min-width: 90px; background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);">Feb'26</th>
                                 <th style="min-width: 90px; background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%);">Mar'26</th>
+                                `}
                                 <th style="min-width: 100px; background: linear-gradient(135deg, #fce7f3 0%, #fbcfe8 100%);">YTD</th>
                             </tr>
                         </thead>
@@ -12729,8 +12864,9 @@ function showView(view) {
             
             html += '</tbody></table></div>';
             
+            // drillFYLabel already computed above (early in function)
             document.getElementById('drilldownTitle').innerHTML = 
-                `<i class="bi bi-clipboard-data"></i> ${projectName} - Detailed Performance Metrics (FY 25-26)`;
+                `<i class="bi bi-clipboard-data"></i> ${projectName} - Detailed Performance Metrics (${drillFYLabel})`;
             document.getElementById('drilldownContent').innerHTML = html;
             document.getElementById('drilldownPanel').style.display = 'block';
             document.body.style.overflow = 'hidden';
@@ -12750,19 +12886,25 @@ function showView(view) {
                 });
             }
             
-            const months = [
-                {name: 'April', scoreCol: 'April25 Score', statusCol: 'April MET/NOT_MET'},
-                {name: 'May', scoreCol: 'May25 Score', statusCol: 'May MET/NOT_MET'},
-                {name: 'June', scoreCol: 'June25 Score', statusCol: 'June MET/NOT_MET'},
-                {name: 'July', scoreCol: 'July25 Score', statusCol: 'July MET/NOT_MET'},
-                {name: 'Aug', scoreCol: 'Aug25 Score', statusCol: 'Aug MET/NOT_MET'},
-                {name: 'Sep', scoreCol: 'Sep25 Score', statusCol: 'Sep MET/NOT_MET'},
-                {name: 'Oct', scoreCol: 'Oct25 Score', statusCol: 'Oct MET/NOT_MET'},
-                {name: 'Nov', scoreCol: 'Nov25 Score', statusCol: 'Nov MET/NOT_MET'},
-                {name: 'Dec', scoreCol: 'Dec25 Score', statusCol: 'Dec MET/NOT_MET'},
-                {name: 'Jan', scoreCol: 'Jan26 Score', statusCol: 'Jan MET/NOT_MET'},
-                {name: 'Feb', scoreCol: 'Feb26 Score', statusCol: 'Feb MET/NOT_MET'},
-                {name: 'Mar', scoreCol: 'Mar26 Score', statusCol: 'Mar MET/NOT_MET'}
+            // Detect FY from measure data: if 'April26 Score' exists → FY26-27, else FY25-26
+            const isFY2627measure = measure['April26 Score'] !== undefined;
+            const months = isFY2627measure ? [
+                // FY 26-27: only Apr'26 available so far
+                {name: "Apr'26", scoreCol: 'April26 Score', statusCol: 'April MET/NOT_MET'},
+            ] : [
+                // FY 25-26: full year Apr'25 → Mar'26
+                {name: "Apr'25", scoreCol: 'April25 Score', statusCol: 'April MET/NOT_MET'},
+                {name: "May'25", scoreCol: 'May25 Score', statusCol: 'May MET/NOT_MET'},
+                {name: "Jun'25", scoreCol: 'June25 Score', statusCol: 'June MET/NOT_MET'},
+                {name: "Jul'25", scoreCol: 'July25 Score', statusCol: 'July MET/NOT_MET'},
+                {name: "Aug'25", scoreCol: 'Aug25 Score', statusCol: 'Aug MET/NOT_MET'},
+                {name: "Sep'25", scoreCol: 'Sep25 Score', statusCol: 'Sep MET/NOT_MET'},
+                {name: "Oct'25", scoreCol: 'Oct25 Score', statusCol: 'Oct MET/NOT_MET'},
+                {name: "Nov'25", scoreCol: 'Nov25 Score', statusCol: 'Nov MET/NOT_MET'},
+                {name: "Dec'25", scoreCol: 'Dec25 Score', statusCol: 'Dec MET/NOT_MET'},
+                {name: "Jan'26", scoreCol: 'Jan26 Score', statusCol: 'Jan MET/NOT_MET'},
+                {name: "Feb'26", scoreCol: 'Feb26 Score', statusCol: 'Feb MET/NOT_MET'},
+                {name: "Mar'26", scoreCol: 'Mar26 Score', statusCol: 'Mar MET/NOT_MET'}
             ];
             
             // Determine penalty status and styling
