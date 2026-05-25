@@ -8370,8 +8370,9 @@ function showView(view) {
             const calcMetPct = (data) => {
                 let totalMet = 0;
                 let totalNotMet = 0;
+                let totalNotReported = 0;
                 
-                // Count Met/Not Met across selected month(s) - ONLY individual months, exclude quarters (AMJ, JAS, OND) and YTD
+                // Count Met/Not Met/Not Reported across selected month(s)
                 data.forEach(row => {
                     months.forEach(month => {
                         // Map month names to correct column names
@@ -8379,26 +8380,25 @@ function showView(view) {
                         if (month === 'June') {
                             statusCol = 'June MET/NOT_MET';
                         } else if (month === 'Jan') {
-                            statusCol = 'Jan MET/NOT_MET';  // January 2026
+                            statusCol = 'Jan MET/NOT_MET';
                         } else if (month === 'Feb') {
-                            statusCol = 'Feb MET/NOT_MET';  // February 2026
+                            statusCol = 'Feb MET/NOT_MET';
                         } else if (month === 'Mar') {
-                            statusCol = 'Mar MET/NOT_MET';  // March 2026
+                            statusCol = 'Mar MET/NOT_MET';
                         } else {
-                            statusCol = `${month} MET/NOT_MET`;  // April, May, July, Aug, Sep, Oct, Nov, Dec
+                            statusCol = `${month} MET/NOT_MET`;
                         }
                         
                         const status = row[statusCol];
                         if (status === 'Met') totalMet++;
                         else if (status === 'Not Met') totalNotMet++;
-                        // Exclude 'Not Reported', 'NA', null, undefined
-                        // Also exclude quarterly columns (AMJ, JAS, OND) and YTD by design - we don't loop over them
+                        else totalNotReported++; // Not Reported / NA / null / undefined
                     });
                 });
                 
                 const total = totalMet + totalNotMet;
                 const pct = total > 0 ? ((totalMet / total) * 100).toFixed(1) : '0.0';
-                return { pct, met: totalMet, notMet: totalNotMet, total, measures: data.length };
+                return { pct, met: totalMet, notMet: totalNotMet, notReported: totalNotReported, total, measures: data.length };
             };
             
             const contractualData = calcMetPct(contractual);
@@ -8420,7 +8420,7 @@ function showView(view) {
                         <div style="background: linear-gradient(135deg, #e0f2fe 0%, #bae6fd 100%); padding: 25px; border-radius: 14px; border-left: 5px solid #0284c7; box-shadow: 0 3px 12px rgba(0,0,0,0.12); transition: all 0.3s ease; cursor: pointer;"
                              onmouseover="this.style.transform='translateY(-5px)'; this.style.boxShadow='0 8px 20px rgba(0,0,0,0.18)';"
                              onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 3px 12px rgba(0,0,0,0.12)';"
-                             ondblclick="showKPIBifurcationDrilldown('Contractual SLA', ${contractualData.met}, ${contractualData.notMet}, ${contractualData.total}, ${contractualData.measures});"
+                             ondblclick="showKPIBifurcationDrilldown('Contractual SLA', ${contractualData.met}, ${contractualData.notMet}, ${contractualData.total}, ${contractualData.measures}, ${contractualData.notReported});"
                              title="Double-click to view detailed breakdown">
                             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
                                 <div>
@@ -8442,7 +8442,7 @@ function showView(view) {
                         <div style="background: linear-gradient(135deg, #ddd6fe 0%, #c4b5fd 100%); padding: 25px; border-radius: 14px; border-left: 5px solid #7c3aed; box-shadow: 0 3px 12px rgba(0,0,0,0.12); transition: all 0.3s ease; cursor: pointer;"
                              onmouseover="this.style.transform='translateY(-5px)'; this.style.boxShadow='0 8px 20px rgba(0,0,0,0.18)';"
                              onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 3px 12px rgba(0,0,0,0.12)';"
-                             ondblclick="showKPIBifurcationDrilldown('Internal KPI', ${internalData.met}, ${internalData.notMet}, ${internalData.total}, ${internalData.measures});"
+                             ondblclick="showKPIBifurcationDrilldown('Internal KPI', ${internalData.met}, ${internalData.notMet}, ${internalData.total}, ${internalData.measures}, ${internalData.notReported});"
                              title="Double-click to view detailed breakdown">
                             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
                                 <div>
@@ -8464,7 +8464,7 @@ function showView(view) {
                         <div style="background: linear-gradient(135deg, #fed7aa 0%, #fdba74 100%); padding: 25px; border-radius: 14px; border-left: 5px solid #f97316; box-shadow: 0 3px 12px rgba(0,0,0,0.12); transition: all 0.3s ease; cursor: pointer;"
                              onmouseover="this.style.transform='translateY(-5px)'; this.style.boxShadow='0 8px 20px rgba(0,0,0,0.18)';"
                              onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 3px 12px rgba(0,0,0,0.12)';"
-                             ondblclick="showKPIBifurcationDrilldown('Penalty SLA', ${penaltyData.met}, ${penaltyData.notMet}, ${penaltyData.total}, ${penaltyData.measures});"
+                             ondblclick="showKPIBifurcationDrilldown('Penalty SLA', ${penaltyData.met}, ${penaltyData.notMet}, ${penaltyData.total}, ${penaltyData.measures}, ${penaltyData.notReported});"
                              title="Double-click to view detailed breakdown">
                             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
                                 <div>
@@ -8486,7 +8486,7 @@ function showView(view) {
                         <div style="background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%); padding: 25px; border-radius: 14px; border-left: 5px solid #10b981; box-shadow: 0 3px 12px rgba(0,0,0,0.12); transition: all 0.3s ease; cursor: pointer;"
                              onmouseover="this.style.transform='translateY(-5px)'; this.style.boxShadow='0 8px 20px rgba(0,0,0,0.18)';"
                              onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 3px 12px rgba(0,0,0,0.12)';"
-                             ondblclick="showKPIBifurcationDrilldown('Non-Penalty SLA', ${nonPenaltyData.met}, ${nonPenaltyData.notMet}, ${nonPenaltyData.total}, ${nonPenaltyData.measures});"
+                             ondblclick="showKPIBifurcationDrilldown('Non-Penalty SLA', ${nonPenaltyData.met}, ${nonPenaltyData.notMet}, ${nonPenaltyData.total}, ${nonPenaltyData.measures}, ${nonPenaltyData.notReported});"
                              title="Double-click to view detailed breakdown">
                             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
                                 <div>
@@ -9485,7 +9485,7 @@ function showView(view) {
                 const isNewAccount = data.fy24Compliance === 0 && data.fy25Compliance === 0 && data.fy26Compliance > 0;
                 const isExitedAccount = data.fy26Compliance === 0 && (data.fy24Compliance > 0 || data.fy25Compliance > 0);
                 const changeDisplay = isNewAccount ? '<span class="badge status-new">NEW</span>' 
-                    : isExitedAccount ? '<span class="badge status-na">Exited</span>'
+                    : isExitedAccount ? '<span style="color:#9ca3af;">N/A</span>'
                     : data.fy26Compliance > 0 ? formatYoYChange(data.fy25Compliance, data.fy26Compliance) : formatYoYChange(data.fy24Compliance, data.fy25Compliance);
                 
                 const escapedAccount = data.account.replace(/'/g, "\\'");
@@ -13276,8 +13276,8 @@ function showView(view) {
         }
 
         // Show KPI Bifurcation Drilldown
-        function showKPIBifurcationDrilldown(category, met, notMet, total, totalMeasures) {
-            console.log(`📊 Showing ${category} drilldown:`, { met, notMet, total, totalMeasures });
+        function showKPIBifurcationDrilldown(category, met, notMet, total, totalMeasures, tileNotReported) {
+            console.log(`📊 Showing ${category} drilldown:`, { met, notMet, total, totalMeasures, tileNotReported });
             
             // Select correct metrics dataset based on FY filter (mirrors generateKPIBifurcationTiles logic)
             const fyFilterDrill = activeFilters.fy || 'all';
@@ -13386,8 +13386,11 @@ function showView(view) {
                 return bPct - aPct;
             });
             
-            // Calculate total Not Reported / NA count
-            const totalNotReported = projectArray.reduce((sum, p) => sum + (p.notReported || 0), 0);
+            // Use Not Reported count passed from tile (calcMetPct) — same dataset & months as tile
+            // Fall back to summing from projectArray if not provided
+            const totalNotReported = (tileNotReported !== undefined && tileNotReported !== null)
+                ? tileNotReported
+                : projectArray.reduce((sum, p) => sum + (p.notReported || 0), 0);
             
             // Define category-specific colors
             let colorScheme = {};
