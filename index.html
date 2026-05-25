@@ -8211,12 +8211,16 @@ function showView(view) {
             
             // Calculate FY 24-25 data using Summary sheet (filteredData.fy24_25)
             const fy24Data = allMonths.map(month => {
-                const met = filteredData.fy24_25.reduce((sum, row) => {
-                    return sum + getMonthData(row, month, 'fy24_25', 'Met');
-                }, 0);
-                const notMet = filteredData.fy24_25.reduce((sum, row) => {
-                    return sum + getMonthData(row, month, 'fy24_25', 'Not_Met');
-                }, 0);
+                const met = (filteredData.fy24_25 || []).reduce((sum, row) => sum + getMonthData(row, month, 'fy24_25', 'Met'), 0);
+                const notMet = (filteredData.fy24_25 || []).reduce((sum, row) => sum + getMonthData(row, month, 'fy24_25', 'Not_Met'), 0);
+                const total = met + notMet;
+                return total > 0 ? parseFloat(((met / total) * 100).toFixed(1)) : 0;
+            });
+
+            // Calculate FY 26-27 data using Summary sheet (filteredData.fy26_27)
+            const fy26Data = allMonths.map(month => {
+                const met = (filteredData.fy26_27 || []).reduce((sum, row) => sum + getMonthData(row, month, 'fy26_27', 'Met'), 0);
+                const notMet = (filteredData.fy26_27 || []).reduce((sum, row) => sum + getMonthData(row, month, 'fy26_27', 'Not_Met'), 0);
                 const total = met + notMet;
                 return total > 0 ? parseFloat(((met / total) * 100).toFixed(1)) : 0;
             });
@@ -8285,24 +8289,28 @@ function showView(view) {
             });
 
             // Calculate comparison metrics based on filter
-            let avgFY24, avgFY25, improvement, compareMonthCount;
+            let avgFY24, avgFY25, avgFY26, improvement, compareMonthCount;
             
             if (isMonthFiltered) {
                 // When month filter is active, average across selected months
                 const selectedIndices = selectedMonthsFilter.map(m => allMonths.indexOf(m)).filter(i => i >= 0);
                 const validFY24 = selectedIndices.map(i => fy24Data[i]).filter(v => v > 0);
                 const validFY25 = selectedIndices.map(i => fy25Data[i]).filter(v => v > 0);
+                const validFY26 = selectedIndices.map(i => fy26Data[i]).filter(v => v > 0);
                 avgFY24 = validFY24.length > 0 ? (validFY24.reduce((a,b) => a+b,0) / validFY24.length).toFixed(1) : '0.0';
                 avgFY25 = validFY25.length > 0 ? (validFY25.reduce((a,b) => a+b,0) / validFY25.length).toFixed(1) : '0.0';
-                improvement = (parseFloat(avgFY25) - parseFloat(avgFY24)).toFixed(1);
+                avgFY26 = validFY26.length > 0 ? (validFY26.reduce((a,b) => a+b,0) / validFY26.length).toFixed(1) : null;
+                improvement = avgFY26 !== null ? (parseFloat(avgFY26) - parseFloat(avgFY25)).toFixed(1) : (parseFloat(avgFY25) - parseFloat(avgFY24)).toFixed(1);
                 compareMonthCount = selectedIndices.length;
             } else {
                 // When no month filter, calculate averages across all available months
                 const fy25NonZeroData = fy25Data.filter(v => v > 0);
+                const fy26NonZeroData = fy26Data.filter(v => v > 0);
                 compareMonthCount = Math.min(fy24Data.length, fy25NonZeroData.length);
                 avgFY24 = compareMonthCount > 0 ? (fy24Data.slice(0, compareMonthCount).reduce((a, b) => a + b, 0) / compareMonthCount).toFixed(1) : 0;
                 avgFY25 = fy25NonZeroData.length > 0 ? (fy25NonZeroData.reduce((a, b) => a + b, 0) / fy25NonZeroData.length).toFixed(1) : 0;
-                improvement = (avgFY25 - avgFY24).toFixed(1);
+                avgFY26 = fy26NonZeroData.length > 0 ? (fy26NonZeroData.reduce((a, b) => a + b, 0) / fy26NonZeroData.length).toFixed(1) : null;
+                improvement = avgFY26 !== null ? (parseFloat(avgFY26) - parseFloat(avgFY25)).toFixed(1) : (parseFloat(avgFY25) - parseFloat(avgFY24)).toFixed(1);
             }
 
             // Build insights and comparison widgets based on filter
@@ -8329,12 +8337,12 @@ function showView(view) {
                     <div class="insights-section">
                         <h3><i class="bi bi-lightbulb-fill"></i> ${monthLabelFull} Performance Comparison</h3>
                         <div class="insight-item">
-                            <h4>📊 FY 24-25 vs FY 25-26 - ${monthLabelFull}</h4>
-                            <p>FY 24-25 (${periodLabel24}): ${avgFY24}% | FY 25-26 (${periodLabel25}): ${avgFY25}% | Change: ${improvement > 0 ? '+' : ''}${improvement}%</p>
+                            <h4>📊 FY 24-25 vs FY 25-26 vs FY 26-27 - ${monthLabelFull}</h4>
+                            <p>FY 24-25: ${avgFY24}% | FY 25-26: ${avgFY25}% | FY 26-27: ${avgFY26 !== null ? avgFY26 + '%' : 'N/A'} | Change: ${improvement > 0 ? '+' : ''}${improvement}%</p>
                         </div>
                         <div class="insight-item">
                             <h4>${improvement > 0 ? '📈 Performance Improvement' : '📉 Performance Decline'}</h4>
-                            <p>${improvement > 0 ? `${monthLabelFull} shows ${improvement}% improvement in FY 25-26 vs FY 24-25.` : `${monthLabelFull} shows ${Math.abs(improvement)}% decline in FY 25-26 vs FY 24-25. Focus on recovery strategies.`}</p>
+                            <p>${improvement > 0 ? `${monthLabelFull} shows ${improvement}% improvement in the latest fiscal year.` : `${monthLabelFull} shows ${Math.abs(improvement)}% decline in the latest fiscal year. Focus on recovery strategies.`}</p>
                         </div>
                     </div>`;
                 
@@ -8342,25 +8350,30 @@ function showView(view) {
                     <div class="comparison-widget">
                         <div class="metric-box fy24">
                             <div class="metric-label">FY 24-25 Avg (${monthLabelFull})</div>
-                            <div class="metric-value" style="color: #ff6b35;">${avgFY24}%</div>
+                            <div class="metric-value" style="color: #9CA3AF;">${avgFY24}%</div>
                         </div>
                         <div class="metric-box fy25">
                             <div class="metric-label">FY 25-26 Avg (${monthLabelFull})</div>
-                            <div class="metric-value" style="color: var(--primary-color);">${avgFY25}%</div>
+                            <div class="metric-value" style="color: #ff6b35;">${avgFY25}%</div>
                         </div>
+                        ${avgFY26 !== null ? `
+                        <div class="metric-box fy26" style="background: linear-gradient(135deg, rgba(14,165,233,0.1), rgba(2,132,199,0.15)); border-left: 4px solid #0ea5e9;">
+                            <div class="metric-label">FY 26-27 Avg (${monthLabelFull})</div>
+                            <div class="metric-value" style="color: #0ea5e9;">${avgFY26}%</div>
+                        </div>` : ''}
                     </div>`;
             } else {
                 // Average across all months insights
                 insightsHTML = `
                     <div class="insights-section">
-                        <h3><i class="bi bi-lightbulb-fill"></i> Monthly Performance Comparison</h3>
+                        <h3><i class="bi bi-lightbulb-fill"></i> Monthly Performance Comparison (All 3 FYs)</h3>
                         <div class="insight-item">
-                            <h4>📊 FY 24-25 vs FY 25-26 (First ${fy25months.length} Months)</h4>
-                            <p>FY 24-25 Average: ${avgFY24}% | FY 25-26 Average: ${avgFY25}% | Change: ${improvement > 0 ? '+' : ''}${improvement}%</p>
+                            <h4>📊 FY 24-25 vs FY 25-26 vs FY 26-27</h4>
+                            <p>FY 24-25 Avg: ${avgFY24}% | FY 25-26 Avg: ${avgFY25}% | FY 26-27 Avg: ${avgFY26 !== null ? avgFY26 + '%' : 'N/A'} | Change: ${improvement > 0 ? '+' : ''}${improvement}%</p>
                         </div>
                         <div class="insight-item">
                             <h4>${improvement > 0 ? '📈 Performance Improvement' : '📉 Performance Decline'}</h4>
-                            <p>${improvement > 0 ? `FY 25-26 shows ${improvement}% improvement in monthly average compliance.` : `FY 25-26 shows ${Math.abs(improvement)}% decline in monthly average compliance. Focus on recovery strategies.`}</p>
+                            <p>${improvement > 0 ? `FY 26-27 shows ${improvement}% improvement over FY 25-26 in monthly average compliance.` : `FY 26-27 shows ${Math.abs(improvement)}% change vs FY 25-26. Focus on recovery strategies.`}</p>
                         </div>
                     </div>`;
                 
@@ -8368,12 +8381,17 @@ function showView(view) {
                     <div class="comparison-widget">
                         <div class="metric-box fy24">
                             <div class="metric-label">FY 24-25 Avg (${compareMonthCount} months)</div>
-                            <div class="metric-value" style="color: #ff6b35;">${avgFY24}%</div>
+                            <div class="metric-value" style="color: #9CA3AF;">${avgFY24}%</div>
                         </div>
                         <div class="metric-box fy25">
                             <div class="metric-label">FY 25-26 Avg (${fy25months.length} months)</div>
-                            <div class="metric-value" style="color: var(--primary-color);">${avgFY25}%</div>
+                            <div class="metric-value" style="color: #ff6b35;">${avgFY25}%</div>
                         </div>
+                        ${avgFY26 !== null ? `
+                        <div class="metric-box fy26" style="background: linear-gradient(135deg, rgba(14,165,233,0.1), rgba(2,132,199,0.15)); border-left: 4px solid #0ea5e9;">
+                            <div class="metric-label">FY 26-27 Avg (${fy26months.length} months)</div>
+                            <div class="metric-value" style="color: #0ea5e9;">${avgFY26}%</div>
+                        </div>` : ''}
                     </div>`;
             }
 
@@ -8385,7 +8403,8 @@ function showView(view) {
                             <th>Month</th>
                             <th>FY 24-25 (%)</th>
                             <th>FY 25-26 (%)</th>
-                            <th>Difference</th>
+                            <th>FY 26-27 (%)</th>
+                            <th>vs FY 25-26</th>
                         </tr>
                     </thead>
                     <tbody>`;
@@ -8401,26 +8420,39 @@ function showView(view) {
                     const monthIdx = allMonths.indexOf(m);
                     if (monthIdx < 0) return;
                     const diff = fy25Data[monthIdx] - fy24Data[monthIdx];
+                    const diff26 = fy26Data[monthIdx] > 0 ? fy26Data[monthIdx] - fy25Data[monthIdx] : null;
                     const diffColor = diff >= 0 ? 'var(--success-color)' : 'var(--danger-color)';
+                    const diff26Color = diff26 !== null ? (diff26 >= 0 ? 'var(--success-color)' : 'var(--danger-color)') : '#999';
                     tableHTML += `
                         <tr>
                             <td><strong>${monthNames[m] || m}</strong></td>
-                            <td style="color: #ff6b35;">${fy24Data[monthIdx].toFixed(1)}%</td>
-                            <td style="color: var(--primary-color);">${fy25Data[monthIdx].toFixed(1)}%</td>
-                            <td style="color: ${diffColor}; font-weight: bold;">${diff >= 0 ? '+' : ''}${diff.toFixed(1)}%</td>
+                            <td style="color: #9CA3AF;">${fy24Data[monthIdx].toFixed(1)}%</td>
+                            <td style="color: #ff6b35;">${fy25Data[monthIdx].toFixed(1)}%</td>
+                            <td style="color: #0ea5e9; font-weight: bold;">${fy26Data[monthIdx] > 0 ? fy26Data[monthIdx].toFixed(1) + '%' : '—'}</td>
+                            <td style="color: ${diff26Color}; font-weight: bold;">${diff26 !== null ? (diff26 >= 0 ? '+' : '') + diff26.toFixed(1) + '%' : '—'}</td>
                         </tr>`;
                 });
             } else {
-                // Show all available months
-                fy25months.forEach((month, idx) => {
-                    const diff = fy25Data[idx] - fy24Data[idx];
+                // Show all available months (union of all 3 FYs)
+                const allAvailMonths = ['Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec','Jan','Feb','Mar'].filter(m =>
+                    fy24months.includes(m) || fy25months.includes(m) || fy26months.includes(m)
+                );
+                allAvailMonths.forEach(month => {
+                    const idx = allMonths.indexOf(month);
+                    const v24 = fy24Data[idx] || 0;
+                    const v25 = fy25Data[idx] || 0;
+                    const v26 = fy26Data[idx] || 0;
+                    const diff2526 = fy24months.includes(month) && fy25months.includes(month) ? v25 - v24 : null;
+                    const diff2627 = fy25months.includes(month) && fy26months.includes(month) ? v26 - v25 : (fy26months.includes(month) ? null : null);
+                    const diff = diff2627 !== null ? diff2627 : (diff2526 !== null ? diff2526 : 0);
                     const diffColor = diff >= 0 ? 'var(--success-color)' : 'var(--danger-color)';
                     tableHTML += `
                         <tr>
                             <td><strong>${month}</strong></td>
-                            <td style="color: #ff6b35;">${fy24Data[idx].toFixed(1)}%</td>
-                            <td style="color: var(--primary-color);">${fy25Data[idx].toFixed(1)}%</td>
-                            <td style="color: ${diffColor}; font-weight: bold;">${diff >= 0 ? '+' : ''}${diff.toFixed(1)}%</td>
+                            <td style="color: #9CA3AF;">${fy24months.includes(month) ? v24.toFixed(1) + '%' : '—'}</td>
+                            <td style="color: #ff6b35;">${fy25months.includes(month) ? v25.toFixed(1) + '%' : '—'}</td>
+                            <td style="color: #0ea5e9; font-weight: bold;">${fy26months.includes(month) ? v26.toFixed(1) + '%' : '—'}</td>
+                            <td style="color: ${diffColor}; font-weight: bold;">${diff !== null ? (diff >= 0 ? '+' : '') + diff.toFixed(1) + '%' : '—'}</td>
                         </tr>`;
                 });
             }
@@ -8449,10 +8481,9 @@ function showView(view) {
             const ctx = document.getElementById('monthlyChart').getContext('2d');
             
             // Determine what to show in chart based on month filter
-            let labelsToShow, fy24DataToShow, fy25DataToShow;
+            let labelsToShow, fy24DataToShow, fy25DataToShow, fy26DataToShow;
             
             if (isMonthFiltered) {
-                // Show only the selected months as bars
                 const monthNames = {
                     'Apr': 'April', 'May': 'May', 'Jun': 'June', 'Jul': 'July',
                     'Aug': 'August', 'Sep': 'September', 'Oct': 'October', 'Nov': 'November',
@@ -8461,45 +8492,57 @@ function showView(view) {
                 labelsToShow = selectedMonthsFilter.map(m => monthNames[m] || m);
                 fy24DataToShow = selectedMonthsFilter.map(m => { const i = allMonths.indexOf(m); return i >= 0 ? fy24Data[i] : 0; });
                 fy25DataToShow = selectedMonthsFilter.map(m => { const i = allMonths.indexOf(m); return i >= 0 ? fy25Data[i] : 0; });
+                fy26DataToShow = selectedMonthsFilter.map(m => { const i = allMonths.indexOf(m); return i >= 0 ? fy26Data[i] : 0; });
             } else {
-                // Show all available months
-                const maxMonthsToShow = Math.max(fy24months.length, fy25months.length);
+                // Show all months that have data in any FY
+                const maxMonthsToShow = Math.max(fy24months.length, fy25months.length, fy26months.length);
                 labelsToShow = allMonths.slice(0, maxMonthsToShow);
-                fy24DataToShow = fy24Data.slice(0, maxMonthsToShow);
-                // For FY25, replace 0 values beyond available data with null to avoid showing 0%
-                fy25DataToShow = fy25Data.slice(0, maxMonthsToShow).map((val, idx) => 
-                    idx < fy25months.length ? val : null
-                );
+                fy24DataToShow = fy24Data.slice(0, maxMonthsToShow).map((val, idx) => idx < fy24months.length ? val : null);
+                fy25DataToShow = fy25Data.slice(0, maxMonthsToShow).map((val, idx) => idx < fy25months.length ? val : null);
+                fy26DataToShow = fy26Data.slice(0, maxMonthsToShow).map((val, idx) => idx < fy26months.length ? val : null);
             }
             
             charts.monthly = new Chart(ctx, {
-                type: isMonthFiltered ? 'bar' : 'line',  // Use bar chart for single month, line for multiple
+                type: isMonthFiltered ? 'bar' : 'line',
                 data: {
                     labels: labelsToShow,
                     datasets: [
                         {
                             label: 'FY 24-25',
                             data: fy24DataToShow,
-                            borderColor: '#3a1c71',  // Purple from gradient
-                            backgroundColor: isMonthFiltered ? 'rgba(58, 28, 113, 0.7)' : 'rgba(58, 28, 113, 0.1)',
-                            borderWidth: 3,
-                            fill: !isMonthFiltered,
+                            borderColor: '#9CA3AF',
+                            backgroundColor: isMonthFiltered ? 'rgba(156, 163, 175, 0.6)' : 'rgba(156, 163, 175, 0.05)',
+                            borderWidth: 2,
+                            fill: false,
                             tension: 0.4,
-                            pointRadius: 5,
-                            pointHoverRadius: 7
+                            pointRadius: 4,
+                            pointHoverRadius: 6,
+                            borderDash: isMonthFiltered ? [] : [4, 4],
+                            spanGaps: false
                         },
                         {
-                            label: `FY 25-26${isMonthFiltered ? '' : ' (' + fy25months.join('-') + ')'}`,
+                            label: `FY 25-26${isMonthFiltered ? '' : ' (' + fy25months.length + ' mths)'}`,
                             data: fy25DataToShow,
-                            borderColor: '#d76d77',  // Pink from gradient
-                            backgroundColor: isMonthFiltered ? 'rgba(215, 109, 119, 0.7)' : 'rgba(215, 109, 119, 0.1)',
+                            borderColor: '#ff6b35',
+                            backgroundColor: isMonthFiltered ? 'rgba(255, 107, 53, 0.7)' : 'rgba(255, 107, 53, 0.1)',
                             borderWidth: 3,
                             fill: !isMonthFiltered,
                             tension: 0.4,
                             pointRadius: 5,
                             pointHoverRadius: 7,
-                            borderDash: isMonthFiltered ? [] : [5, 5],  // Dashed line for FY 25-26 in line chart
-                            spanGaps: false  // Don't connect null values
+                            spanGaps: false
+                        },
+                        {
+                            label: `FY 26-27${isMonthFiltered ? '' : ' (' + fy26months.length + ' mths)'}`,
+                            data: fy26DataToShow,
+                            borderColor: '#0ea5e9',
+                            backgroundColor: isMonthFiltered ? 'rgba(14, 165, 233, 0.7)' : 'rgba(14, 165, 233, 0.15)',
+                            borderWidth: 3,
+                            fill: !isMonthFiltered,
+                            tension: 0.4,
+                            pointRadius: 6,
+                            pointHoverRadius: 8,
+                            spanGaps: false
                         }
                     ]
                 },
@@ -8651,7 +8694,8 @@ function showView(view) {
                             <th>Quarter</th>
                             <th>FY 24-25 (%)</th>
                             <th>FY 25-26 (%)</th>
-                            <th>Difference</th>
+                            <th>FY 26-27 (%)</th>
+                            <th>vs FY 25-26</th>
                         </tr>
                     </thead>
                     <tbody>`;
@@ -8873,8 +8917,20 @@ function showView(view) {
                 const fy25Total = fy25Met + fy25NotMet;
                 const fy25Compliance = fy25Total > 0 ? parseFloat(((fy25Met / fy25Total) * 100).toFixed(1)) : 0;
 
-                // Get region and practice from either FY
-                const sampleRow = fy24Rows.length > 0 ? fy24Rows[0] : (fy25Rows.length > 0 ? fy25Rows[0] : null);
+                // FY 26-27 data
+                const fy26Rows = (filteredData.fy26_27 || []).filter(row => row.Project === accountName);
+                let fy26Met = 0, fy26NotMet = 0;
+                fy26months.forEach(month => {
+                    fy26Rows.forEach(row => {
+                        fy26Met += getMonthData(row, month, 'fy26_27', 'Met');
+                        fy26NotMet += getMonthData(row, month, 'fy26_27', 'Not_Met');
+                    });
+                });
+                const fy26Total = fy26Met + fy26NotMet;
+                const fy26Compliance = fy26Total > 0 ? parseFloat(((fy26Met / fy26Total) * 100).toFixed(1)) : 0;
+
+                // Get region and practice from any available FY
+                const sampleRow = fy24Rows.length > 0 ? fy24Rows[0] : (fy25Rows.length > 0 ? fy25Rows[0] : (fy26Rows.length > 0 ? fy26Rows[0] : null));
                 
                 if (sampleRow) {
                     accountsData.push({
@@ -8883,13 +8939,14 @@ function showView(view) {
                         practice: sampleRow['Practice Head'],
                         fy24Compliance,
                         fy25Compliance,
-                        improvement: fy25Compliance - fy24Compliance
+                        fy26Compliance,
+                        improvement: fy26Compliance > 0 ? fy26Compliance - fy25Compliance : fy25Compliance - fy24Compliance
                     });
                 }
             });
 
-            // Sort by FY 25-26 compliance
-            accountsData.sort((a, b) => b.fy25Compliance - a.fy25Compliance);
+            // Sort by most recent year compliance
+            accountsData.sort((a, b) => (b.fy26Compliance || b.fy25Compliance) - (a.fy26Compliance || a.fy25Compliance));
 
             // Generate insights
             const improvingAccounts = accountsData.filter(a => a.improvement > 2).length;
@@ -8900,7 +8957,7 @@ function showView(view) {
                     <h3><i class="bi bi-lightbulb-fill"></i> Project Performance Comparison</h3>
                     <div class="insight-item">
                         <h4>📈 Improving Accounts</h4>
-                        <p>${improvingAccounts} account(s) show >2% improvement in FY 25-26 compared to FY 24-25.</p>
+                        <p>${improvingAccounts} account(s) show >2% improvement in FY 26-27 vs FY 25-26.</p>
                     </div>
                     ${decliningAccounts > 0 ? `
                     <div class="insight-item">
@@ -8921,6 +8978,8 @@ function showView(view) {
                                 <th>Practice Head</th>
                                 <th>FY 24-25 (%)</th>
                                 <th>FY 25-26 (%)</th>
+                                <th>FY 26-27 (%)</th>
+                                <th>FY 26-27 (%)</th>
                                 <th>Change</th>
                             </tr>
                         </thead>
@@ -8932,7 +8991,8 @@ function showView(view) {
                 
                 const fy24Display = data.fy24Compliance > 0 ? formatPercentageWithRAG(data.fy24Compliance) : 'N/A';
                 const fy25Display = data.fy25Compliance > 0 ? formatPercentageWithRAG(data.fy25Compliance) : 'N/A';
-                const changeDisplay = formatYoYChange(data.fy24Compliance, data.fy25Compliance);
+                const fy26Display = data.fy26Compliance > 0 ? formatPercentageWithRAG(data.fy26Compliance) : 'N/A';
+                const changeDisplay = data.fy26Compliance > 0 ? formatYoYChange(data.fy25Compliance, data.fy26Compliance) : formatYoYChange(data.fy24Compliance, data.fy25Compliance);
                 
                 const escapedAccount = data.account.replace(/'/g, "\\'");
                 tableHTML += `<tr onclick="showProjectDrilldown('${escapedAccount}')" style="cursor: pointer; transition: background 0.2s ease;" 
@@ -8944,6 +9004,7 @@ function showView(view) {
                     <td>${data.practice}</td>
                     <td>${fy24Display}</td>
                     <td>${fy25Display}</td>
+                    <td>${fy26Display}</td>
                     <td>${changeDisplay}</td>
                 </tr>`;
             });
@@ -8969,6 +9030,7 @@ function showView(view) {
             const accountNames = accountsData.slice(0, 10).map(d => d.account);
             const fy24Values = accountsData.slice(0, 10).map(d => d.fy24Compliance);
             const fy25Values = accountsData.slice(0, 10).map(d => d.fy25Compliance);
+            const fy26Values = accountsData.slice(0, 10).map(d => d.fy26Compliance);
 
             const ctx = document.getElementById('accountTrendChart').getContext('2d');
             charts.accountTrend = new Chart(ctx, {
@@ -8981,24 +9043,37 @@ function showView(view) {
                             data: fy24Values,
                             borderColor: '#9CA3AF',
                             backgroundColor: 'rgba(156, 163, 175, 0.1)',
-                            borderWidth: 3,
-                            fill: true,
+                            borderWidth: 2,
+                            fill: false,
                             tension: 0.4,
-                            pointRadius: 5,
-                            pointHoverRadius: 7,
-                            pointBackgroundColor: '#9CA3AF'
+                            pointRadius: 4,
+                            pointHoverRadius: 6,
+                            pointBackgroundColor: '#9CA3AF',
+                            borderDash: [4, 4]
                         },
                         {
                             label: 'FY 25-26',
                             data: fy25Values,
-                            borderColor: getComputedStyle(document.documentElement).getPropertyValue('--primary-color').trim() || '#ff6b35',
+                            borderColor: '#ff6b35',
                             backgroundColor: 'rgba(255, 107, 53, 0.1)',
                             borderWidth: 3,
-                            fill: true,
+                            fill: false,
                             tension: 0.4,
                             pointRadius: 5,
                             pointHoverRadius: 7,
-                            pointBackgroundColor: getComputedStyle(document.documentElement).getPropertyValue('--primary-color').trim() || '#ff6b35'
+                            pointBackgroundColor: '#ff6b35'
+                        },
+                        {
+                            label: 'FY 26-27',
+                            data: fy26Values,
+                            borderColor: '#0ea5e9',
+                            backgroundColor: 'rgba(14, 165, 233, 0.15)',
+                            borderWidth: 3,
+                            fill: true,
+                            tension: 0.4,
+                            pointRadius: 6,
+                            pointHoverRadius: 8,
+                            pointBackgroundColor: '#0ea5e9'
                         }
                     ]
                 },
@@ -9077,14 +9152,8 @@ function showView(view) {
             // FY 24-25 data
             filteredData.fy24_25.forEach(row => {
                 const region = row.Region;
-                // Skip projects with null/undefined/empty region
-                if (!region || region === 'null' || String(region).trim() === '') {
-                    return;
-                }
-                if (!regionData[region]) {
-                    regionData[region] = { fy24Met: 0, fy24NotMet: 0, fy25Met: 0, fy25NotMet: 0 };
-                }
-                
+                if (!region || region === 'null' || String(region).trim() === '') return;
+                if (!regionData[region]) regionData[region] = { fy24Met: 0, fy24NotMet: 0, fy25Met: 0, fy25NotMet: 0, fy26Met: 0, fy26NotMet: 0 };
                 fy24months.forEach(month => {
                     regionData[region].fy24Met += getMonthData(row, month, 'fy24_25', 'Met');
                     regionData[region].fy24NotMet += getMonthData(row, month, 'fy24_25', 'Not_Met');
@@ -9094,39 +9163,43 @@ function showView(view) {
             // FY 25-26 data
             filteredData.fy25_26.forEach(row => {
                 const region = row.Region;
-                // Skip projects with null/undefined/empty region
-                if (!region || region === 'null' || String(region).trim() === '') {
-                    return;
-                }
-                if (!regionData[region]) {
-                    regionData[region] = { fy24Met: 0, fy24NotMet: 0, fy25Met: 0, fy25NotMet: 0 };
-                }
-                
+                if (!region || region === 'null' || String(region).trim() === '') return;
+                if (!regionData[region]) regionData[region] = { fy24Met: 0, fy24NotMet: 0, fy25Met: 0, fy25NotMet: 0, fy26Met: 0, fy26NotMet: 0 };
                 fy25months.forEach(month => {
                     regionData[region].fy25Met += getMonthData(row, month, 'fy25_26', 'Met');
                     regionData[region].fy25NotMet += getMonthData(row, month, 'fy25_26', 'Not_Met');
                 });
             });
 
+            // FY 26-27 data
+            (filteredData.fy26_27 || []).forEach(row => {
+                const region = row.Region;
+                if (!region || region === 'null' || String(region).trim() === '') return;
+                if (!regionData[region]) regionData[region] = { fy24Met: 0, fy24NotMet: 0, fy25Met: 0, fy25NotMet: 0, fy26Met: 0, fy26NotMet: 0 };
+                fy26months.forEach(month => {
+                    regionData[region].fy26Met += getMonthData(row, month, 'fy26_27', 'Met');
+                    regionData[region].fy26NotMet += getMonthData(row, month, 'fy26_27', 'Not_Met');
+                });
+            });
+
             const regionArray = Object.entries(regionData).map(([region, data]) => {
                 const fy24Total = data.fy24Met + data.fy24NotMet;
                 const fy25Total = data.fy25Met + data.fy25NotMet;
+                const fy26Total = data.fy26Met + data.fy26NotMet;
                 const fy24Compliance = fy24Total > 0 ? parseFloat(((data.fy24Met / fy24Total) * 100).toFixed(1)) : 0;
                 const fy25Compliance = fy25Total > 0 ? parseFloat(((data.fy25Met / fy25Total) * 100).toFixed(1)) : 0;
-                return { 
-                    region, 
-                    fy24Compliance, 
-                    fy25Compliance,
-                    improvement: fy25Compliance - fy24Compliance
-                };
-            }).sort((a, b) => b.fy25Compliance - a.fy25Compliance);
+                const fy26Compliance = fy26Total > 0 ? parseFloat(((data.fy26Met / fy26Total) * 100).toFixed(1)) : 0;
+                const improvement = fy26Total > 0 ? fy26Compliance - fy25Compliance : fy25Compliance - fy24Compliance;
+                return { region, fy24Compliance, fy25Compliance, fy26Compliance, improvement };
+            }).sort((a, b) => (b.fy26Compliance || b.fy25Compliance) - (a.fy26Compliance || a.fy25Compliance));
 
+            const topRegion = regionArray[0] || { region: 'N/A', fy26Compliance: 0, fy25Compliance: 0, fy24Compliance: 0 };
             const insightsHTML = `
                 <div class="insights-section">
                     <h3><i class="bi bi-lightbulb-fill"></i> Regional Performance Comparison</h3>
                     <div class="insight-item">
-                        <h4>🏆 Top Region FY 25-26</h4>
-                        <p>${regionArray[0].region} leads with ${regionArray[0].fy25Compliance}% (vs ${regionArray[0].fy24Compliance}% in FY 24-25).</p>
+                        <h4>🏆 Top Region FY 26-27</h4>
+                        <p>${topRegion.region} leads with ${topRegion.fy26Compliance || topRegion.fy25Compliance}% compliance this year.</p>
                     </div>
                 </div>`;
             
@@ -9140,18 +9213,24 @@ function showView(view) {
                                 <th>Region</th>
                                 <th>FY 24-25 (%)</th>
                                 <th>FY 25-26 (%)</th>
+                                <th>FY 26-27 (%)</th>
                                 <th>Change</th>
                             </tr>
                         </thead>
                         <tbody>`;
             
-            regionArray.forEach(({ region, fy24Compliance, fy25Compliance, improvement }) => {
+            regionArray.forEach(({ region, fy24Compliance, fy25Compliance, fy26Compliance, improvement }) => {
+                const fy24Color = fy24Compliance > 0 ? '#9CA3AF' : '#9CA3AF';
+                const fy25Color = '#ff6b35';
+                const fy26Color = '#0ea5e9';
                 const improvementColor = improvement >= 0 ? 'var(--success-color)' : 'var(--danger-color)';
+                const fy26Display = fy26Compliance > 0 ? fy26Compliance.toFixed(1) + '%' : '—';
                 
                 html += `<tr>
                     <td><strong>${region}</strong></td>
-                    <td style="color: #ff6b35; font-weight: bold;">${fy24Compliance}%</td>
-                    <td style="color: var(--primary-color); font-weight: bold;">${fy25Compliance}%</td>
+                    <td style="color: #9CA3AF; font-weight: bold;">${fy24Compliance > 0 ? fy24Compliance.toFixed(1) + '%' : '—'}</td>
+                    <td style="color: #ff6b35; font-weight: bold;">${fy25Compliance > 0 ? fy25Compliance.toFixed(1) + '%' : '—'}</td>
+                    <td style="color: #0ea5e9; font-weight: bold;">${fy26Display}</td>
                     <td style="color: ${improvementColor}; font-weight: bold;">${improvement >= 0 ? '+' : ''}${improvement.toFixed(1)}%</td>
                 </tr>`;
             });
@@ -9187,6 +9266,13 @@ function showView(view) {
                             label: 'FY 25-26',
                             data: regionArray.map(r => r.fy25Compliance),
                             backgroundColor: '#ff6b35',
+                            borderWidth: 2,
+                            borderColor: '#fff'
+                        },
+                        {
+                            label: 'FY 26-27',
+                            data: regionArray.map(r => r.fy26Compliance),
+                            backgroundColor: '#0ea5e9',
                             borderWidth: 2,
                             borderColor: '#fff'
                         }
@@ -9381,10 +9467,7 @@ function showView(view) {
             // FY 24-25 data
             filteredData.fy24_25.forEach(row => {
                 const practice = row['Practice Head'];
-                if (!practiceData[practice]) {
-                    practiceData[practice] = { fy24Met: 0, fy24NotMet: 0, fy25Met: 0, fy25NotMet: 0 };
-                }
-                
+                if (!practiceData[practice]) practiceData[practice] = { fy24Met: 0, fy24NotMet: 0, fy25Met: 0, fy25NotMet: 0, fy26Met: 0, fy26NotMet: 0 };
                 fy24months.forEach(month => {
                     practiceData[practice].fy24Met += getMonthData(row, month, 'fy24_25', 'Met');
                     practiceData[practice].fy24NotMet += getMonthData(row, month, 'fy24_25', 'Not_Met');
@@ -9394,50 +9477,62 @@ function showView(view) {
             // FY 25-26 data
             filteredData.fy25_26.forEach(row => {
                 const practice = row['Practice Head'];
-                if (!practiceData[practice]) {
-                    practiceData[practice] = { fy24Met: 0, fy24NotMet: 0, fy25Met: 0, fy25NotMet: 0 };
-                }
-                
+                if (!practiceData[practice]) practiceData[practice] = { fy24Met: 0, fy24NotMet: 0, fy25Met: 0, fy25NotMet: 0, fy26Met: 0, fy26NotMet: 0 };
                 fy25months.forEach(month => {
                     practiceData[practice].fy25Met += getMonthData(row, month, 'fy25_26', 'Met');
                     practiceData[practice].fy25NotMet += getMonthData(row, month, 'fy25_26', 'Not_Met');
                 });
             });
 
+            // FY 26-27 data
+            (filteredData.fy26_27 || []).forEach(row => {
+                const practice = row['Practice Head'];
+                if (!practiceData[practice]) practiceData[practice] = { fy24Met: 0, fy24NotMet: 0, fy25Met: 0, fy25NotMet: 0, fy26Met: 0, fy26NotMet: 0 };
+                fy26months.forEach(month => {
+                    practiceData[practice].fy26Met += getMonthData(row, month, 'fy26_27', 'Met');
+                    practiceData[practice].fy26NotMet += getMonthData(row, month, 'fy26_27', 'Not_Met');
+                });
+            });
+
             const practiceArray = Object.entries(practiceData).map(([practice, data]) => {
                 const fy24Total = data.fy24Met + data.fy24NotMet;
                 const fy25Total = data.fy25Met + data.fy25NotMet;
+                const fy26Total = data.fy26Met + data.fy26NotMet;
                 const fy24Compliance = fy24Total > 0 ? parseFloat(((data.fy24Met / fy24Total) * 100).toFixed(1)) : null;
                 const fy25Compliance = fy25Total > 0 ? parseFloat(((data.fy25Met / fy25Total) * 100).toFixed(1)) : null;
+                const fy26Compliance = fy26Total > 0 ? parseFloat(((data.fy26Met / fy26Total) * 100).toFixed(1)) : null;
                 
-                // Calculate status: New, NA, or numeric difference
+                // Calculate status vs most recent comparison
                 let status = '';
                 let statusClass = '';
-                if (fy24Compliance === null && fy25Compliance !== null) {
-                    status = 'NEW';
-                    statusClass = 'status-new';
-                } else if (fy24Compliance !== null && fy25Compliance === null) {
-                    status = 'N/A';
-                    statusClass = 'status-na';
-                } else if (fy24Compliance !== null && fy25Compliance !== null) {
+                const prevVal = fy25Compliance;
+                const currVal = fy26Compliance;
+                if (prevVal === null && currVal !== null) { status = 'NEW'; statusClass = 'status-new'; }
+                else if (prevVal !== null && currVal === null && fy26months.length > 0) { status = 'N/A'; statusClass = 'status-na'; }
+                else if (prevVal !== null && currVal !== null) {
+                    const diff = currVal - prevVal;
+                    status = (diff >= 0 ? '+' : '') + diff.toFixed(1) + '%';
+                    statusClass = diff >= 0 ? 'status-improvement' : 'status-decline';
+                } else if (fy24Compliance === null && fy25Compliance !== null) { status = 'NEW'; statusClass = 'status-new'; }
+                else if (fy24Compliance !== null && fy25Compliance === null) { status = 'N/A'; statusClass = 'status-na'; }
+                else if (fy24Compliance !== null && fy25Compliance !== null) {
                     const diff = fy25Compliance - fy24Compliance;
                     status = (diff >= 0 ? '+' : '') + diff.toFixed(1) + '%';
                     statusClass = diff >= 0 ? 'status-improvement' : 'status-decline';
-                } else {
-                    status = 'N/A';
-                    statusClass = 'status-na';
-                }
+                } else { status = 'N/A'; statusClass = 'status-na'; }
                 
                 return { 
                     practice, 
                     fy24Compliance: fy24Compliance !== null ? fy24Compliance : 0, 
                     fy25Compliance: fy25Compliance !== null ? fy25Compliance : 0,
+                    fy26Compliance: fy26Compliance !== null ? fy26Compliance : 0,
                     fy24Display: fy24Compliance !== null ? fy24Compliance.toFixed(1) + '%' : 'N/A',
                     fy25Display: fy25Compliance !== null ? fy25Compliance.toFixed(1) + '%' : 'N/A',
+                    fy26Display: fy26Compliance !== null ? fy26Compliance.toFixed(1) + '%' : 'N/A',
                     status,
                     statusClass
                 };
-            }).sort((a, b) => b.fy25Compliance - a.fy25Compliance);
+            }).sort((a, b) => (b.fy26Compliance || b.fy25Compliance) - (a.fy26Compliance || a.fy25Compliance));
 
             // Calculate badges for all practice heads
             const practiceBadges = calculatePracticeBadges(practiceArray, practiceData, fy25months);
@@ -9464,6 +9559,7 @@ function showView(view) {
             practiceArray.forEach((data, cardIndex) => {
                 const fy24Color = data.fy24Compliance > 0 ? getRAGColor(data.fy24Compliance) : 'var(--text-secondary)';
                 const fy25Color = data.fy25Compliance > 0 ? getRAGColor(data.fy25Compliance) : 'var(--text-secondary)';
+                const fy26Color = data.fy26Compliance > 0 ? getRAGColor(data.fy26Compliance) : 'var(--text-secondary)';
                 
                 // Get badges for this practice head
                 const badges = practiceBadges[data.practice] || [];
@@ -9628,6 +9724,12 @@ function showView(view) {
                                 <div class="practice-metric-label">FY 25-26</div>
                                 <div class="practice-metric-value" style="color: ${fy25Color};">
                                     ${data.fy25Display}
+                                </div>
+                            </div>
+                            <div class="practice-metric">
+                                <div class="practice-metric-label">FY 26-27</div>
+                                <div class="practice-metric-value" style="color: #0ea5e9;">
+                                    ${data.fy26Display}
                                 </div>
                             </div>
                         </div>
