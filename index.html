@@ -4629,6 +4629,12 @@ let rawData = null;
             account: [],
             months: []
         };
+        
+        // Executive View year-selector state (persists across re-renders)
+        window.execViewState = window.execViewState || {
+            rankFY: 'auto',       // 'auto' | 'fy24_25' | 'fy25_26' | 'fy26_27'
+            comparePair: 'auto'   // 'auto' | 'fy24_vs_25' | 'fy25_vs_26'
+        };
 
         // Industry Benchmarks (Investment column removed)
         const industryBenchmarks = {
@@ -7092,6 +7098,16 @@ function showView(view) {
         }
 
 
+        // Executive View Year-Selector helpers
+        function setExecRankFY(fy) {
+            window.execViewState.rankFY = fy;
+            renderExecutiveView();
+        }
+        function setExecComparePair(pair) {
+            window.execViewState.comparePair = pair;
+            renderExecutiveView();
+        }
+
         // Render Executive View - NEW ENHANCED VIEW
         function renderExecutiveView() {
             console.log('🔍 renderExecutiveView() called at', new Date().toLocaleTimeString());
@@ -7185,7 +7201,10 @@ function showView(view) {
                         fy25Compliance,
                         fy26Compliance,
                         mostRecentCompliance,
-                        improvement: fy25Compliance - fy24Compliance
+                        // improvement stored for both pairs — selected at render time
+                        improvement2425: fy25Compliance - fy24Compliance,  // FY24→FY25
+                        improvement2526: fy26Compliance - fy25Compliance,  // FY25→FY26
+                        improvement: fy25Compliance - fy24Compliance        // default (overridden below)
                     });
                 }
             });
@@ -7210,12 +7229,32 @@ function showView(view) {
                     accountPerformance.filter(a => duplicates.includes(a.account)));
             }
             
-            // Top 5 most improved (YoY change)
-            const top5Improved = [...accountPerformance].filter(a => a.fy24Compliance > 0).sort((a, b) => b.improvement - a.improvement).slice(0, 5);
+            // Determine compare pair for Improved/Declined
+            const comparePairPref = window.execViewState.comparePair || 'auto';
+            // auto: use FY25→FY26 if fy26 data exists, else FY24→FY25
+            const autoComparePair = (filteredData.fy26_27||[]).length > 0 ? 'fy25_vs_26' : 'fy24_vs_25';
+            const activePair = (comparePairPref === 'auto') ? autoComparePair : comparePairPref;
+            const compareFromLabel = activePair === 'fy25_vs_26' ? 'FY 25-26' : 'FY 24-25';
+            const compareToLabel   = activePair === 'fy25_vs_26' ? 'FY 26-27' : 'FY 25-26';
+            const compareFromKey   = activePair === 'fy25_vs_26' ? 'fy25Compliance' : 'fy24Compliance';
+            const compareToKey     = activePair === 'fy25_vs_26' ? 'fy26Compliance' : 'fy25Compliance';
+            const compareImprovKey = activePair === 'fy25_vs_26' ? 'improvement2526' : 'improvement2425';
+            const compareHasFromFn = activePair === 'fy25_vs_26'
+                ? (a => a.fy25Compliance > 0)
+                : (a => a.fy24Compliance > 0);
+            
+            // Top 5 most improved (selected compare pair)
+            const top5Improved = [...accountPerformance]
+                .filter(compareHasFromFn)
+                .sort((a, b) => b[compareImprovKey] - a[compareImprovKey])
+                .slice(0, 5);
             console.log('Top 5 Improved:', top5Improved);
             
-            // Top 5 most declined (YoY change)
-            const top5Declined = [...accountPerformance].filter(a => a.fy24Compliance > 0).sort((a, b) => a.improvement - b.improvement).slice(0, 5);
+            // Top 5 most declined (selected compare pair)
+            const top5Declined = [...accountPerformance]
+                .filter(compareHasFromFn)
+                .sort((a, b) => a[compareImprovKey] - b[compareImprovKey])
+                .slice(0, 5);
             console.log('Top 5 Declined:', top5Declined);
             
             // Check if any account appears in both lists
@@ -7226,8 +7265,12 @@ function showView(view) {
                 console.error('🚨 ACCOUNTS IN BOTH LISTS:', inBoth);
             }
             
-            // Regional rankings - use most recent FY with data
-            const execDrillFY = (filteredData.fy26_27||[]).length > 0 ? 'fy26_27' : (filteredData.fy25_26||[]).length > 0 ? 'fy25_26' : 'fy24_25';
+            // Regional rankings - use user-selected FY or auto (most recent with data)
+            const autoRankFY = (filteredData.fy26_27||[]).length > 0 ? 'fy26_27' : (filteredData.fy25_26||[]).length > 0 ? 'fy25_26' : 'fy24_25';
+            const rankFYPref = window.execViewState.rankFY || 'auto';
+            // Validate that selected FY actually has data; fall back to auto if not
+            const execDrillFY = (rankFYPref === 'auto' || !(filteredData[rankFYPref]||[]).length)
+                ? autoRankFY : rankFYPref;
             const execDrillMonths = execDrillFY === 'fy24_25' ? fy24months : execDrillFY === 'fy26_27' ? fy26months : fy25months;
             const execDrillLabel = execDrillFY === 'fy24_25' ? 'FY 24-25' : execDrillFY === 'fy26_27' ? 'FY 26-27' : 'FY 25-26';
             const regionData = {};
@@ -7281,15 +7324,85 @@ function showView(view) {
             
             const yoyChange = fy25Metrics.compliance - fy24Metrics.compliance;
             const yoy2526vs2627 = fy26Metrics.compliance - fy25Metrics.compliance;
+            // Active compare change (for badge in selector bar)
+            const activeYoYChange = activePair === 'fy25_vs_26' ? yoy2526vs2627 : yoyChange;
+            const activeYoYFromLabel = compareFromLabel;
+            const activeYoYToLabel   = compareToLabel;
             
             const html = `
-                <div class="insights-section animate__animated animate__fadeIn">
-                    <h3><i class="bi bi-star-fill"></i> Executive View - Strategic Performance Overview</h3>
-                    <div class="insight-item">
-                        <h4>📊 Year-over-Year SLA Performance Comparison</h4>
-                        <p><strong>FY 2024-25:</strong> ${fy24Metrics.compliance}% | <strong>FY 2025-26:</strong> ${fy25Metrics.compliance}% | <strong>FY 2026-27:</strong> ${fy26Metrics.compliance > 0 ? fy26Metrics.compliance + '%' : 'N/A'} | 
-                        <span class="${yoyChange >= 0 ? 'improvement-badge' : 'decline-badge'}">${yoyChange >= 0 ? '↑' : '↓'} ${Math.abs(yoyChange).toFixed(1)}% YoY (FY24→FY25)</span>
-                        ${fy26Metrics.compliance > 0 ? `| <span class="${yoy2526vs2627 >= 0 ? 'improvement-badge' : 'decline-badge'}">${yoy2526vs2627 >= 0 ? '↑' : '↓'} ${Math.abs(yoy2526vs2627).toFixed(1)}% YoY (FY25→FY26)</span>` : ''}</p>
+                <div class="insights-section animate__animated animate__fadeIn" style="padding-bottom: 0;">
+                    <h3 style="margin-bottom: 10px;"><i class="bi bi-star-fill"></i> Executive View - Strategic Performance Overview</h3>
+                    
+                    <!-- ── Year Selector Bar ── -->
+                    <div style="background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 14px; padding: 16px 20px; margin-bottom: 16px; display: flex; flex-wrap: wrap; align-items: center; gap: 24px;">
+                        
+                        <!-- Ranking FY selector -->
+                        <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
+                            <span style="font-size: 0.8em; font-weight: 700; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 1px; white-space: nowrap;">
+                                <i class="bi bi-trophy-fill" style="color: gold;"></i> Ranking Year
+                            </span>
+                            <div style="display: flex; gap: 6px; flex-wrap: wrap;">
+                                ${['auto', 'fy24_25', 'fy25_26', 'fy26_27'].map(fy => {
+                                    const label = fy === 'auto' ? 'Auto (Latest)' : fy === 'fy24_25' ? 'FY 24-25' : fy === 'fy25_26' ? 'FY 25-26' : 'FY 26-27';
+                                    const color = fy === 'fy24_25' ? '#9CA3AF' : fy === 'fy25_26' ? '#ff6b35' : fy === 'fy26_27' ? '#0ea5e9' : '#6366f1';
+                                    const isActive = (window.execViewState.rankFY || 'auto') === fy;
+                                    const hasData = fy === 'auto' || (filteredData[fy]||[]).length > 0;
+                                    if (!hasData) return '';
+                                    return \`<button onclick="setExecRankFY('\${fy}')"
+                                        style="padding: 5px 14px; border-radius: 20px; border: 2px solid \${color};
+                                               background: \${isActive ? color : 'transparent'};
+                                               color: \${isActive ? '#fff' : color};
+                                               font-weight: 700; font-size: 0.82em; cursor: pointer;
+                                               transition: all 0.2s ease;">\${label}</button>\`;
+                                }).join('')}
+                            </div>
+                        </div>
+                        
+                        <!-- Divider -->
+                        <div style="width: 1px; height: 36px; background: var(--border-color); flex-shrink: 0;"></div>
+                        
+                        <!-- Compare Period selector -->
+                        <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
+                            <span style="font-size: 0.8em; font-weight: 700; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 1px; white-space: nowrap;">
+                                <i class="bi bi-arrow-left-right"></i> Compare Period
+                            </span>
+                            <div style="display: flex; gap: 6px; flex-wrap: wrap;">
+                                ${[
+                                    { key: 'auto',       label: 'Auto',           color: '#6366f1' },
+                                    { key: 'fy24_vs_25', label: 'FY24 → FY25',    color: '#ff6b35' },
+                                    { key: 'fy25_vs_26', label: 'FY25 → FY26',    color: '#0ea5e9',
+                                      disabled: (filteredData.fy26_27||[]).length === 0 }
+                                ].map(opt => {
+                                    if (opt.disabled) return '';
+                                    const isActive = (window.execViewState.comparePair || 'auto') === opt.key;
+                                    return \`<button onclick="setExecComparePair('\${opt.key}')"
+                                        style="padding: 5px 14px; border-radius: 20px; border: 2px solid \${opt.color};
+                                               background: \${isActive ? opt.color : 'transparent'};
+                                               color: \${isActive ? '#fff' : opt.color};
+                                               font-weight: 700; font-size: 0.82em; cursor: pointer;
+                                               transition: all 0.2s ease;">\${opt.label}</button>\`;
+                                }).join('')}
+                            </div>
+                        </div>
+                        
+                        <!-- Active YoY badge -->
+                        <div style="margin-left: auto; white-space: nowrap;">
+                            <span style="font-size: 0.78em; color: var(--text-secondary); margin-right: 6px;">${activeYoYFromLabel} → ${activeYoYToLabel}:</span>
+                            <span class="${activeYoYChange >= 0 ? 'improvement-badge' : 'decline-badge'}" style="font-size: 0.9em;">
+                                ${activeYoYChange >= 0 ? '↑' : '↓'} ${Math.abs(activeYoYChange).toFixed(1)}% YoY
+                            </span>
+                        </div>
+                    </div>
+                    
+                    <!-- Snapshot summary line -->
+                    <div class="insight-item" style="margin-bottom: 4px;">
+                        <p style="font-size:0.9em;">
+                            <strong>FY 2024-25:</strong> ${fy24Metrics.compliance}% &nbsp;|&nbsp;
+                            <strong>FY 2025-26:</strong> ${fy25Metrics.compliance}% &nbsp;|&nbsp;
+                            <strong>FY 2026-27:</strong> ${fy26Metrics.compliance > 0 ? fy26Metrics.compliance + '%' : 'N/A'} &nbsp;|&nbsp;
+                            <span class="${yoyChange >= 0 ? 'improvement-badge' : 'decline-badge'}">${yoyChange >= 0 ? '↑' : '↓'} ${Math.abs(yoyChange).toFixed(1)}% (FY24→FY25)</span>
+                            ${fy26Metrics.compliance > 0 ? \`&nbsp;|&nbsp;<span class="\${yoy2526vs2627 >= 0 ? 'improvement-badge' : 'decline-badge'}">\${yoy2526vs2627 >= 0 ? '↑' : '↓'} \${Math.abs(yoy2526vs2627).toFixed(1)}% (FY25→FY26)</span>\` : ''}
+                        </p>
                     </div>
                 </div>
 
@@ -7369,7 +7482,7 @@ function showView(view) {
                 <div class="dashboard-grid">
                     <!-- Top 5 Most Improved Accounts -->
                     <div class="card animated-card" style="animation-delay: 0.2s;">
-                        <h3><i class="bi bi-graph-up-arrow" style="color: #10b981;"></i> Top 5 Most Improved Accounts (YoY)</h3>
+                        <h3><i class="bi bi-graph-up-arrow" style="color: #10b981;"></i> Top 5 Most Improved Accounts (${compareFromLabel} → ${compareToLabel})</h3>
                         <div class="chart-container">
                             <canvas id="top5ImprovedChart"></canvas>
                         </div>
@@ -7377,10 +7490,10 @@ function showView(view) {
                             <thead>
                                 <tr>
                                     <th style="width: 10%;">Rank</th>
-                                    <th style="width: 40%;">Account</th>
-                                    <th style="width: 17%;">FY 24-25</th>
-                                    <th style="width: 17%;">FY 25-26</th>
-                                    <th style="width: 16%;">Change</th>
+                                    <th style="width: 38%;">Account</th>
+                                    <th style="width: 17%;">${compareFromLabel}</th>
+                                    <th style="width: 17%;">${compareToLabel}</th>
+                                    <th style="width: 18%;">Change</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -7388,9 +7501,9 @@ function showView(view) {
                                     <tr>
                                         <td><strong>${idx + 1}</strong></td>
                                         <td>${acc.account}</td>
-                                        <td>${acc.fy24Compliance.toFixed(1)}%</td>
-                                        <td>${acc.fy25Compliance.toFixed(1)}%</td>
-                                        <td class="improvement-badge">↑ +${acc.improvement.toFixed(1)}%</td>
+                                        <td>${acc[compareFromKey] > 0 ? acc[compareFromKey].toFixed(1) + '%' : '—'}</td>
+                                        <td>${acc[compareToKey] > 0 ? acc[compareToKey].toFixed(1) + '%' : '—'}</td>
+                                        <td class="improvement-badge">↑ +${acc[compareImprovKey].toFixed(1)}%</td>
                                     </tr>
                                 `).join('')}
                             </tbody>
@@ -7399,7 +7512,7 @@ function showView(view) {
 
                     <!-- Top 5 Most Declined Accounts -->
                     <div class="card animated-card" style="animation-delay: 0.3s;">
-                        <h3><i class="bi bi-graph-down-arrow" style="color: #ef4444;"></i> Top 5 Most Declined Accounts (YoY)</h3>
+                        <h3><i class="bi bi-graph-down-arrow" style="color: #ef4444;"></i> Top 5 Most Declined Accounts (${compareFromLabel} → ${compareToLabel})</h3>
                         <div class="chart-container">
                             <canvas id="top5DeclinedChart"></canvas>
                         </div>
@@ -7407,10 +7520,10 @@ function showView(view) {
                             <thead>
                                 <tr>
                                     <th style="width: 10%;">Rank</th>
-                                    <th style="width: 40%;">Account</th>
-                                    <th style="width: 17%;">FY 24-25</th>
-                                    <th style="width: 17%;">FY 25-26</th>
-                                    <th style="width: 16%;">Change</th>
+                                    <th style="width: 38%;">Account</th>
+                                    <th style="width: 17%;">${compareFromLabel}</th>
+                                    <th style="width: 17%;">${compareToLabel}</th>
+                                    <th style="width: 18%;">Change</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -7418,9 +7531,9 @@ function showView(view) {
                                     <tr>
                                         <td><strong>${idx + 1}</strong></td>
                                         <td>${acc.account}</td>
-                                        <td>${acc.fy24Compliance.toFixed(1)}%</td>
-                                        <td>${acc.fy25Compliance.toFixed(1)}%</td>
-                                        <td class="decline-badge">↓ ${acc.improvement.toFixed(1)}%</td>
+                                        <td>${acc[compareFromKey] > 0 ? acc[compareFromKey].toFixed(1) + '%' : '—'}</td>
+                                        <td>${acc[compareToKey] > 0 ? acc[compareToKey].toFixed(1) + '%' : '—'}</td>
+                                        <td class="decline-badge">↓ ${Math.abs(acc[compareImprovKey]).toFixed(1)}%</td>
                                     </tr>
                                 `).join('')}
                             </tbody>
@@ -7649,7 +7762,7 @@ function showView(view) {
                         labels: top5Improved.map(a => a.account),
                         datasets: [{
                             label: 'Improvement',
-                            data: top5Improved.map(a => a.improvement),
+                            data: top5Improved.map(a => a[compareImprovKey]),
                             backgroundColor: '#10b981',
                             borderWidth: 0,
                             borderRadius: 6
@@ -7721,7 +7834,7 @@ function showView(view) {
                         labels: top5Declined.map(a => a.account),
                         datasets: [{
                             label: 'Decline',
-                            data: top5Declined.map(a => Math.abs(a.improvement)),
+                            data: top5Declined.map(a => Math.abs(a[compareImprovKey])),
                             backgroundColor: '#ef4444',
                             borderWidth: 0,
                             borderRadius: 6
