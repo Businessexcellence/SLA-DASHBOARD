@@ -7259,20 +7259,24 @@ function showView(view) {
             const compareFromKey   = activePair === 'fy25_vs_26' ? 'fy25Compliance' : 'fy24Compliance';
             const compareToKey     = activePair === 'fy25_vs_26' ? 'fy26Compliance' : 'fy25Compliance';
             const compareImprovKey = activePair === 'fy25_vs_26' ? 'improvement2526' : 'improvement2425';
-            const compareHasFromFn = activePair === 'fy25_vs_26'
-                ? (a => a.fy25Compliance > 0)
-                : (a => a.fy24Compliance > 0);
+            // For improved/declined: BOTH the "from" and "to" FY must have data.
+            // An account absent in the "to" FY (contract ended / demerged) is NOT a decline —
+            // it simply exited. Requiring toCompliance > 0 excludes those accounts.
+            const compareHasBothFn = activePair === 'fy25_vs_26'
+                ? (a => a.fy25Compliance > 0 && a.fy26Compliance > 0)   // must exist in BOTH FY25-26 AND FY26-27
+                : (a => a.fy24Compliance > 0 && a.fy25Compliance > 0);  // must exist in BOTH FY24-25 AND FY25-26
             
-            // Top 5 most improved (selected compare pair)
+            // Top 5 most improved (selected compare pair — both FYs must have data)
             const top5Improved = [...accountPerformance]
-                .filter(compareHasFromFn)
+                .filter(compareHasBothFn)
                 .sort((a, b) => b[compareImprovKey] - a[compareImprovKey])
                 .slice(0, 5);
             console.log('Top 5 Improved:', top5Improved);
             
-            // Top 5 most declined (selected compare pair)
+            // Top 5 most declined (selected compare pair — both FYs must have data)
+            // Accounts that exited (no "to" FY data) are excluded — contract ended, not declined
             const top5Declined = [...accountPerformance]
-                .filter(compareHasFromFn)
+                .filter(compareHasBothFn)
                 .sort((a, b) => a[compareImprovKey] - b[compareImprovKey])
                 .slice(0, 5);
             console.log('Top 5 Declined:', top5Declined);
