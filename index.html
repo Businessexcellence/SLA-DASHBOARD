@@ -8023,7 +8023,15 @@ function showView(view) {
                 months = selectedMonths.map(m => monthMap[m] || m);
                 if (months.length === 1) {
                     const m = months[0];
-                    const yr = (m === 'Jan' || m === 'Feb' || m === 'Mar') ? '2026' : '2025';
+                    // Year label is FY-aware
+                    let yr;
+                    if (fyFilter === 'fy26_27' || fyFilter === 'all') {
+                        yr = (m === 'Jan' || m === 'Feb' || m === 'Mar') ? '2027' : '2026';
+                    } else if (fyFilter === 'fy24_25') {
+                        yr = (m === 'Jan' || m === 'Feb' || m === 'Mar') ? '2025' : '2024';
+                    } else {
+                        yr = (m === 'Jan' || m === 'Feb' || m === 'Mar') ? '2026' : '2025';
+                    }
                     periodLabel = `(${m} ${yr} Only)`;
                 } else {
                     periodLabel = `(${months.join(', ')})`;
@@ -8351,7 +8359,15 @@ function showView(view) {
                 months = selectedMonths.map(m => monthMap[m] || m);
                 if (months.length === 1) {
                     const m = months[0];
-                    const yr = (m === 'Jan' || m === 'Feb' || m === 'Mar') ? '2026' : '2025';
+                    // Year label is FY-aware
+                    let yr;
+                    if (fyFilterKPI === 'fy26_27' || fyFilterKPI === 'all') {
+                        yr = (m === 'Jan' || m === 'Feb' || m === 'Mar') ? '2027' : '2026';
+                    } else if (fyFilterKPI === 'fy24_25') {
+                        yr = (m === 'Jan' || m === 'Feb' || m === 'Mar') ? '2025' : '2024';
+                    } else {
+                        yr = (m === 'Jan' || m === 'Feb' || m === 'Mar') ? '2026' : '2025';
+                    }
                     periodLabel = `(${m} ${yr} Only)`;
                 } else {
                     periodLabel = `(${months.join(', ')})`;
