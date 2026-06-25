@@ -8039,9 +8039,9 @@ function showView(view) {
             } else {
                 // All months — determine based on active FY
                 if (fyFilter === 'fy26_27' || fyFilter === 'all') {
-                    // FY 26-27: only April available so far
-                    months = ['April'];
-                    periodLabel = '(Current FY 26-27 - Apr 2026)';
+                    // FY 26-27: Apr + May 2026 available
+                    months = ['April', 'May'];
+                    periodLabel = '(Current FY 26-27 - Apr-May 2026)';
                 } else {
                     // FY 25-26: full year
                     months = ['April', 'May', 'June', 'July', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec', 'Jan', 'Feb', 'Mar'];
@@ -8375,8 +8375,8 @@ function showView(view) {
             } else {
                 // All months — determine based on active FY
                 if (fyFilterKPI === 'fy26_27' || fyFilterKPI === 'all') {
-                    months = ['April'];
-                    periodLabel = '(Current FY 26-27 - Apr 2026)';
+                    months = ['April', 'May'];
+                    periodLabel = '(Current FY 26-27 - Apr-May 2026)';
                 } else {
                     months = ['April', 'May', 'June', 'July', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec', 'Jan', 'Feb', 'Mar'];
                     periodLabel = '(Current FY 25-26 - Apr 2025 to Mar 2026)';
@@ -13105,8 +13105,9 @@ function showView(view) {
             // Detect FY from measure data: if 'April26 Score' exists → FY26-27, else FY25-26
             const isFY2627measure = measure['April26 Score'] !== undefined;
             const months = isFY2627measure ? [
-                // FY 26-27: only Apr'26 available so far
+                // FY 26-27: Apr'26 + May'26 available
                 {name: "Apr'26", scoreCol: 'April26 Score', statusCol: 'April MET/NOT_MET'},
+                {name: "May'26", scoreCol: 'May26 Score', statusCol: 'May MET/NOT_MET'},
             ] : [
                 // FY 25-26: full year Apr'25 → Mar'26
                 {name: "Apr'25", scoreCol: 'April25 Score', statusCol: 'April MET/NOT_MET'},
@@ -13351,9 +13352,9 @@ function showView(view) {
             if (_drillMonths.length > 0) {
                 months = _drillMonths.map(m => monthMap[m] || m);
             } else {
-                // Default months based on active FY — FY26-27 only has April; FY25-26 has full 12 months
+                // Default months based on active FY — FY26-27 has Apr+May 2026; FY25-26 has full 12 months
                 if (fyFilterDrill === 'fy26_27' || fyFilterDrill === 'all') {
-                    months = ['April'];
+                    months = ['April', 'May'];
                 } else {
                     months = ['April', 'May', 'June', 'July', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec', 'Jan', 'Feb', 'Mar'];
                 }
