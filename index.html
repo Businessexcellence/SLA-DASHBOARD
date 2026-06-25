@@ -12926,8 +12926,10 @@ function showView(view) {
         function showProjectDrilldown(projectName) {
             console.log('🔍 Opening drill-down for:', projectName);
             console.log('📊 metricsDetailsData available:', metricsDetailsData ? metricsDetailsData.length : 0, 'measures');
-            // Select correct metrics data based on FY filter
-            const drillFY = activeFilters.fy || 'all';
+            // Select correct metrics data based on FY filter.
+            // When no FY filter is applied ('all'), default to the current FY (fy26_27).
+            const _rawFY = activeFilters.fy || 'all';
+            const drillFY = (_rawFY === 'all') ? 'fy26_27' : _rawFY;
             const drillFYLabel = (drillFY === 'fy25_26') ? 'FY 25-26' : 
                                   (drillFY === 'fy24_25') ? 'FY 24-25' : 'FY 26-27';
             let activeDetailData;
@@ -13297,8 +13299,9 @@ function showView(view) {
         function showKPIBifurcationDrilldown(category, met, notMet, total, totalMeasures, tileNotReported) {
             console.log(`📊 Showing ${category} drilldown:`, { met, notMet, total, totalMeasures, tileNotReported });
             
-            // Select correct metrics dataset based on FY filter (mirrors generateKPIBifurcationTiles logic)
-            const fyFilterDrill = activeFilters.fy || 'all';
+            // Select correct metrics dataset based on FY filter (mirrors generateKPIBifurcationTiles logic).
+            // When no FY filter is applied ('all'), default to the current FY (fy26_27).
+            const fyFilterDrill = (activeFilters.fy && activeFilters.fy !== 'all') ? activeFilters.fy : 'fy26_27';
             let activeMetricsDataDrill;
             if (fyFilterDrill === 'fy25_26') {
                 activeMetricsDataDrill = (metricsDetails2526Data && metricsDetails2526Data.length > 0) ? metricsDetails2526Data :
@@ -13354,7 +13357,7 @@ function showView(view) {
                 months = _drillMonths.map(m => monthMap[m] || m);
             } else {
                 // Default months based on active FY — FY26-27 has Apr+May 2026; FY25-26 has full 12 months
-                if (fyFilterDrill === 'fy26_27' || fyFilterDrill === 'all') {
+                if (fyFilterDrill === 'fy26_27') {
                     months = ['April', 'May'];
                 } else {
                     months = ['April', 'May', 'June', 'July', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec', 'Jan', 'Feb', 'Mar'];
