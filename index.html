@@ -7995,8 +7995,16 @@ function showView(view) {
             }
             
             // Apply Practice Head filter (array from multiselect)
+            // Use project-level lookup from FY26-27 summary (source of truth for filter dropdown)
+            // This fixes mismatch where Summary has "Manish" but Metrics Details has "Manish Malhotra"
             if (activeFilters.practice && activeFilters.practice.length > 0) {
-                filteredMetricsData = filteredMetricsData.filter(r => activeFilters.practice.includes(r['Practice Head']));
+                const _fy2627Summary = (rawData && rawData.fy26_27) ? rawData.fy26_27 : (filteredData && filteredData.fy26_27 ? filteredData.fy26_27 : []);
+                const _projPHMap = {};
+                _fy2627Summary.forEach(r => { if (r.Project) _projPHMap[r.Project.trim()] = r['Practice Head']; });
+                filteredMetricsData = filteredMetricsData.filter(r => {
+                    const ph = (r.Project && _projPHMap[r.Project.trim()]) ? _projPHMap[r.Project.trim()] : r['Practice Head'];
+                    return activeFilters.practice.includes(ph);
+                });
             }
             
             // Apply Account/Project filter (array from multiselect)
@@ -8325,8 +8333,16 @@ function showView(view) {
             }
             
             // Apply Practice Head filter (array from multiselect)
+            // Use project-level lookup from FY26-27 summary (source of truth for filter dropdown)
+            // This fixes mismatch where Summary has "Manish" but Metrics Details has "Manish Malhotra"
             if (activeFilters.practice && activeFilters.practice.length > 0) {
-                filteredMetricsData = filteredMetricsData.filter(r => activeFilters.practice.includes(r['Practice Head']));
+                const _fy2627SummaryKPI = (rawData && rawData.fy26_27) ? rawData.fy26_27 : (filteredData && filteredData.fy26_27 ? filteredData.fy26_27 : []);
+                const _projPHMapKPI = {};
+                _fy2627SummaryKPI.forEach(r => { if (r.Project) _projPHMapKPI[r.Project.trim()] = r['Practice Head']; });
+                filteredMetricsData = filteredMetricsData.filter(r => {
+                    const ph = (r.Project && _projPHMapKPI[r.Project.trim()]) ? _projPHMapKPI[r.Project.trim()] : r['Practice Head'];
+                    return activeFilters.practice.includes(ph);
+                });
             }
             
             // Apply Account/Project filter (array from multiselect)
@@ -8585,8 +8601,15 @@ function showView(view) {
                 }
                 
                 // Apply Practice Head filter
+                // Use project-level lookup from FY26-27 summary to fix name mismatch
                 if (activeFilters.practice && activeFilters.practice.length > 0) {
-                    filteredMetrics = filteredMetrics.filter(r => activeFilters.practice.includes(r['Practice Head']));
+                    const _fy2627SummaryDrill = (rawData && rawData.fy26_27) ? rawData.fy26_27 : (filteredData && filteredData.fy26_27 ? filteredData.fy26_27 : []);
+                    const _projPHMapDrill = {};
+                    _fy2627SummaryDrill.forEach(r => { if (r.Project) _projPHMapDrill[r.Project.trim()] = r['Practice Head']; });
+                    filteredMetrics = filteredMetrics.filter(r => {
+                        const ph = (r.Project && _projPHMapDrill[r.Project.trim()]) ? _projPHMapDrill[r.Project.trim()] : r['Practice Head'];
+                        return activeFilters.practice.includes(ph);
+                    });
                 }
                 
                 // Apply Account/Project filter
@@ -13326,8 +13349,15 @@ function showView(view) {
             if (activeFilters.region && activeFilters.region.length > 0) {
                 filteredMetricsData = filteredMetricsData.filter(r => activeFilters.region.includes(r.Region));
             }
+            // Apply Practice Head filter using project-level lookup from summary (fixes name mismatch)
             if (activeFilters.practice && activeFilters.practice.length > 0) {
-                filteredMetricsData = filteredMetricsData.filter(r => activeFilters.practice.includes(r['Practice Head']));
+                const _fy2627SummaryBifDrill = (rawData && rawData.fy26_27) ? rawData.fy26_27 : (filteredData && filteredData.fy26_27 ? filteredData.fy26_27 : []);
+                const _projPHMapBifDrill = {};
+                _fy2627SummaryBifDrill.forEach(r => { if (r.Project) _projPHMapBifDrill[r.Project.trim()] = r['Practice Head']; });
+                filteredMetricsData = filteredMetricsData.filter(r => {
+                    const ph = (r.Project && _projPHMapBifDrill[r.Project.trim()]) ? _projPHMapBifDrill[r.Project.trim()] : r['Practice Head'];
+                    return activeFilters.practice.includes(ph);
+                });
             }
             if (activeFilters.account && activeFilters.account.length > 0) {
                 filteredMetricsData = filteredMetricsData.filter(r => activeFilters.account.includes(r.Project));
