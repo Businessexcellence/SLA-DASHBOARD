@@ -6,7 +6,7 @@
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
-    <title>TAGGD Dashboard v5.2.0 - Jan'26 Column Added</title>
+    <title>TAGGD Dashboard v5.2.1 - Regional Head Filter Fix (HPE/Mahak)</title>
     
     <!-- External Libraries -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0"></script>
@@ -4649,6 +4649,51 @@ let rawData = null;
             account: [],
             months: []
         };
+
+        /**
+         * Build a map of Project -> Regional Head using the summary data (rawData).
+         * The metrics-details rows do NOT carry a "Regional Head" field, so when a
+         * Regional Head filter (e.g. "Mahak") is applied we must look up which
+         * projects belong to that Regional Head from the summary sheets and then
+         * filter the metrics rows by those projects.
+         * Handles both 'Regional Head ' (FY25-26/26-27, trailing space) and
+         * 'Regional Head' (FY24-25) key variants.
+         */
+        function getProjectToRegionalHeadMap() {
+            const map = {};
+            try {
+                const sources = [];
+                if (typeof rawData !== 'undefined' && rawData) {
+                    if (Array.isArray(rawData.fy24_25)) sources.push(...rawData.fy24_25);
+                    if (Array.isArray(rawData.fy25_26)) sources.push(...rawData.fy25_26);
+                    if (Array.isArray(rawData.fy26_27)) sources.push(...rawData.fy26_27);
+                }
+                sources.forEach(row => {
+                    if (!row || !row.Project) return;
+                    const rh = row['Regional Head '] || row['Regional Head'];
+                    if (rh) map[String(row.Project).trim()] = rh;
+                });
+            } catch (e) {
+                console.warn('getProjectToRegionalHeadMap failed:', e);
+            }
+            return map;
+        }
+
+        /**
+         * Returns the set of Project names that belong to the currently selected
+         * Regional Head(s). Returns null when no Regional Head filter is active
+         * (meaning "do not restrict by regional head").
+         */
+        function getProjectsForActiveRegionalHead() {
+            const selected = activeFilters.regionalHead || [];
+            if (!selected.length) return null;
+            const map = getProjectToRegionalHeadMap();
+            const projects = new Set();
+            Object.keys(map).forEach(proj => {
+                if (selected.includes(map[proj])) projects.add(proj);
+            });
+            return projects;
+        }
         
         // Executive View year-selector state (persists across re-renders)
         window.execViewState = window.execViewState || {
@@ -7982,11 +8027,12 @@ function showView(view) {
             let filteredMetricsData = activeMetricsData;
 
             // Apply Regional Head filter
-            if (activeFilters.regionalHead && activeFilters.regionalHead.length > 0) {
-                filteredMetricsData = filteredMetricsData.filter(r => {
-                    const rh = r['Regional Head '] || r['Regional Head'];
-                    return activeFilters.regionalHead.includes(rh);
-                });
+            // Metrics rows have NO reliable "Regional Head" field, so resolve via
+            // the summary data: keep only projects belonging to the selected
+            // Regional Head(s). (Fixes Regional Head filter, e.g. "Mahak", showing 0.)
+            const rhProjects = getProjectsForActiveRegionalHead();
+            if (rhProjects) {
+                filteredMetricsData = filteredMetricsData.filter(r => r.Project && rhProjects.has(String(r.Project).trim()));
             }
             
             // Apply Region filter (array from multiselect)
@@ -8320,11 +8366,12 @@ function showView(view) {
             let filteredMetricsData = activeMetricsData;
 
             // Apply Regional Head filter
-            if (activeFilters.regionalHead && activeFilters.regionalHead.length > 0) {
-                filteredMetricsData = filteredMetricsData.filter(r => {
-                    const rh = r['Regional Head '] || r['Regional Head'];
-                    return activeFilters.regionalHead.includes(rh);
-                });
+            // Metrics rows have NO reliable "Regional Head" field, so resolve via
+            // the summary data: keep only projects belonging to the selected
+            // Regional Head(s). (Fixes Regional Head filter, e.g. "Mahak", showing 0.)
+            const rhProjectsKPI = getProjectsForActiveRegionalHead();
+            if (rhProjectsKPI) {
+                filteredMetricsData = filteredMetricsData.filter(r => r.Project && rhProjectsKPI.has(String(r.Project).trim()));
             }
             
             // Apply Region filter (array from multiselect)
