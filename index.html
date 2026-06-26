@@ -6,7 +6,7 @@
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
-    <title>TAGGD Dashboard v5.2.1 - Regional Head Filter Fix (HPE/Mahak)</title>
+    <title>TAGGD Dashboard v5.3.0 - Beautified Charts &amp; Graphs</title>
     
     <!-- External Libraries -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0"></script>
@@ -1650,19 +1650,39 @@
         }
         
         .chart-container {
-            background: var(--card-bg);
-            padding: 25px;
-            border-radius: 12px;
-            box-shadow: var(--shadow-md);
+            background: linear-gradient(160deg, #ffffff 0%, #fffaf6 100%);
+            padding: 26px 26px 22px;
+            border-radius: 18px;
+            border: 1px solid rgba(255, 107, 53, 0.10);
+            box-shadow: 0 6px 22px -8px rgba(60, 53, 48, 0.18),
+                        0 2px 6px -2px rgba(60, 53, 48, 0.08);
             height: 450px;
-            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+            transition: transform 0.35s cubic-bezier(0.22, 1, 0.36, 1),
+                        box-shadow 0.35s ease,
+                        border-color 0.35s ease;
         }
-        
+
+        /* Subtle accent bar at the top of every chart card */
+        .chart-container::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, #ff6b35 0%, #ff8c5a 50%, #ffb088 100%);
+            opacity: 0.9;
+        }
+
         .chart-container:hover {
-            transform: translateY(-3px);
-            box-shadow: var(--shadow-lg);
+            transform: translateY(-5px);
+            box-shadow: 0 18px 40px -12px rgba(255, 107, 53, 0.30),
+                        0 6px 14px -6px rgba(60, 53, 48, 0.15);
+            border-color: rgba(255, 107, 53, 0.25);
         }
-        
+
         .chart-container canvas {
             max-height: 360px;
         }
@@ -4974,20 +4994,84 @@ let rawData = null;
         }
         
         Chart.defaults.font.family = "'Inter', 'Segoe UI', sans-serif";
-        Chart.defaults.plugins.legend.labels.usePointStyle = true;
+        Chart.defaults.font.size = 13;
+        Chart.defaults.color = '#475569';
         Chart.defaults.devicePixelRatio = 3;  // Force high DPI rendering (3x resolution for crisp export)
 
-        // Remove grid lines from all charts globally
+        // ---- BEAUTIFY: smooth, premium animations applied to every chart ----
+        Chart.defaults.animation = {
+            duration: 1100,
+            easing: 'easeOutQuart'
+        };
+        Chart.defaults.animations = Chart.defaults.animations || {};
+        Chart.defaults.animations.colors = { duration: 600, easing: 'easeOutQuart' };
+        Chart.defaults.transitions = Chart.defaults.transitions || {};
+        Chart.defaults.transitions.active = { animation: { duration: 250 } };
+
+        // ---- BEAUTIFY: elegant legend ----
+        Chart.defaults.plugins.legend.labels.usePointStyle = true;
+        Chart.defaults.plugins.legend.labels.pointStyle = 'circle';
+        Chart.defaults.plugins.legend.labels.boxWidth = 8;
+        Chart.defaults.plugins.legend.labels.boxHeight = 8;
+        Chart.defaults.plugins.legend.labels.padding = 18;
+        Chart.defaults.plugins.legend.labels.font = { size: 13, weight: '600', family: "'Inter', 'Segoe UI', sans-serif" };
+        Chart.defaults.plugins.legend.labels.color = '#334155';
+
+        // ---- BEAUTIFY: rich, rounded, high-contrast tooltips for every chart ----
+        Chart.defaults.plugins.tooltip.enabled = true;
+        Chart.defaults.plugins.tooltip.backgroundColor = 'rgba(28, 25, 23, 0.92)';
+        Chart.defaults.plugins.tooltip.titleColor = '#ffd9c2';
+        Chart.defaults.plugins.tooltip.titleFont = { size: 13, weight: '700', family: "'Inter', sans-serif" };
+        Chart.defaults.plugins.tooltip.bodyColor = '#f8fafc';
+        Chart.defaults.plugins.tooltip.bodyFont = { size: 13, weight: '500' };
+        Chart.defaults.plugins.tooltip.padding = 14;
+        Chart.defaults.plugins.tooltip.cornerRadius = 12;
+        Chart.defaults.plugins.tooltip.boxPadding = 6;
+        Chart.defaults.plugins.tooltip.usePointStyle = true;
+        Chart.defaults.plugins.tooltip.borderColor = 'rgba(255, 107, 53, 0.5)';
+        Chart.defaults.plugins.tooltip.borderWidth = 1;
+        Chart.defaults.plugins.tooltip.caretSize = 7;
+        Chart.defaults.plugins.tooltip.displayColors = true;
+
+        // ---- BEAUTIFY: softer rounded bars & smoother lines globally ----
+        Chart.defaults.elements.bar.borderRadius = 8;
+        Chart.defaults.elements.bar.borderSkipped = false;
+        Chart.defaults.elements.line.tension = 0.4;
+        Chart.defaults.elements.line.borderWidth = 3;
+        Chart.defaults.elements.line.capBezierPoints = true;
+        Chart.defaults.elements.point.radius = 4;
+        Chart.defaults.elements.point.hoverRadius = 7;
+        Chart.defaults.elements.point.hoverBorderWidth = 3;
+        Chart.defaults.elements.point.backgroundColor = '#ffffff';
+        Chart.defaults.elements.point.borderWidth = 2;
+
+        // ---- BEAUTIFY: subtle dashed grid on Y axis, clean X axis ----
         Chart.defaults.scales.x = Chart.defaults.scales.x || {};
         Chart.defaults.scales.x.grid = {
             display: false,
-            drawBorder: true
+            drawBorder: false
         };
+        Chart.defaults.scales.x.ticks = Chart.defaults.scales.x.ticks || {};
+        Chart.defaults.scales.x.ticks.color = '#64748b';
+        Chart.defaults.scales.x.ticks.font = { size: 12, weight: '600' };
+        Chart.defaults.scales.x.ticks.padding = 8;
+
         Chart.defaults.scales.y = Chart.defaults.scales.y || {};
         Chart.defaults.scales.y.grid = {
-            display: false,
-            drawBorder: true
+            display: true,
+            color: 'rgba(148, 163, 184, 0.16)',
+            lineWidth: 1,
+            drawBorder: false,
+            drawTicks: false
         };
+        Chart.defaults.scales.y.border = { display: false };
+        Chart.defaults.scales.y.ticks = Chart.defaults.scales.y.ticks || {};
+        Chart.defaults.scales.y.ticks.color = '#94a3b8';
+        Chart.defaults.scales.y.ticks.font = { size: 12, weight: '500' };
+        Chart.defaults.scales.y.ticks.padding = 10;
+
+        Chart.defaults.layout = Chart.defaults.layout || {};
+        Chart.defaults.layout.padding = { top: 12, right: 12, bottom: 4, left: 4 };
         
         // Set white background for all charts
         Chart.defaults.plugins.beforeDraw = {
@@ -5015,6 +5099,76 @@ let rawData = null;
                     ctx.restore();
                 }
             });
+        }
+
+        // ===================================================================
+        // BEAUTIFY: Gradient + soft-shadow helpers for charts
+        // ===================================================================
+
+        /**
+         * Build a vertical canvas gradient from a base hex colour.
+         * Used to give bars/areas a premium top→bottom fade.
+         */
+        function makeChartGradient(ctx, area, hex, topAlpha = 0.95, bottomAlpha = 0.55) {
+            if (!ctx || !area) return hex;
+            const { r, g, b } = hexToRgbObj(hex);
+            const gradient = ctx.createLinearGradient(0, area.top, 0, area.bottom);
+            gradient.addColorStop(0, `rgba(${r},${g},${b},${topAlpha})`);
+            gradient.addColorStop(1, `rgba(${r},${g},${b},${bottomAlpha})`);
+            return gradient;
+        }
+
+        /**
+         * Soft translucent area gradient for line charts (fill under the line).
+         */
+        function makeAreaGradient(ctx, area, hex, topAlpha = 0.28, bottomAlpha = 0.0) {
+            if (!ctx || !area) return 'rgba(255,107,53,0.12)';
+            const { r, g, b } = hexToRgbObj(hex);
+            const gradient = ctx.createLinearGradient(0, area.top, 0, area.bottom);
+            gradient.addColorStop(0, `rgba(${r},${g},${b},${topAlpha})`);
+            gradient.addColorStop(1, `rgba(${r},${g},${b},${bottomAlpha})`);
+            return gradient;
+        }
+
+        function hexToRgbObj(hex) {
+            if (typeof hex !== 'string') return { r: 255, g: 107, b: 53 };
+            let h = hex.replace('#', '');
+            if (h.length === 3) h = h.split('').map(c => c + c).join('');
+            const num = parseInt(h, 16);
+            if (isNaN(num)) return { r: 255, g: 107, b: 53 };
+            return { r: (num >> 16) & 255, g: (num >> 8) & 255, b: num & 255 };
+        }
+
+        /**
+         * Plugin: paint a soft drop-shadow behind bars & line strokes so charts
+         * feel elevated rather than flat. Registered globally and harmless for
+         * charts that don't need it.
+         */
+        const SoftShadowPlugin = {
+            id: 'softShadow',
+            beforeDatasetDraw(chart, args) {
+                const meta = args.meta;
+                if (!meta || !meta.dataset && !(meta.data && meta.data.length)) return;
+                const type = meta.type || chart.config.type;
+                if (type === 'bar' || type === 'line') {
+                    const ctx = chart.ctx;
+                    ctx.save();
+                    ctx.shadowColor = 'rgba(60, 53, 48, 0.18)';
+                    ctx.shadowBlur = type === 'line' ? 10 : 8;
+                    ctx.shadowOffsetX = 0;
+                    ctx.shadowOffsetY = type === 'line' ? 5 : 4;
+                }
+            },
+            afterDatasetDraw(chart, args) {
+                const meta = args.meta;
+                const type = meta && (meta.type || chart.config.type);
+                if (type === 'bar' || type === 'line') {
+                    chart.ctx.restore();
+                }
+            }
+        };
+        if (typeof Chart !== 'undefined' && Chart.register) {
+            Chart.register(SoftShadowPlugin);
         }
         
         Chart.defaults.plugins.datalabels = {
@@ -6431,15 +6585,25 @@ function renderNotReportedCharts() {
                 datasets: [{
                     label: 'FY 2024-25',
                     data: fy24Data,
-                    borderColor: '#ff6b35',
-                    backgroundColor: 'rgba(58, 28, 113, 0.1)',
+                    borderColor: '#94a3b8',
+                    backgroundColor: (context) => {
+                        const { ctx, chartArea } = context.chart;
+                        return makeAreaGradient(ctx, chartArea, '#94a3b8', 0.20);
+                    },
+                    pointBackgroundColor: '#ffffff',
+                    pointBorderColor: '#94a3b8',
                     tension: 0.4,
                     fill: true
                 }, {
                     label: 'FY 2025-26',
                     data: fy25Data,  // Already has nulls for months without data
                     borderColor: '#ff6b35',
-                    backgroundColor: 'rgba(255, 107, 53, 0.1)',
+                    backgroundColor: (context) => {
+                        const { ctx, chartArea } = context.chart;
+                        return makeAreaGradient(ctx, chartArea, '#ff6b35', 0.30);
+                    },
+                    pointBackgroundColor: '#ffffff',
+                    pointBorderColor: '#ff6b35',
                     tension: 0.4,
                     fill: true,
                     spanGaps: false  // Stop line at last data point
@@ -6497,7 +6661,15 @@ function renderNotReportedCharts() {
                 datasets: [{
                     label: 'Total Not Reported',
                     data: [fy24Total, fy25Total],
-                    backgroundColor: ['#ff6b35', '#e65528']
+                    backgroundColor: (context) => {
+                        const { ctx, chartArea } = context.chart;
+                        if (!chartArea) return '#ff6b35';
+                        const palette = ['#ff8c5a', '#ff6b35'];
+                        return makeChartGradient(ctx, chartArea, palette[context.dataIndex] || '#ff6b35');
+                    },
+                    hoverBackgroundColor: '#e65528',
+                    borderRadius: 10,
+                    maxBarThickness: 90
                 }]
             },
             options: {
@@ -6914,16 +7086,28 @@ function showView(view) {
                         {
                             label: 'SLA Met',
                             data: [fy24Metrics.totalMet, fy25Metrics.totalMet, fy26Metrics.totalMet],
-                            backgroundColor: 'rgba(255, 140, 90, 0.8)',
-                            borderColor: 'rgb(16, 185, 129)',
-                            borderWidth: 2
+                            backgroundColor: (context) => {
+                                const { ctx, chartArea } = context.chart;
+                                if (!chartArea) return '#10b981';
+                                return makeChartGradient(ctx, chartArea, '#10b981', 0.95, 0.6);
+                            },
+                            hoverBackgroundColor: '#059669',
+                            borderRadius: 8,
+                            borderSkipped: false,
+                            maxBarThickness: 64
                         },
                         {
                             label: 'SLA Not Met',
                             data: [fy24Metrics.totalNotMet, fy25Metrics.totalNotMet, fy26Metrics.totalNotMet],
-                            backgroundColor: 'rgba(211, 211, 211, 0.8)',
-                            borderColor: 'rgb(239, 68, 68)',
-                            borderWidth: 2
+                            backgroundColor: (context) => {
+                                const { ctx, chartArea } = context.chart;
+                                if (!chartArea) return '#ef4444';
+                                return makeChartGradient(ctx, chartArea, '#ef4444', 0.9, 0.55);
+                            },
+                            hoverBackgroundColor: '#dc2626',
+                            borderRadius: 8,
+                            borderSkipped: false,
+                            maxBarThickness: 64
                         }
                     ]
                 },
